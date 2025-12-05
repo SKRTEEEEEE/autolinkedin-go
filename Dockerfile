@@ -1,12 +1,12 @@
 # Multi-stage Dockerfile for LinkGen AI
 
 # Development stage with hot reload
-FROM golang:1.21-alpine AS development
+FROM golang:1.25-alpine AS development
 
 WORKDIR /app
 
 # Install development tools
-RUN go install github.com/cosmtrek/air@latest
+RUN go install github.com/air-verse/air@latest
 
 # Copy go mod files
 COPY src/go.mod src/go.sum ./
@@ -24,7 +24,7 @@ EXPOSE 8080
 CMD ["air", "-c", ".air.toml"]
 
 # Builder stage for production
-FROM golang:1.21-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
