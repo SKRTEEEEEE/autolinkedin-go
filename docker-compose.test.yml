@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # Go application for testing
+  app:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: linkgenai-app-test
+    environment:
+      - APP_ENV=test
+      - APP_PORT=8080
+      - LOG_LEVEL=info
+      - MONGO_URI=mongodb://mongodb-test:27017
+      - MONGO_DATABASE=linkgenai_test
+      - NATS_URL=nats://nats-test:4222
+      - NATS_QUEUE_NAME=test_queue
+      - LLM_SERVICE_URL=http://mock-llm:8081
+    command: ["go", "test", "-v", "-race", "-coverprofile=coverage.out", "./..."]
+    depends_on:
+      mongodb-test:
+        condition: service_healthy
+      nats-test:
+        condition: service_started
+    networks:
+      - linkgenai-test-network
+    volumes:
+      - ./src:/app:ro
+      - ./test:/app/test:ro
+
+  # MongoDB for testing (ephemeral)
+  mongodb-test:
+    image: mongo:7.0-alpine
+    container_name: linkgenai-mongodb-test
+    environment:
+      - MONGO_INITDB_DATABASE=linkgenai_test
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    networks:
+      - linkgenai-test-network
+    tmpfs:
+      # Use tmpfs (RAM) for ephemeral storage
+      - /data/db
+
+  # NATS for testing (ephemeral)
+  nats-test:
+    image: nats:2.10-alpine
+    container_name: linkgenai-nats-test
+    command: ["--js"]
+    networks:
+      - linkgenai-test-network
+    tmpfs:
+      # Use tmpfs (RAM) for ephemeral storage
+      - /data
+
+networks:
+  linkgenai-test-network:
+    driver: bridge
+
+# No volumes defined - all data is ephemeral in tmpfs

@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # Go application with hot reload
+  app:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: linkgenai-app-dev
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount source code for hot reload
+      - ./src:/app:delegated
+      # Cache go modules
+      - go-modules:/go/pkg/mod
+    environment:
+      - APP_ENV=development
+      - APP_PORT=8080
+      - LOG_LEVEL=debug
+      - MONGO_URI=mongodb://mongodb:27017
+      - MONGO_DATABASE=linkgenai
+      - NATS_URL=nats://nats:4222
+      - NATS_QUEUE_NAME=draft_generation
+      - LLM_SERVICE_URL=http://host.docker.internal:11434
+      - LLM_MODEL=llama2
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    networks:
+      - linkgenai-network
+    restart: unless-stopped
+
+  # MongoDB for data persistence
+  mongodb:
+    image: mongo:7.0-alpine
+    container_name: linkgenai-mongodb-dev
+    ports:
+      - "27017:27017"
+    volumes:
+      # Persistent volume for development data
+      - mongodb-data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=linkgenai
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - linkgenai-network
+    restart: unless-stopped
+
+  # NATS for async messaging
+  nats:
+    image: nats:2.10-alpine
+    container_name: linkgenai-nats-dev
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["--js", "--sd", "/data"]
+    volumes:
+      # Persistent volume for NATS JetStream
+      - nats-data:/data
+    networks:
+      - linkgenai-network
+    restart: unless-stopped
+
+networks:
+  linkgenai-network:
+    driver: bridge
+
+volumes:
+  mongodb-data:
+    driver: local
+  nats-data:
+    driver: local
+  go-modules:
+    driver: local

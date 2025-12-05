@@ -1,2 +1,46 @@
+# Task documentation (work in progress)
 docs/task/
-agents.md
+
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test coverage
+*.out
+coverage.html
+*.test
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+tmp/
+dist/
+vendor/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Go workspace file
+go.work
+
+# Air temporary files
+build-errors.log
