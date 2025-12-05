@@ -46,10 +46,10 @@ func TestSchedulerIdeasGenerationFlow(t *testing.T) {
 // This test will FAIL until error handling and retry logic are implemented
 func TestSchedulerWithLLMFailure(t *testing.T) {
 	tests := []struct {
-		name           string
-		llmFailures    int
-		maxRetries     int
-		shouldRecover  bool
+		name          string
+		llmFailures   int
+		maxRetries    int
+		shouldRecover bool
 	}{
 		{
 			name:          "scheduler recovers after transient LLM failure",

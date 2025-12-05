@@ -1,0 +1,228 @@
+# golangci-lint configuration for LinkGen AI
+# See https://golangci-lint.run/usage/configuration/ for all options
+
+run:
+  # Timeout for analysis
+  timeout: 5m
+  
+  # Include test files
+  tests: true
+  
+  # Which dirs to skip: issues from them won't be reported
+  skip-dirs:
+    - vendor
+    - bin
+    - docs
+    - scripts
+  
+  # Which files to skip: issues from them won't be reported
+  skip-files:
+    - ".*_test\\.go$"
+    - "mock_.*\\.go$"
+
+linters:
+  # Enable specific linters
+  enable:
+    - errcheck       # Checks for unchecked errors
+    - gosimple       # Simplify code
+    - govet          # Reports suspicious constructs
+    - ineffassign    # Detects ineffectual assignments
+    - staticcheck    # Advanced Go linter
+    - unused         # Checks for unused constants, variables, functions and types
+    - gofmt          # Checks whether code was gofmt-ed
+    - goimports      # Checks missing or unreferenced package imports
+    - misspell       # Finds commonly misspelled English words
+    - gocritic       # Provides diagnostics that check for bugs, performance and style issues
+    - revive         # Fast, configurable, extensible, flexible, and beautiful linter for Go
+    - gosec          # Inspects source code for security problems
+    - bodyclose      # Checks whether HTTP response body is closed successfully
+    - noctx          # Finds sending http request without context.Context
+    - sqlclose       # Checks that sql.Rows and sql.Stmt are closed
+    - rowserrcheck   # Checks whether Err of rows is checked successfully
+    - goprintffuncname # Checks that printf-like functions are named with f at the end
+    - unconvert      # Removes unnecessary type conversions
+    - dupl           # Code clone detection
+    - exportloopref  # Checks for pointers to enclosing loop variables
+    - exhaustive     # Checks exhaustiveness of enum switch statements
+    - goconst        # Finds repeated strings that could be replaced by a constant
+    - godot          # Checks if comments end in a period
+    - gocyclo        # Computes and checks the cyclomatic complexity of functions
+    - nestif         # Reports deeply nested if statements
+    - prealloc       # Finds slice declarations that could potentially be pre-allocated
+    - whitespace     # Detects leading and trailing whitespace
+    - wrapcheck      # Checks that errors from external packages are wrapped
+
+  # Disable specific linters
+  disable:
+    - typecheck      # Can cause issues with generated code
+    - deadcode       # Deprecated
+    - varcheck       # Deprecated
+    - structcheck    # Deprecated
+
+linters-settings:
+  errcheck:
+    # Report about not checking of errors in type assertions: `a := b.(MyStruct)`
+    check-type-assertions: true
+    # Report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`
+    check-blank: true
+
+  govet:
+    # Report about shadowed variables
+    check-shadowing: true
+
+  gofmt:
+    # Simplify code: gofmt with `-s` option
+    simplify: true
+
+  goimports:
+    # Put imports beginning with prefix after 3rd-party packages
+    local-prefixes: github.com/linkgen-ai/backend
+
+  gocyclo:
+    # Minimal code complexity to report
+    min-complexity: 15
+
+  dupl:
+    # Tokens count to trigger issue
+    threshold: 100
+
+  goconst:
+    # Minimal length of string constant
+    min-len: 3
+    # Minimum occurrences of constant string count to trigger issue
+    min-occurrences: 3
+
+  misspell:
+    # Correct spellings using locale preferences
+    locale: US
+
+  lll:
+    # Max line length, lines longer will be reported
+    line-length: 120
+    # Tab width in spaces
+    tab-width: 4
+
+  unused:
+    # Treat code as a program (not a library)
+    check-exported: false
+
+  unparam:
+    # Inspect exported functions
+    check-exported: false
+
+  nakedret:
+    # Make an issue if func has more lines of code than this setting and it has naked returns
+    max-func-lines: 30
+
+  prealloc:
+    # Report pre-allocation suggestions only on simple loops that have no returns/breaks/continues/gotos in them
+    simple: true
+    range-loops: true
+    for-loops: false
+
+  gocritic:
+    # Enable multiple checks by tags
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+      - experimental
+    disabled-checks:
+      - whyNoLint
+      - unnamedResult
+
+  revive:
+    # Minimal confidence for issues
+    confidence: 0.8
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unused-parameter
+      - name: unreachable-code
+      - name: redefines-builtin-id
+
+  gosec:
+    # To specify a set of rules to explicitly exclude
+    excludes:
+      - G104 # Audit errors not checked
+    # Severity of issues to report (low, medium, high)
+    severity: "low"
+    confidence: "low"
+
+issues:
+  # Maximum issues count per one linter
+  max-issues-per-linter: 50
+  
+  # Maximum count of issues with the same text
+  max-same-issues: 3
+  
+  # Show only new issues created after git revision
+  new: false
+  
+  # Exclude known issues
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        - goconst
+    
+    # Exclude specific linters for generated files
+    - path: mock_.*\.go
+      linters:
+        - revive
+        - stylecheck
+        - gosec
+    
+    # Exclude lll issues for long lines with go:generate
+    - linters:
+        - lll
+      source: "^//go:generate "
+
+  # Independently of option `exclude` we use default exclude patterns
+  exclude-use-default: false
+
+output:
+  # Colored output
+  format: colored-line-number
+  
+  # Print lines of code with issue
+  print-issued-lines: true
+  
+  # Print linter name in the end of issue text
+  print-linter-name: true
+  
+  # Make issues output unique by line
+  uniq-by-line: true
+  
+  # Sort results by: filepath, line and column
+  sort-results: true
+
+severity:
+  # Default value is empty string
+  default-severity: error
+  
+  # If set to true severity-rules regular expressions become case sensitive
+  case-sensitive: false

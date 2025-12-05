@@ -4,8 +4,7 @@
 
 # Documentation
 docs/
-README.md
-AGENTS.md
+*.md
 
 # Tests
 test/

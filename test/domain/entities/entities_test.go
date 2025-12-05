@@ -116,36 +116,36 @@ func TestIdeaEntity(t *testing.T) {
 // This test will FAIL until domain/entities/draft.go is implemented
 func TestDraftEntity(t *testing.T) {
 	tests := []struct {
-		name       string
-		draftType  string
-		content    string
-		userID     string
-		status     string
-		wantErr    bool
+		name      string
+		draftType string
+		content   string
+		userID    string
+		status    string
+		wantErr   bool
 	}{
 		{
-			name:       "valid post draft",
-			draftType:  "post",
-			content:    "This is a LinkedIn post draft about Clean Architecture",
-			userID:     "user123",
-			status:     "draft",
-			wantErr:    false,
+			name:      "valid post draft",
+			draftType: "post",
+			content:   "This is a LinkedIn post draft about Clean Architecture",
+			userID:    "user123",
+			status:    "draft",
+			wantErr:   false,
 		},
 		{
-			name:       "valid article draft",
-			draftType:  "article",
-			content:    "# Article Title\n\nArticle content here",
-			userID:     "user123",
-			status:     "draft",
-			wantErr:    false,
+			name:      "valid article draft",
+			draftType: "article",
+			content:   "# Article Title\n\nArticle content here",
+			userID:    "user123",
+			status:    "draft",
+			wantErr:   false,
 		},
 		{
-			name:       "invalid draft - unknown type",
-			draftType:  "unknown",
-			content:    "Some content",
-			userID:     "user123",
-			status:     "draft",
-			wantErr:    true,
+			name:      "invalid draft - unknown type",
+			draftType: "unknown",
+			content:   "Some content",
+			userID:    "user123",
+			status:    "draft",
+			wantErr:   true,
 		},
 	}
 

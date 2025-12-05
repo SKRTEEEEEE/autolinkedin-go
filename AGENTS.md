@@ -30,7 +30,10 @@ Todo el código de agents debe mantenerse dentro de `./src`, respetando estricta
 *(Los agents no pueden crear nuevas capas ni alterar la estructura base.)*
 
 ---
-
+## Verificación
+1. Eslint
+2. [Test](#test)
+3. [Docker](#docker)
 ## Test
 
 Mantener todos los tests dentro de `./test`, replicando la misma estructura jerárquica que `./src`.

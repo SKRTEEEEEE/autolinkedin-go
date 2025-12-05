@@ -9,12 +9,12 @@ import (
 // This test will FAIL until NATS queue, worker, and use cases are implemented
 func TestDraftGenerationAsyncFlow(t *testing.T) {
 	tests := []struct {
-		name              string
-		userID            string
-		expectedPosts     int
-		expectedArticles  int
-		maxWaitTime       time.Duration
-		wantErr           bool
+		name             string
+		userID           string
+		expectedPosts    int
+		expectedArticles int
+		maxWaitTime      time.Duration
+		wantErr          bool
 	}{
 		{
 			name:             "successful async draft generation",

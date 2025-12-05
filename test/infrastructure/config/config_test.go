@@ -15,10 +15,10 @@ func TestConfigLoading(t *testing.T) {
 		{
 			name: "valid configuration",
 			envVars: map[string]string{
-				"MONGODB_URI":    "mongodb://localhost:27017",
-				"NATS_URL":       "nats://localhost:4222",
-				"LLM_API_URL":    "http://localhost:8080",
-				"SERVER_PORT":    "8000",
+				"MONGODB_URI": "mongodb://localhost:27017",
+				"NATS_URL":    "nats://localhost:4222",
+				"LLM_API_URL": "http://localhost:8080",
+				"SERVER_PORT": "8000",
 			},
 			wantErr: false,
 		},

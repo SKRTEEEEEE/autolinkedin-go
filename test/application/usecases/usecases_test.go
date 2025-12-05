@@ -8,32 +8,32 @@ import (
 // This test will FAIL until application/usecases/generate_ideas.go is implemented
 func TestGenerateIdeasUseCase(t *testing.T) {
 	tests := []struct {
-		name         string
-		userID       string
-		topic        string
+		name          string
+		userID        string
+		topic         string
 		expectedCount int
-		wantErr      bool
+		wantErr       bool
 	}{
 		{
-			name:         "generate 10 ideas for valid topic",
-			userID:       "user123",
-			topic:        "AI and Machine Learning",
+			name:          "generate 10 ideas for valid topic",
+			userID:        "user123",
+			topic:         "AI and Machine Learning",
 			expectedCount: 10,
-			wantErr:      false,
+			wantErr:       false,
 		},
 		{
-			name:         "error on empty user ID",
-			userID:       "",
-			topic:        "AI and Machine Learning",
+			name:          "error on empty user ID",
+			userID:        "",
+			topic:         "AI and Machine Learning",
 			expectedCount: 0,
-			wantErr:      true,
+			wantErr:       true,
 		},
 		{
-			name:         "error on empty topic",
-			userID:       "user123",
-			topic:        "",
+			name:          "error on empty topic",
+			userID:        "user123",
+			topic:         "",
 			expectedCount: 0,
-			wantErr:      true,
+			wantErr:       true,
 		},
 	}
 

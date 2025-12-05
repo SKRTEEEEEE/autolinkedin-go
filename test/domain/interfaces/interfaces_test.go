@@ -29,8 +29,8 @@ func TestLLMServiceInterface(t *testing.T) {
 // This test will FAIL until repository interfaces are implemented
 func TestRepositoryInterfaces(t *testing.T) {
 	tests := []struct {
-		name           string
-		interfaceName  string
+		name            string
+		interfaceName   string
 		requiredMethods []string
 	}{
 		{

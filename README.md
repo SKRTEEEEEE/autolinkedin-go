@@ -83,13 +83,27 @@ make docker-test
 
 ## 🔧 Available Commands
 
+### Development
 - `make build` - Build the application binary
 - `make run` - Run the application locally
-- `make test` - Run all tests
-- `make docker-dev` - Start development environment with Docker
-- `make docker-test` - Run tests in isolated Docker containers
-- `make lint` - Run code linters
+- `make deps` - Install Go dependencies
 - `make fmt` - Format code
+
+### Testing
+- `make test` - Run all tests locally
+- `make docker-test` - Run tests in isolated Docker environment
+- `make lint` - Run golangci-lint for code quality checks
+- `make ci-check` - Run complete CI/CD validation suite
+
+### Docker
+- `make docker-dev` - Start development environment with hot reload
+- `make docker-stop` - Stop all Docker containers
+- `make docker-validate` - Validate Docker configurations
+
+### Utilities
+- `make clean` - Clean build artifacts and caches
+- `make deps-update` - Update Go dependencies
+- `make help` - Show all available commands
 
 ## 🐳 Docker Environments
 
@@ -97,13 +111,40 @@ make docker-test
 Uses hot reload for instant code changes:
 ```bash
 make docker-dev
+# or
+./scripts/dev.sh
 ```
+
+The development environment includes:
+- **Hot reload** with Air - code changes are detected automatically
+- **Persistent volumes** for MongoDB and NATS data
+- **Volume mounts** for source code (./src:/app)
+- Services: MongoDB (27017), NATS (4222), App (8080)
 
 ### Test Mode
 Isolated ephemeral containers with automatic cleanup:
 ```bash
 make docker-test
+# or
+./scripts/test.sh
 ```
+
+The test environment features:
+- **Ephemeral storage** using tmpfs (RAM-based, no disk writes)
+- **Isolated network** separate from development
+- **Automatic cleanup** after test execution
+- **No persistent volumes** - all data is temporary
+
+### Docker Validation
+Validate your Docker configurations:
+```bash
+make docker-validate
+```
+
+This checks:
+- Docker and Docker Compose installation
+- Syntax validation of docker-compose.yml and docker-compose.test.yml
+- Dockerfile multi-stage build validation
 
 ## 📚 Documentation
 

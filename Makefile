@@ -1,21 +1,23 @@
-.PHONY: help build run test clean deps deps-update deps-clean vendor docker-dev docker-test docker-stop lint fmt
+.PHONY: help build run test clean deps deps-update deps-clean vendor docker-dev docker-test docker-stop docker-validate lint fmt ci-check
 
 # Default target
 help:
 	@echo "LinkGen AI - Available Make Targets:"
-	@echo "  make build         - Build the application binary"
-	@echo "  make run           - Run the application locally"
-	@echo "  make test          - Run all tests"
-	@echo "  make clean         - Clean build artifacts"
-	@echo "  make deps          - Install dependencies"
-	@echo "  make deps-update   - Update dependencies"
-	@echo "  make deps-clean    - Clean module cache"
-	@echo "  make vendor        - Vendor dependencies"
-	@echo "  make docker-dev    - Start development environment with Docker"
-	@echo "  make docker-test   - Run tests in isolated Docker environment"
-	@echo "  make docker-stop   - Stop all Docker containers"
-	@echo "  make lint          - Run linters"
-	@echo "  make fmt           - Format code"
+	@echo "  make build            - Build the application binary"
+	@echo "  make run              - Run the application locally"
+	@echo "  make test             - Run all tests"
+	@echo "  make clean            - Clean build artifacts"
+	@echo "  make deps             - Install dependencies"
+	@echo "  make deps-update      - Update dependencies"
+	@echo "  make deps-clean       - Clean module cache"
+	@echo "  make vendor           - Vendor dependencies"
+	@echo "  make docker-dev       - Start development environment with Docker"
+	@echo "  make docker-test      - Run tests in isolated Docker environment"
+	@echo "  make docker-stop      - Stop all Docker containers"
+	@echo "  make docker-validate  - Validate Docker configurations"
+	@echo "  make lint             - Run linters"
+	@echo "  make fmt              - Format code"
+	@echo "  make ci-check         - Run all CI/CD checks"
 
 # Build the application
 build:
@@ -79,13 +81,23 @@ docker-stop:
 	docker-compose down
 	docker-compose -f docker-compose.test.yml down -v
 
+# Validate Docker configurations
+docker-validate:
+	@echo "Validating Docker configurations..."
+	@bash scripts/validate-docker.sh
+
 # Run linters
 lint:
 	@echo "Running linters..."
-	cd src && golangci-lint run ./...
+	@bash scripts/lint.sh
 
 # Format code
 fmt:
 	@echo "Formatting code..."
 	cd src && go fmt ./...
 	cd test && go fmt ./...
+
+# Run all CI/CD checks
+ci-check:
+	@echo "Running all CI/CD checks..."
+	@bash scripts/ci-check.sh
