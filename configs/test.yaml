@@ -1,0 +1,39 @@
+# Test environment configuration
+
+server:
+  host: "localhost"
+  port: 8001
+  read_timeout: 30
+  write_timeout: 30
+
+database:
+  uri: "mongodb://localhost:27017"
+  database: "linkgenai_test"
+  max_pool_size: 20
+  min_pool_size: 2
+
+nats:
+  url: "nats://localhost:4222"
+  queue: "linkgen-test-queue"
+
+llm:
+  endpoint: "http://localhost:8080"
+  api_key: "test-api-key"
+  timeout: 30
+  max_tokens: 1000
+  temperature: 0.5
+
+linkedin:
+  api_url: "https://api.linkedin.com/v2"
+  client_id: "test-client-id"
+  client_secret: "test-client-secret"
+
+scheduler:
+  interval: "10m"
+  batch_size: 10
+  enabled: false
+
+logging:
+  level: "debug"
+  format: "json"
+  output: "stdout"

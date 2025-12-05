@@ -1,0 +1,39 @@
+# Development environment configuration
+
+server:
+  host: "localhost"
+  port: 8000
+  read_timeout: 30
+  write_timeout: 30
+
+database:
+  uri: "mongodb://localhost:27017"
+  database: "linkgenai_dev"
+  max_pool_size: 50
+  min_pool_size: 5
+
+nats:
+  url: "nats://localhost:4222"
+  queue: "linkgen-dev-queue"
+
+llm:
+  endpoint: "http://localhost:8080"
+  api_key: "${LINKGEN_LLM_API_KEY}"
+  timeout: 60
+  max_tokens: 2000
+  temperature: 0.7
+
+linkedin:
+  api_url: "https://api.linkedin.com/v2"
+  client_id: "${LINKGEN_LINKEDIN_CLIENT_ID}"
+  client_secret: "${LINKGEN_LINKEDIN_CLIENT_SECRET}"
+
+scheduler:
+  interval: "1h"
+  batch_size: 50
+  enabled: true
+
+logging:
+  level: "debug"
+  format: "json"
+  output: "stdout"
