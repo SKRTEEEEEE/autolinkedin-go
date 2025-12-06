@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/linkgen-ai/backend/domain/entities"
+	"github.com/linkgen-ai/backend/src/domain/entities"
 )
 
 // NewDraft creates a new Draft entity with type-specific setup

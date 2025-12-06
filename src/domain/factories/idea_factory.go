@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/linkgen-ai/backend/domain/entities"
+	"github.com/linkgen-ai/backend/src/domain/entities"
 )
 
 // NewIdea creates a new Idea entity with validation and expiration
