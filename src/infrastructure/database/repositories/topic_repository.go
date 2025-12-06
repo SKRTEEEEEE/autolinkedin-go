@@ -36,6 +36,7 @@ type topicDocument struct {
 	Keywords    []string           `bson:"keywords"`
 	Category    string             `bson:"category"`
 	Priority    int                `bson:"priority"`
+	Active      bool               `bson:"active"`
 	CreatedAt   primitive.DateTime `bson:"created_at"`
 }
 
@@ -57,6 +58,7 @@ func (r *topicRepository) toDocument(topic *entities.Topic) (*topicDocument, err
 		Keywords:    topic.Keywords,
 		Category:    topic.Category,
 		Priority:    topic.Priority,
+		Active:      topic.Active,
 		CreatedAt:   primitive.NewDateTimeFromTime(topic.CreatedAt),
 	}
 
@@ -86,6 +88,7 @@ func (r *topicRepository) toEntity(doc *topicDocument) *entities.Topic {
 		Keywords:    doc.Keywords,
 		Category:    doc.Category,
 		Priority:    doc.Priority,
+		Active:      doc.Active,
 		CreatedAt:   doc.CreatedAt.Time(),
 	}
 }
@@ -218,6 +221,51 @@ func (r *topicRepository) FindRandomByUserID(ctx context.Context, userID string)
 	}
 
 	return r.toEntity(&doc), nil
+}
+
+// Update updates an existing topic in the database
+func (r *topicRepository) Update(ctx context.Context, topic *entities.Topic) error {
+	if topic == nil {
+		return database.ErrInvalidEntity
+	}
+
+	if topic.ID == "" {
+		return database.ErrInvalidID
+	}
+
+	// Validate topic before persisting
+	if err := topic.Validate(); err != nil {
+		return fmt.Errorf("topic validation failed: %w", err)
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(topic.ID)
+	if err != nil {
+		return database.ErrInvalidID
+	}
+
+	// Prepare update document (excluding ID, UserID, and CreatedAt)
+	update := bson.M{
+		"$set": bson.M{
+			"name":        topic.Name,
+			"description": topic.Description,
+			"keywords":    topic.Keywords,
+			"category":    topic.Category,
+			"priority":    topic.Priority,
+			"active":      topic.Active,
+		},
+	}
+
+	filter := bson.M{"_id": objectID}
+	result, err := r.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return fmt.Errorf("failed to update topic: %w", err)
+	}
+
+	if result.MatchedCount == 0 {
+		return database.ErrEntityNotFound
+	}
+
+	return nil
 }
 
 // Delete removes a topic from the database

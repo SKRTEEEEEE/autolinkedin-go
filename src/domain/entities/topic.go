@@ -15,6 +15,7 @@ type Topic struct {
 	Keywords    []string
 	Category    string
 	Priority    int
+	Active      bool
 	CreatedAt   time.Time
 }
 

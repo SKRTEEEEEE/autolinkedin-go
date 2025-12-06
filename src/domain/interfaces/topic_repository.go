@@ -21,6 +21,9 @@ type TopicRepository interface {
 	// Used by the scheduler for periodic idea generation
 	FindRandomByUserID(ctx context.Context, userID string) (*entities.Topic, error)
 
+	// Update updates an existing topic
+	Update(ctx context.Context, topic *entities.Topic) error
+
 	// Delete removes a topic from the system
 	Delete(ctx context.Context, topicID string) error
 }

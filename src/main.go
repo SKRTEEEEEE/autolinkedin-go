@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/linkgen-ai/backend/src/application/services"
 	"github.com/linkgen-ai/backend/src/application/usecases"
 	"github.com/linkgen-ai/backend/src/application/workers"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
@@ -291,6 +292,12 @@ func (a *Application) initialize(ctx context.Context) error {
 	a.clearIdeasUC = usecases.NewClearIdeasUseCase(a.userRepo, a.ideaRepo)
 	a.refineDraftUC = usecases.NewRefineDraftUseCase(a.draftRepo, a.llmClient)
 
+	// Seed development data
+	if err := a.seedDevelopmentData(ctx); err != nil {
+		a.logger.Warn("Failed to seed development data", zap.Error(err))
+		// Don't fail startup if seeding fails
+	}
+
 	// Initialize HTTP server
 	if err := a.initializeHTTPServer(); err != nil {
 		return fmt.Errorf("failed to initialize HTTP server: %w", err)
@@ -302,6 +309,20 @@ func (a *Application) initialize(ctx context.Context) error {
 	}
 
 	a.logger.Info("Application dependencies initialized successfully")
+	return nil
+}
+
+// seedDevelopmentData seeds initial development data
+func (a *Application) seedDevelopmentData(ctx context.Context) error {
+	a.logger.Info("Seeding development data...")
+
+	seeder := services.NewDevSeeder(a.userRepo, a.topicRepo, a.logger)
+	
+	if err := seeder.SeedAll(ctx); err != nil {
+		return fmt.Errorf("failed to seed development data: %w", err)
+	}
+
+	a.logger.Info("Development data seeded successfully")
 	return nil
 }
 
@@ -348,6 +369,14 @@ func (a *Application) initializeHTTPServer() error {
 	router.HandleFunc("/health", healthHandler.HandleHealth).Methods("GET")
 	router.HandleFunc("/readiness", healthHandler.HandleReadiness).Methods("GET")
 	router.HandleFunc("/liveness", healthHandler.HandleLiveness).Methods("GET")
+
+	// Register topics handler
+	topicsHandler := handlers.NewTopicsHandler(
+		a.topicRepo,
+		a.userRepo,
+		a.logger,
+	)
+	topicsHandler.RegisterRoutes(router)
 
 	// Register ideas handler
 	ideasHandler := handlers.NewIdeasHandler(
