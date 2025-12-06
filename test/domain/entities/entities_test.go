@@ -1,8 +1,11 @@
-package entities
+package entities_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/linkgen-ai/backend/domain/entities"
+	"github.com/linkgen-ai/backend/domain/factories"
 )
 
 // TestUserEntity validates User entity structure and behavior
