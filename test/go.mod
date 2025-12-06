@@ -5,6 +5,8 @@ go 1.25.3
 replace github.com/linkgen-ai/backend => ../src
 
 require (
+	github.com/gorilla/mux v1.8.1
+	github.com/google/uuid v1.6.0
 	github.com/linkgen-ai/backend v0.0.0-00010101000000-000000000000
 	gopkg.in/yaml.v3 v3.0.1
 )
