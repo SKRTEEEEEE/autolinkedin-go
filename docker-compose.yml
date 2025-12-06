@@ -29,6 +29,7 @@ services:
       - LINKGEN_MONGODB_URI=mongodb://mongodb:27017/linkgenai
       - LINKGEN_NATS_URL=nats://nats:4222
       - LINKGEN_LLM_ENDPOINT=${LLM_SERVICE_URL}
+      - LINKGEN_LLM_MODEL=${LLM_MODEL}
       - LINKGEN_LLM_API_KEY=proxy-key-not-needed
     depends_on:
       mongodb:

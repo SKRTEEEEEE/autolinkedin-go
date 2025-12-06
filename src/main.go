@@ -249,7 +249,7 @@ func (a *Application) initialize(ctx context.Context) error {
 		BaseURL:    cfg.LLM.Endpoint,
 		Timeout:    cfg.LLM.Timeout,
 		MaxRetries: 3,
-		Model:      "gpt-4",
+		Model:      cfg.LLM.Model,
 	}
 	llmClient, err := llm.NewLLMHTTPClient(llmConfig)
 	if err != nil {
@@ -316,7 +316,13 @@ func (a *Application) initialize(ctx context.Context) error {
 func (a *Application) seedDevelopmentData(ctx context.Context) error {
 	a.logger.Info("Seeding development data...")
 
-	seeder := services.NewDevSeeder(a.userRepo, a.topicRepo, a.logger)
+	seeder := services.NewDevSeeder(
+		a.userRepo,
+		a.topicRepo,
+		a.ideaRepo,
+		a.llmClient,
+		a.logger,
+	)
 	
 	if err := seeder.SeedAll(ctx); err != nil {
 		return fmt.Errorf("failed to seed development data: %w", err)

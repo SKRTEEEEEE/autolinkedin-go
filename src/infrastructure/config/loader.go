@@ -93,6 +93,10 @@ func LoadFromEnvironment() (*Config, error) {
 		cfg.LLM.Endpoint = endpoint
 	}
 	
+	if model := os.Getenv("LINKGEN_LLM_MODEL"); model != "" {
+		cfg.LLM.Model = model
+	}
+	
 	if apiKey := os.Getenv("LINKGEN_LLM_API_KEY"); apiKey != "" {
 		cfg.LLM.APIKey = apiKey
 	}
@@ -226,6 +230,9 @@ func LoadFromFile(filePath string) (*Config, error) {
 	if llm, ok := rawConfig["llm"].(map[string]interface{}); ok {
 		if endpoint, ok := llm["endpoint"].(string); ok {
 			cfg.LLM.Endpoint = endpoint
+		}
+		if model, ok := llm["model"].(string); ok {
+			cfg.LLM.Model = model
 		}
 		if apiKey, ok := llm["api_key"].(string); ok {
 			cfg.LLM.APIKey = apiKey
@@ -497,6 +504,9 @@ func mergeConfigs(dst, src *Config) {
 	// LLM
 	if src.LLM.Endpoint != "" {
 		dst.LLM.Endpoint = src.LLM.Endpoint
+	}
+	if src.LLM.Model != "" {
+		dst.LLM.Model = src.LLM.Model
 	}
 	if src.LLM.APIKey != "" {
 		dst.LLM.APIKey = src.LLM.APIKey
