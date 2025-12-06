@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nats-io/nats.go"
+	nats "github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
 
@@ -92,6 +92,9 @@ func (p *Publisher) Publish(ctx context.Context, data interface{}) error {
 	if conn == nil {
 		return ErrNotConnected
 	}
+
+	// Type assertion to ensure nats.Conn is used
+	var _ *nats.Conn = conn
 
 	err = conn.Publish(p.subject, payload)
 	if err != nil {

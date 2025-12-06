@@ -33,7 +33,18 @@ type DraftGenerationMessage struct {
 
 // GenerateDraftsUseCase is the interface for the draft generation use case
 type GenerateDraftsUseCase interface {
-	Execute(ctx context.Context, userID, ideaID string) error
+	Execute(ctx context.Context, input GenerateDraftsInput) ([]*Draft, error)
+}
+
+// GenerateDraftsInput represents input for draft generation
+type GenerateDraftsInput struct {
+	UserID string
+	IdeaID string
+}
+
+// Draft is a minimal draft entity representation for workers
+type Draft struct {
+	ID string
 }
 
 // DraftGenerationWorker handles async draft generation from NATS queue
@@ -163,7 +174,10 @@ func (w *DraftGenerationWorker) processMessage(ctx context.Context, msgData []by
 	)
 
 	// Execute use case
-	err := w.useCase.Execute(ctx, msg.UserID, msg.IdeaID)
+	_, err := w.useCase.Execute(ctx, GenerateDraftsInput{
+		UserID: msg.UserID,
+		IdeaID: msg.IdeaID,
+	})
 	if err != nil {
 		w.incrementProcessingErrors()
 		w.logger.Error("use case execution failed",

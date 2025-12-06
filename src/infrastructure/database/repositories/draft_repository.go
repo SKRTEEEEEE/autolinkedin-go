@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
@@ -232,7 +233,7 @@ func (r *draftRepository) Update(ctx context.Context, draftID string, updates ma
 	}
 
 	// Add updated timestamp
-	updates["updated_at"] = primitive.NewDateTimeFromTime(primitive.Now().Time())
+	updates["updated_at"] = primitive.NewDateTimeFromTime(time.Now())
 
 	filter := bson.M{"_id": objectID}
 	update := bson.M{"$set": updates}
@@ -365,7 +366,7 @@ func (r *draftRepository) AppendRefinement(ctx context.Context, draftID string, 
 		"$set": bson.M{
 			"content":    entry.Content,
 			"status":     string(entities.DraftStatusRefined),
-			"updated_at": primitive.NewDateTimeFromTime(primitive.Now().Time()),
+			"updated_at": primitive.NewDateTimeFromTime(time.Now()),
 		},
 	}
 

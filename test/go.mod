@@ -3,6 +3,7 @@ module github.com/linkgen-ai/backend/test
 go 1.25.3
 
 replace github.com/linkgen-ai/backend => ../src
+replace github.com/linkgen-ai/backend/src => ../src
 
 require (
 	github.com/gorilla/mux v1.8.1

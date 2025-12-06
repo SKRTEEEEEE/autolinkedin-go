@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
@@ -178,7 +179,7 @@ func (r *userRepository) Update(ctx context.Context, userID string, updates map[
 	}
 
 	// Add updated timestamp
-	updates["updated_at"] = primitive.NewDateTimeFromTime(primitive.NewDateTimeFromTime(primitive.Now().Time()).Time())
+	updates["updated_at"] = primitive.NewDateTimeFromTime(time.Now())
 
 	filter := bson.M{"_id": objectID}
 	update := bson.M{"$set": updates}

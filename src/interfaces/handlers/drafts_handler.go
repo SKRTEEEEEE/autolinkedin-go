@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/linkgen-ai/backend/src/application/usecases"
+	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
 	"github.com/linkgen-ai/backend/src/domain/valueobjects"
 	"github.com/linkgen-ai/backend/src/infrastructure/messaging/nats"
@@ -198,7 +199,7 @@ func (h *DraftsHandler) GetDrafts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Query repository
-	drafts, err := h.draftRepository.ListByUserID(ctx, userID, status, draftType)
+	drafts, err := h.draftRepository.ListByUserID(ctx, userID, entities.DraftStatus(status), entities.DraftType(draftType))
 	if err != nil {
 		statusCode, code, message := MapDomainError(err, h.logger)
 		WriteError(w, statusCode, code, message, nil, h.logger)
