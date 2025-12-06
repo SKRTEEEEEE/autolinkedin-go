@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
@@ -170,4 +171,41 @@ func (c *Client) GetMongoClient() (*mongo.Client, error) {
 	}
 
 	return client, nil
+}
+
+// Check performs a health check on the database connection
+func (c *Client) Check(ctx context.Context) *HealthCheckResult {
+	start := time.Now()
+	
+	c.mu.RLock()
+	client := c.connection.GetClient()
+	c.mu.RUnlock()
+
+	if client == nil {
+		return &HealthCheckResult{
+			Status:    HealthStatusUnhealthy,
+			Latency:   time.Since(start),
+			Error:     "client not initialized",
+			Timestamp: time.Now(),
+		}
+	}
+
+	// Ping the database
+	pingCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	if err := client.Ping(pingCtx, nil); err != nil {
+		return &HealthCheckResult{
+			Status:    HealthStatusUnhealthy,
+			Latency:   time.Since(start),
+			Error:     err.Error(),
+			Timestamp: time.Now(),
+		}
+	}
+
+	return &HealthCheckResult{
+		Status:    HealthStatusHealthy,
+		Latency:   time.Since(start),
+		Timestamp: time.Now(),
+	}
 }

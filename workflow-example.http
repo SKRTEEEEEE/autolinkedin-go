@@ -1,0 +1,157 @@
+###
+# LinkGen AI - API Workflow Examples
+# Base URL: http://localhost:8080
+#
+# IMPORTANT: Before using these endpoints, you need to:
+# 1. Create users, ideas, and drafts in the database
+# 2. Replace the @userId, @ideaId, and @draftId variables below with actual IDs
+###
+
+@baseUrl = http://localhost:8080
+@userId = 675319c1f8d4a2e8b1234567
+@ideaId = 675319c1f8d4a2e8b7654321
+@draftId = 675319c1f8d4a2e8b9876543
+
+###
+# Health Check Endpoints
+###
+
+### Get API Health Status
+GET {{baseUrl}}/health HTTP/1.1
+Content-Type: application/json
+
+###
+### Get Readiness Status
+GET {{baseUrl}}/readiness HTTP/1.1
+Content-Type: application/json
+
+###
+### Get Liveness Status
+GET {{baseUrl}}/liveness HTTP/1.1
+Content-Type: application/json
+
+###
+# Ideas Management Endpoints
+###
+
+### Get Ideas for User (all ideas)
+GET {{baseUrl}}/v1/ideas/{{userId}} HTTP/1.1
+Content-Type: application/json
+
+###
+### Get Ideas with Topic Filter
+GET {{baseUrl}}/v1/ideas/{{userId}}?topic=technology&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+### Get Ideas with Limit
+GET {{baseUrl}}/v1/ideas/{{userId}}?limit=5 HTTP/1.1
+Content-Type: application/json
+
+###
+### Clear All Ideas for User
+DELETE {{baseUrl}}/v1/ideas/{{userId}}/clear HTTP/1.1
+Content-Type: application/json
+
+###
+# Drafts Management Endpoints
+###
+
+### Generate Draft from Idea (Async - returns job ID)
+POST {{baseUrl}}/v1/drafts/generate HTTP/1.1
+Content-Type: application/json
+
+{
+  "user_id": "{{userId}}",
+  "idea_id": "{{ideaId}}"
+}
+
+###
+### Get All Drafts for User
+GET {{baseUrl}}/v1/drafts/{{userId}} HTTP/1.1
+Content-Type: application/json
+
+###
+### Get Drafts with Status Filter
+GET {{baseUrl}}/v1/drafts/{{userId}}?status=draft&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+### Get Published Drafts Only
+GET {{baseUrl}}/v1/drafts/{{userId}}?status=published HTTP/1.1
+Content-Type: application/json
+
+###
+### Refine Existing Draft
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Make it more professional and add a call to action",
+  "user_id": "{{userId}}"
+}
+
+###
+### Refine Draft with Different Prompt
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Shorten it to 200 words and make it more engaging",
+  "user_id": "{{userId}}"
+}
+
+###
+# Complete Workflow Example
+###
+
+### Step 1: Check API Health
+GET {{baseUrl}}/health HTTP/1.1
+
+###
+### Step 2: Get Available Ideas for User
+# @name getIdeas
+GET {{baseUrl}}/v1/ideas/{{userId}}?limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+### Step 3: Generate Draft from First Idea
+# @name generateDraft
+POST {{baseUrl}}/v1/drafts/generate HTTP/1.1
+Content-Type: application/json
+
+{
+  "user_id": "{{userId}}",
+  "idea_id": "{{ideaId}}"
+}
+
+###
+### Step 4: Wait a few seconds, then Get Drafts to see the generated draft
+# @name getDrafts
+GET {{baseUrl}}/v1/drafts/{{userId}}?status=draft HTTP/1.1
+Content-Type: application/json
+
+###
+### Step 5: Refine the Generated Draft
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Make it more concise and add hashtags relevant to the topic",
+  "user_id": "{{userId}}"
+}
+
+###
+### Step 6: Get Updated Draft
+GET {{baseUrl}}/v1/drafts/{{userId}} HTTP/1.1
+Content-Type: application/json
+
+###
+# Notes:
+# - Replace the @userId, @ideaId, and @draftId variables at the top with actual IDs from your database
+# - The /v1/drafts/generate endpoint is asynchronous and returns a job_id immediately
+# - Draft generation happens in the background via NATS messaging
+# - Use the job_id or check the drafts list after a few seconds to see the generated draft
+# - All dates/times are in ISO 8601 format (e.g., "2024-12-06T15:30:00Z")
+# - Valid draft statuses: "draft", "published", "scheduled"
+###

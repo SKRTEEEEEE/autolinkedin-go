@@ -7,19 +7,29 @@ services:
       dockerfile: Dockerfile
     container_name: linkgenai-app-dev
     ports:
-      - "${APP_PORT:-8080}:8080"
+      - "${APP_PORT:-8080}:8000"
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app
+          ignore:
+            - tmp/
+        - action: rebuild
+          path: go.mod
+        - action: rebuild
+          path: go.sum
     volumes:
-      # Mount source code for hot reload
-      - ./src:/app:delegated
       # Cache go modules
       - go-modules:/go/pkg/mod
     env_file:
       - .env
     environment:
-      # Override localhost references to use Docker service names
-      - MONGO_URI=mongodb://mongodb:27017
-      - NATS_URL=nats://nats:4222
-      - LLM_SERVICE_URL=${LLM_SERVICE_URL}
+      # Override with Docker service names
+      - LINKGEN_MONGODB_URI=mongodb://mongodb:27017/linkgenai
+      - LINKGEN_NATS_URL=nats://nats:4222
+      - LINKGEN_LLM_ENDPOINT=${LLM_SERVICE_URL}
+      - LINKGEN_LLM_API_KEY=proxy-key-not-needed
     depends_on:
       mongodb:
         condition: service_healthy

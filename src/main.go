@@ -15,8 +15,10 @@ import (
 	"github.com/linkgen-ai/backend/src/infrastructure/config"
 	"github.com/linkgen-ai/backend/src/infrastructure/database"
 	dbRepos "github.com/linkgen-ai/backend/src/infrastructure/database/repositories"
+	httpServer "github.com/linkgen-ai/backend/src/infrastructure/http"
 	"github.com/linkgen-ai/backend/src/infrastructure/http/llm"
 	"github.com/linkgen-ai/backend/src/infrastructure/messaging/nats"
+	"github.com/linkgen-ai/backend/src/interfaces/handlers"
 	"go.uber.org/zap"
 )
 
@@ -39,6 +41,9 @@ type Application struct {
 
 	// Use cases
 	generateDraftsUC *usecases.GenerateDraftsUseCase
+	listIdeasUC      *usecases.ListIdeasUseCase
+	clearIdeasUC     *usecases.ClearIdeasUseCase
+	refineDraftUC    *usecases.RefineDraftUseCase
 
 	// Workers
 	draftWorker *workers.DraftGenerationWorker
@@ -47,7 +52,7 @@ type Application struct {
 	workerWg    sync.WaitGroup
 
 	// HTTP Server
-	httpServer interface{} // Will be replaced with actual HTTP server
+	httpServer *httpServer.Server
 
 	// Worker registry for health checks
 	workerRegistry *WorkerRegistry
@@ -282,6 +287,14 @@ func (a *Application) initialize(ctx context.Context) error {
 		a.draftRepo,
 		a.llmClient,
 	)
+	a.listIdeasUC = usecases.NewListIdeasUseCase(a.userRepo, a.ideaRepo)
+	a.clearIdeasUC = usecases.NewClearIdeasUseCase(a.userRepo, a.ideaRepo)
+	a.refineDraftUC = usecases.NewRefineDraftUseCase(a.draftRepo, a.llmClient)
+
+	// Initialize HTTP server
+	if err := a.initializeHTTPServer(); err != nil {
+		return fmt.Errorf("failed to initialize HTTP server: %w", err)
+	}
 
 	// Initialize workers
 	if err := a.initializeWorkers(); err != nil {
@@ -289,6 +302,71 @@ func (a *Application) initialize(ctx context.Context) error {
 	}
 
 	a.logger.Info("Application dependencies initialized successfully")
+	return nil
+}
+
+// initializeHTTPServer creates and configures the HTTP server with routes
+func (a *Application) initializeHTTPServer() error {
+	a.logger.Info("Initializing HTTP server...")
+
+	// Create HTTP server
+	serverConfig := httpServer.ServerConfig{
+		Host:            a.config.Server.Host,
+		Port:            a.config.Server.Port,
+		ReadTimeout:     a.config.Server.ReadTimeout,
+		WriteTimeout:    a.config.Server.WriteTimeout,
+		ShutdownTimeout: a.config.Server.ShutdownTimeout,
+	}
+	a.httpServer = httpServer.NewServer(serverConfig, a.logger)
+
+	// Get router
+	router := a.httpServer.GetRouter()
+
+	// Create NATS publisher for drafts
+	draftPublisher, err := nats.NewPublisher(nats.PublisherConfig{
+		Client:  a.natsClient,
+		Subject: "draft.generate",
+		Logger:  a.logger,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create NATS publisher: %w", err)
+	}
+
+	// Create adapter for database health checker
+	dbHealthChecker := &dbHealthAdapter{client: a.dbClient}
+	
+	// Create adapter for worker registry
+	workerRegistryAdapter := &workerRegistryAdapter{registry: a.workerRegistry}
+	
+	// Register health handler
+	healthHandler := handlers.NewHealthHandler(
+		dbHealthChecker,
+		workerRegistryAdapter,
+		a.natsClient,
+		a.logger,
+	)
+	router.HandleFunc("/health", healthHandler.HandleHealth).Methods("GET")
+	router.HandleFunc("/readiness", healthHandler.HandleReadiness).Methods("GET")
+	router.HandleFunc("/liveness", healthHandler.HandleLiveness).Methods("GET")
+
+	// Register ideas handler
+	ideasHandler := handlers.NewIdeasHandler(
+		a.listIdeasUC,
+		a.clearIdeasUC,
+		a.logger,
+	)
+	ideasHandler.RegisterRoutes(router)
+
+	// Register drafts handler
+	draftsHandler := handlers.NewDraftsHandler(
+		a.refineDraftUC,
+		a.draftRepo,
+		draftPublisher,
+		a.logger,
+	)
+	draftsHandler.RegisterRoutes(router)
+
+	a.logger.Info("HTTP server initialized successfully")
 	return nil
 }
 
@@ -337,6 +415,11 @@ func (a *Application) initializeWorkers() error {
 func (a *Application) start(ctx context.Context) error {
 	a.logger.Info("Starting application services...")
 
+	// Start HTTP server
+	if err := a.httpServer.Start(); err != nil {
+		return fmt.Errorf("failed to start HTTP server: %w", err)
+	}
+
 	// Create worker context
 	a.workerCtx, a.workerCancel = context.WithCancel(ctx)
 
@@ -345,11 +428,10 @@ func (a *Application) start(ctx context.Context) error {
 		return fmt.Errorf("failed to start workers: %w", err)
 	}
 
-	// TODO: Start HTTP server
 	// TODO: Start scheduler
 	
 	a.logger.Info("Application services started successfully")
-	fmt.Println("LinkGen AI is running on http://localhost:8080")
+	fmt.Printf("LinkGen AI is running on http://%s:%d\n", a.config.Server.Host, a.config.Server.Port)
 	
 	return nil
 }
@@ -426,13 +508,19 @@ func (a *Application) stopWorkers(timeout time.Duration) error {
 func (a *Application) shutdown(ctx context.Context) error {
 	a.logger.Info("Shutting down application services...")
 
-	// Stop workers first
+	// Stop HTTP server first
+	if a.httpServer != nil {
+		if err := a.httpServer.Shutdown(ctx); err != nil {
+			a.logger.Error("Error stopping HTTP server", zap.Error(err))
+		}
+	}
+
+	// Stop workers
 	workerShutdownTimeout := 5 * time.Second
 	if err := a.stopWorkers(workerShutdownTimeout); err != nil {
 		a.logger.Error("Error stopping workers", zap.Error(err))
 	}
 
-	// TODO: Stop HTTP server
 	// TODO: Stop scheduler
 
 	// Disconnect from NATS
@@ -486,4 +574,44 @@ func (uca *useCaseAdapter) Execute(ctx context.Context, input workers.GenerateDr
 	}
 
 	return workerDrafts, nil
+}
+
+// dbHealthAdapter adapts database.Client to handlers.HealthChecker
+type dbHealthAdapter struct {
+	client *database.Client
+}
+
+// Check adapts the health check interface
+func (a *dbHealthAdapter) Check(ctx context.Context) *handlers.HealthCheckResult {
+	result := a.client.Check(ctx)
+	return &handlers.HealthCheckResult{
+		Status:  string(result.Status),
+		Latency: result.Latency,
+		Error:   result.Error,
+	}
+}
+
+// workerRegistryAdapter adapts WorkerRegistry to handlers.WorkerRegistry
+type workerRegistryAdapter struct {
+	registry *WorkerRegistry
+}
+
+// GetStatus adapts the worker status interface
+func (a *workerRegistryAdapter) GetStatus() map[string]*handlers.WorkerStatus {
+	status := a.registry.GetStatus()
+	adapted := make(map[string]*handlers.WorkerStatus)
+	for name, ws := range status {
+		adapted[name] = &handlers.WorkerStatus{
+			Name:      ws.Name,
+			Running:   ws.Running,
+			StartedAt: ws.StartedAt,
+			Error:     ws.Error,
+		}
+	}
+	return adapted
+}
+
+// IsHealthy adapts the health check interface
+func (a *workerRegistryAdapter) IsHealthy() bool {
+	return a.registry.IsHealthy()
 }
