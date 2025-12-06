@@ -169,51 +169,6 @@ func (s *DevSeeder) SeedDefaultTopics(ctx context.Context) error {
 	return nil
 }
 
-// generateMockIdeas creates mock ideas for development when LLM is unavailable
-func (s *DevSeeder) generateMockIdeas(topicName string, count int) []string {
-	mockIdeas := map[string][]string{
-		"Technology": {
-			"The future of AI-driven development: How machine learning is transforming software engineering workflows",
-			"Building scalable microservices: Best practices for cloud-native architecture in 2025",
-			"Cybersecurity trends: Protecting your applications from emerging threats",
-			"The rise of serverless computing: When to use and when to avoid",
-			"Developer productivity tools that changed the game this year",
-		},
-		"Productivity": {
-			"Time-blocking techniques that actually work for software developers",
-			"The Pomodoro Technique 2.0: Modern adaptations for remote teams",
-			"Eliminating context switching: Strategies for deep work in a distracted world",
-			"Automating your daily routine: Tools and workflows that save hours per week",
-			"The science of focused work: How to maintain concentration for 4+ hours",
-		},
-		"Leadership": {
-			"Leading remote engineering teams: Lessons learned from 100+ distributed projects",
-			"The art of giving technical feedback: Building a culture of continuous improvement",
-			"Hiring for culture add, not culture fit: Diversifying your tech team",
-			"Conflict resolution in agile teams: Turning disagreements into innovations",
-			"Mentoring junior developers: A framework for accelerating career growth",
-		},
-	}
-
-	ideas, exists := mockIdeas[topicName]
-	if !exists {
-		// Generic fallback ideas
-		ideas = []string{
-			fmt.Sprintf("Exploring advanced concepts in %s", topicName),
-			fmt.Sprintf("Best practices every professional should know about %s", topicName),
-			fmt.Sprintf("Common mistakes to avoid when working with %s", topicName),
-			fmt.Sprintf("How %s is evolving in the modern workplace", topicName),
-			fmt.Sprintf("Building expertise in %s: A practical guide", topicName),
-		}
-	}
-
-	if count > len(ideas) {
-		count = len(ideas)
-	}
-
-	return ideas[:count]
-}
-
 // SeedInitialIdeas generates initial ideas for all dev user topics
 func (s *DevSeeder) SeedInitialIdeas(ctx context.Context) error {
 	s.logger.Info("Seeding initial ideas for development user...")
@@ -257,12 +212,11 @@ func (s *DevSeeder) SeedInitialIdeas(ctx context.Context) error {
 		// Call LLM to generate ideas
 		ideaContents, err := s.llmService.GenerateIdeas(ctx, topic.Name, ideasPerTopic)
 		if err != nil {
-			s.logger.Warn("Failed to generate ideas for topic, using fallback mock ideas",
+			s.logger.Warn("Failed to generate ideas for topic",
 				zap.String("topic", topic.Name),
 				zap.Error(err),
 			)
-			// Fallback: Use mock ideas for development
-			ideaContents = s.generateMockIdeas(topic.Name, ideasPerTopic)
+			continue
 		}
 
 		if len(ideaContents) == 0 {
