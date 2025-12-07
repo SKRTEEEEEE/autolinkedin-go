@@ -11,6 +11,7 @@ import (
 type User struct {
 	ID            string
 	Email         string
+	Language      string // Default: "es" (Spanish)
 	LinkedInToken string
 	APIKeys       map[string]string
 	Configuration map[string]interface{}
@@ -18,6 +19,10 @@ type User struct {
 	UpdatedAt     time.Time
 	Active        bool
 }
+
+const (
+	DefaultLanguage = "es"
+)
 
 var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
 
@@ -77,6 +82,11 @@ func (u *User) Validate() error {
 		return fmt.Errorf("invalid email format")
 	}
 
+	// Set default language if not specified
+	if u.Language == "" {
+		u.Language = DefaultLanguage
+	}
+
 	if u.CreatedAt.IsZero() {
 		return fmt.Errorf("created timestamp cannot be zero")
 	}
@@ -86,6 +96,14 @@ func (u *User) Validate() error {
 	}
 
 	return nil
+}
+
+// GetLanguage returns the user's language, defaulting to Spanish
+func (u *User) GetLanguage() string {
+	if u.Language == "" {
+		return DefaultLanguage
+	}
+	return u.Language
 }
 
 // isValidEmail validates email format

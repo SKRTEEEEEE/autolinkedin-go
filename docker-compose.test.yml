@@ -31,7 +31,7 @@ services:
 
   # MongoDB for testing (ephemeral)
   mongodb-test:
-    image: mongo:7.0-alpine
+    image: mongo:7
     container_name: linkgenai-mongodb-test
     environment:
       - MONGO_INITDB_DATABASE=linkgenai_test
@@ -48,7 +48,7 @@ services:
 
   # NATS for testing (ephemeral)
   nats-test:
-    image: nats:2.10-alpine
+    image: nats:2.10
     container_name: linkgenai-nats-test
     command: ["--js"]
     networks:

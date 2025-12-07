@@ -47,6 +47,7 @@ type NATSConfig struct {
 // LLMConfig contains LLM service configuration
 type LLMConfig struct {
 	Endpoint    string
+	Model       string
 	APIKey      string
 	Timeout     time.Duration
 	MaxTokens   int
@@ -103,6 +104,7 @@ func (c *Config) String() string {
     ReconnectWait: %s
   LLM:
     Endpoint: %s
+    Model: %s
     APIKey: %s
     Timeout: %s
     MaxTokens: %d
@@ -142,6 +144,7 @@ func (c *Config) String() string {
 		c.NATS.MaxReconnects,
 		c.NATS.ReconnectWait,
 		c.LLM.Endpoint,
+		c.LLM.Model,
 		maskSecret(c.LLM.APIKey),
 		c.LLM.Timeout,
 		c.LLM.MaxTokens,

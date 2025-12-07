@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Go application with hot reload
   app:
@@ -9,22 +7,30 @@ services:
       dockerfile: Dockerfile
     container_name: linkgenai-app-dev
     ports:
-      - "8080:8080"
+      - "${APP_PORT:-8080}:8000"
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app
+          ignore:
+            - tmp/
+        - action: rebuild
+          path: go.mod
+        - action: rebuild
+          path: go.sum
     volumes:
-      # Mount source code for hot reload
-      - ./src:/app:delegated
       # Cache go modules
       - go-modules:/go/pkg/mod
+    env_file:
+      - .env
     environment:
-      - APP_ENV=development
-      - APP_PORT=8080
-      - LOG_LEVEL=debug
-      - MONGO_URI=mongodb://mongodb:27017
-      - MONGO_DATABASE=linkgenai
-      - NATS_URL=nats://nats:4222
-      - NATS_QUEUE_NAME=draft_generation
-      - LLM_SERVICE_URL=http://host.docker.internal:11434
-      - LLM_MODEL=llama2
+      # Override with Docker service names
+      - LINKGEN_MONGODB_URI=mongodb://mongodb:27017/linkgenai
+      - LINKGEN_NATS_URL=nats://nats:4222
+      - LINKGEN_LLM_ENDPOINT=${LLM_SERVICE_URL}
+      - LINKGEN_LLM_MODEL=${LLM_MODEL}
+      - LINKGEN_LLM_API_KEY=proxy-key-not-needed
     depends_on:
       mongodb:
         condition: service_healthy
@@ -36,7 +42,7 @@ services:
 
   # MongoDB for data persistence
   mongodb:
-    image: mongo:7.0-alpine
+    image: mongo:7.0
     container_name: linkgenai-mongodb-dev
     ports:
       - "27017:27017"
@@ -56,7 +62,7 @@ services:
 
   # NATS for async messaging
   nats:
-    image: nats:2.10-alpine
+    image: nats:2.10
     container_name: linkgenai-nats-dev
     ports:
       - "4222:4222"

@@ -17,6 +17,7 @@ const (
 	CollectionIdeas      = "ideas"
 	CollectionDrafts     = "drafts"
 	CollectionUserTopics = "userTopics"
+	CollectionPrompts    = "prompts"
 )
 
 // IndexDefinition represents a MongoDB index
@@ -72,6 +73,22 @@ func GetAllIndexDefinitions() []IndexDefinition {
 			Collection: CollectionTopics,
 			Keys:       bson.D{{Key: "user_id", Value: 1}},
 			Options:    options.Index().SetName("user_id_idx"),
+		},
+		// Prompts collection indexes
+		{
+			Collection: CollectionPrompts,
+			Keys:       bson.D{{Key: "user_id", Value: 1}},
+			Options:    options.Index().SetName("user_id_idx"),
+		},
+		{
+			Collection: CollectionPrompts,
+			Keys:       bson.D{{Key: "user_id", Value: 1}, {Key: "type", Value: 1}},
+			Options:    options.Index().SetName("user_type_compound_idx"),
+		},
+		{
+			Collection: CollectionPrompts,
+			Keys:       bson.D{{Key: "user_id", Value: 1}, {Key: "style_name", Value: 1}},
+			Options:    options.Index().SetName("user_style_compound_idx"),
 		},
 	}
 }

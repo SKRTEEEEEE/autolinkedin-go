@@ -38,17 +38,21 @@ cp .env.example .env
 
 3. Install dependencies:
 ```bash
-make deps
+cd src
+go mod download
+go mod tidy
+cd ..
 ```
 
 4. Run with Docker (recommended):
 ```bash
-make docker-dev
+docker-compose up -d
 ```
 
 Or run locally:
 ```bash
-make run
+cd src
+go run main.go
 ```
 
 The API will be available at `http://localhost:8080`.
@@ -57,12 +61,14 @@ The API will be available at `http://localhost:8080`.
 
 Run all tests:
 ```bash
-make test
+go test -v -race -coverprofile=coverage.out ./test/...
+go tool cover -html=coverage.out -o coverage.html
 ```
 
 Run tests in isolated Docker environment:
 ```bash
-make docker-test
+docker-compose -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from app
+docker-compose -f docker-compose.test.yml down -v
 ```
 
 ## 📁 Project Structure
@@ -77,42 +83,40 @@ make docker-test
 ├── test/                    # Tests (mirrors src structure)
 ├── docs/                    # Documentation
 ├── scripts/                 # Utility scripts
-├── configs/                 # Configuration files
-└── Makefile                 # Build and development commands
+└── configs/                 # Configuration files
 ```
 
 ## 🔧 Available Commands
 
 ### Development
-- `make build` - Build the application binary
-- `make run` - Run the application locally
-- `make deps` - Install Go dependencies
-- `make fmt` - Format code
+- `cd src && go build -o ../bin/linkgenai main.go` - Build the application binary
+- `cd src && go run main.go` - Run the application locally
+- `cd src && go mod download && go mod tidy` - Install Go dependencies
+- `cd src && go fmt ./... && cd ../test && go fmt ./...` - Format code
 
 ### Testing
-- `make test` - Run all tests locally
-- `make docker-test` - Run tests in isolated Docker environment
-- `make lint` - Run golangci-lint for code quality checks
-- `make ci-check` - Run complete CI/CD validation suite
+- `go test -v -race -coverprofile=coverage.out ./test/...` - Run all tests locally
+- `docker-compose -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from app` - Run tests in isolated Docker environment
+- `bash scripts/lint.sh` - Run golangci-lint for code quality checks
+- `bash scripts/ci-check.sh` - Run complete CI/CD validation suite
 
 ### Docker
-- `make docker-dev` - Start development environment with hot reload
-- `make docker-stop` - Stop all Docker containers
-- `make docker-validate` - Validate Docker configurations
+- `docker-compose up -d` - Start development environment with hot reload
+- `docker-compose down && docker-compose -f docker-compose.test.yml down -v` - Stop all Docker containers
+- `bash scripts/validate-docker.sh` - Validate Docker configurations
 
 ### Utilities
-- `make clean` - Clean build artifacts and caches
-- `make deps-update` - Update Go dependencies
-- `make help` - Show all available commands
+- `rm -rf bin/ coverage.out coverage.html && cd src && go clean` - Clean build artifacts and caches
+- `cd src && go get -u ./... && go mod tidy` - Update Go dependencies
 
 ## 🐳 Docker Environments
 
 ### Development Mode
 Uses hot reload for instant code changes:
 ```bash
-make docker-dev
+docker-compose up -d
 # or
-./scripts/dev.sh
+bash scripts/dev.sh
 ```
 
 The development environment includes:
@@ -124,9 +128,10 @@ The development environment includes:
 ### Test Mode
 Isolated ephemeral containers with automatic cleanup:
 ```bash
-make docker-test
+docker-compose -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from app
+docker-compose -f docker-compose.test.yml down -v
 # or
-./scripts/test.sh
+bash scripts/test.sh
 ```
 
 The test environment features:
@@ -138,7 +143,7 @@ The test environment features:
 ### Docker Validation
 Validate your Docker configurations:
 ```bash
-make docker-validate
+bash scripts/validate-docker.sh
 ```
 
 This checks:

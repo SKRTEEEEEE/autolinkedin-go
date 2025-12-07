@@ -3,8 +3,14 @@
 // those entities to use their business rules to achieve the goals of the use case.
 //
 // Core Use Cases:
-// - IdeaGenerationUseCase: Automated periodic idea generation
-// - DraftGenerationUseCase: Create drafts from ideas (async)
-// - RefinementUseCase: Refine existing drafts with user feedback
-// - PublishUseCase: Publish drafts to LinkedIn
+// - GenerateIdeasUseCase: Automated periodic idea generation from topics
+// - GenerateDraftsUseCase: Create drafts from ideas (5 posts + 1 article)
+// - RefineDraftUseCase: Refine existing drafts with user feedback
+// - ListIdeasUseCase: List accumulated ideas with optional filters
+// - ClearIdeasUseCase: Clear accumulated ideas for a user
+//
+// Each use case follows Clean Architecture principles:
+// - Depends only on domain interfaces and entities
+// - No dependencies on infrastructure or frameworks
+// - Business logic orchestration with proper error handling
 package usecases
