@@ -18,6 +18,7 @@
 @draftId = REPLACE_WITH_ACTUAL_DRAFT_ID
 @topicId = 6935acdb7ffdf94df341c95a
 @promptId = REPLACE_WITH_ACTUAL_PROMPT_ID
+@jobId = REPLACE_WITH_ACTUAL_JOB_ID
 
 ###
 # Health Check Endpoints
@@ -306,6 +307,17 @@ Content-Type: application/json
 # docker-compose logs -f app | grep "draft generation"
 
 ###
+### Paso 6c: NUEVO - Consultar Estado del Job
+# @name getJobStatus
+# ⚠️ REQUERIDO: Copia el job_id de la respuesta del Paso 6 y úsalo aquí
+# Este endpoint muestra el estado actual del job: pending, processing, completed, failed
+# También devuelve los draft_ids generados cuando el job está completado
+@jobId = REPLACE_WITH_ACTUAL_JOB_ID
+
+GET {{baseUrl}}/v1/drafts/jobs/{{jobId}} HTTP/1.1
+Content-Type: application/json
+
+###
 ### Paso 7: Esperar unos segundos y Ver Drafts Generados
 # @name getDrafts
 # El worker puede tardar 5-10 segundos en procesar la solicitud
@@ -371,6 +383,7 @@ Content-Type: application/json
 # - POST /v1/drafts/generate retorna 202 Accepted con job_id inmediatamente
 # - La generación ocurre en segundo plano vía worker NATS
 # - El worker genera automáticamente 5 posts + 1 artículo
+# - GET /v1/drafts/jobs/{jobId} para consultar el estado del job (pending|processing|completed|failed)
 # - GET /v1/drafts/{userId} para ver los drafts generados (esperar 5-10 segundos)
 # - Una vez generados, la idea se marca como "used: true" y no puede reutilizarse
 # 

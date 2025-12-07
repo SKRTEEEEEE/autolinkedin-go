@@ -21,6 +21,8 @@ import (
 type DraftsHandler struct {
 	refineDraftUseCase *usecases.RefineDraftUseCase
 	draftRepository    interfaces.DraftRepository
+	jobRepository      interfaces.JobRepository
+	ideaRepository     interfaces.IdeasRepository
 	natsPublisher      *nats.Publisher
 	logger             *zap.Logger
 }
@@ -29,6 +31,8 @@ type DraftsHandler struct {
 func NewDraftsHandler(
 	refineDraftUseCase *usecases.RefineDraftUseCase,
 	draftRepository interfaces.DraftRepository,
+	jobRepository interfaces.JobRepository,
+	ideaRepository interfaces.IdeasRepository,
 	natsPublisher *nats.Publisher,
 	logger *zap.Logger,
 ) *DraftsHandler {
@@ -39,6 +43,8 @@ func NewDraftsHandler(
 	return &DraftsHandler{
 		refineDraftUseCase: refineDraftUseCase,
 		draftRepository:    draftRepository,
+		jobRepository:      jobRepository,
+		ideaRepository:     ideaRepository,
 		natsPublisher:      natsPublisher,
 		logger:             logger,
 	}
@@ -77,8 +83,55 @@ func (h *DraftsHandler) GenerateDrafts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate that idea exists and belongs to user
+	ideas, err := h.ideaRepository.ListByUserID(ctx, req.UserID, "", 0)
+	if err != nil {
+		WriteError(w, http.StatusInternalServerError, ErrorCodeDatabaseError, "Failed to validate idea", nil, h.logger)
+		return
+	}
+
+	var ideaExists bool
+	for _, idea := range ideas {
+		if idea.ID == req.IdeaID {
+			if idea.Used {
+				WriteError(w, http.StatusBadRequest, ErrorCodeValidation, "Idea has already been used", nil, h.logger)
+				return
+			}
+			ideaExists = true
+			break
+		}
+	}
+
+	if !ideaExists {
+		WriteError(w, http.StatusNotFound, ErrorCodeNotFound, "Idea not found", nil, h.logger)
+		return
+	}
+
 	// Generate job ID
 	jobID := uuid.New().String()
+
+	// Create job entity
+	now := time.Now()
+	job := &entities.Job{
+		ID:        jobID,
+		UserID:    req.UserID,
+		Type:      entities.JobTypeDraftGeneration,
+		Status:    entities.JobStatusPending,
+		IdeaID:    &req.IdeaID,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	// Persist job
+	_, err = h.jobRepository.Create(ctx, job)
+	if err != nil {
+		h.logger.Error("failed to create job",
+			zap.String("job_id", jobID),
+			zap.Error(err),
+		)
+		WriteError(w, http.StatusInternalServerError, ErrorCodeDatabaseError, "Failed to create job", nil, h.logger)
+		return
+	}
 
 	// Create message for NATS
 	message := DraftGenerationMessage{
@@ -95,6 +148,11 @@ func (h *DraftsHandler) GenerateDrafts(w http.ResponseWriter, r *http.Request) {
 			zap.String("job_id", jobID),
 			zap.Error(err),
 		)
+		
+		// Mark job as failed
+		_ = job.MarkAsFailed("Failed to queue: " + err.Error())
+		_ = h.jobRepository.Update(ctx, job)
+
 		WriteError(w, http.StatusServiceUnavailable, ErrorCodeServiceTimeout, "Failed to queue draft generation", nil, h.logger)
 		return
 	}
@@ -361,9 +419,77 @@ func (h *DraftsHandler) RefineDraft(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, response, h.logger)
 }
 
+// GetJobStatusResponse represents the response for job status query
+type GetJobStatusResponse struct {
+	JobID       string    `json:"job_id"`
+	Status      string    `json:"status"`
+	IdeaID      *string   `json:"idea_id,omitempty"`
+	DraftIDs    []string  `json:"draft_ids,omitempty"`
+	Error       string    `json:"error,omitempty"`
+	CreatedAt   string    `json:"created_at"`
+	StartedAt   *string   `json:"started_at,omitempty"`
+	CompletedAt *string   `json:"completed_at,omitempty"`
+}
+
+// GetJobStatus handles GET /v1/drafts/jobs/{jobId}
+func (h *DraftsHandler) GetJobStatus(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Extract jobId from path
+	vars := mux.Vars(r)
+	jobID := vars["jobId"]
+
+	// Validate jobID
+	if jobID == "" {
+		WriteError(w, http.StatusBadRequest, ErrorCodeValidation, "job_id is required", nil, h.logger)
+		return
+	}
+
+	// Query job repository
+	job, err := h.jobRepository.FindByID(ctx, jobID)
+	if err != nil {
+		statusCode, code, message := MapDomainError(err, h.logger)
+		WriteError(w, statusCode, code, message, nil, h.logger)
+		return
+	}
+
+	if job == nil {
+		WriteError(w, http.StatusNotFound, ErrorCodeNotFound, "Job not found", nil, h.logger)
+		return
+	}
+
+	// Convert to DTO
+	response := GetJobStatusResponse{
+		JobID:     job.ID,
+		Status:    string(job.Status),
+		IdeaID:    job.IdeaID,
+		DraftIDs:  job.DraftIDs,
+		Error:     job.Error,
+		CreatedAt: job.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	if job.StartedAt != nil {
+		startedAtStr := job.StartedAt.Format("2006-01-02T15:04:05Z07:00")
+		response.StartedAt = &startedAtStr
+	}
+
+	if job.CompletedAt != nil {
+		completedAtStr := job.CompletedAt.Format("2006-01-02T15:04:05Z07:00")
+		response.CompletedAt = &completedAtStr
+	}
+
+	h.logger.Info("job status retrieved",
+		zap.String("job_id", jobID),
+		zap.String("status", string(job.Status)),
+	)
+
+	WriteJSON(w, http.StatusOK, response, h.logger)
+}
+
 // RegisterRoutes registers draft routes
 func (h *DraftsHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/v1/drafts/generate", h.GenerateDrafts).Methods(http.MethodPost)
 	router.HandleFunc("/v1/drafts/{userId}", h.GetDrafts).Methods(http.MethodGet)
 	router.HandleFunc("/v1/drafts/{draftId}/refine", h.RefineDraft).Methods(http.MethodPost)
+	router.HandleFunc("/v1/drafts/jobs/{jobId}", h.GetJobStatus).Methods(http.MethodGet)
 }

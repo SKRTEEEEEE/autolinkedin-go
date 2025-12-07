@@ -18,6 +18,7 @@ const (
 	CollectionDrafts     = "drafts"
 	CollectionUserTopics = "userTopics"
 	CollectionPrompts    = "prompts"
+	CollectionJobs       = "jobs"
 )
 
 // IndexDefinition represents a MongoDB index

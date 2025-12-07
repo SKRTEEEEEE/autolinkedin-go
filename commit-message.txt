@@ -1,0 +1,51 @@
+feat(phase-2): implement job tracking system for async draft generation
+
+Implements the complete job tracking system as specified in Fase 2 of
+flujo-app.md, enabling async draft generation status monitoring.
+
+New features:
+- Job entity with states: pending, processing, completed, failed
+- JobRepository interface and MongoDB implementation
+- GET /v1/drafts/jobs/{jobId} endpoint to query job status
+- Worker updates job status throughout draft generation lifecycle
+- Handler validates ideas before creating jobs
+- Jobs persist draft_ids when generation completes
+
+Changes:
+Domain layer:
+- Add Job entity with validation and state transitions
+- Add JobRepository interface
+
+Infrastructure layer:
+- Implement JobRepository with MongoDB persistence
+- Add "jobs" collection constant
+- Convert between domain Job and worker Job via adapter
+
+Application layer:
+- Update DraftGenerationWorker to accept JobRepository
+- Worker marks job as processing/completed/failed with timestamps
+- Worker stores generated draft IDs in completed jobs
+
+Interface layer:
+- Update DraftsHandler to create and persist jobs
+- Add GetJobStatus endpoint
+- Validate idea exists and not used before job creation
+- Add DATABASE_ERROR code for job persistence errors
+
+Main application:
+- Initialize JobRepository with jobs collection
+- Wire JobRepository to DraftsHandler and worker
+- Add jobRepositoryAdapter for worker integration
+
+Documentation:
+- Update workflow-example.http with job status endpoint
+- Add Paso 6c to check job status during generation
+- Document complete async flow with job tracking
+
+This implements the required Fase 2 functionality:
+- Section 2.2: Job created and queued to NATS
+- Section 2.3: Worker updates job status
+- Section 2.4: GET endpoint to query job status
+
+CO-CREATED by Agent666 — ⟦ Product of SKRTEEEEEE ⟧
+Co-authored-by: Agent666 <agent666@skrte.ai>

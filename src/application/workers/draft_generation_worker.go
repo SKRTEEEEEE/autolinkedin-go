@@ -25,6 +25,7 @@ var (
 
 // DraftGenerationMessage represents the message structure for draft generation
 type DraftGenerationMessage struct {
+	JobID      string    `json:"job_id"`
 	UserID     string    `json:"user_id"`
 	IdeaID     string    `json:"idea_id"`
 	Timestamp  time.Time `json:"timestamp"`
@@ -47,14 +48,36 @@ type Draft struct {
 	ID string
 }
 
+// JobRepository defines the interface for job persistence
+type JobRepository interface {
+	FindByID(ctx context.Context, jobID string) (*Job, error)
+	Update(ctx context.Context, job *Job) error
+}
+
+// Job is a minimal job entity representation for workers
+type Job struct {
+	ID          string
+	UserID      string
+	Type        string
+	Status      string
+	IdeaID      *string
+	DraftIDs    []string
+	Error       string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	StartedAt   *time.Time
+	CompletedAt *time.Time
+}
+
 // DraftGenerationWorker handles async draft generation from NATS queue
 type DraftGenerationWorker struct {
-	consumer   *nats.Consumer
-	useCase    GenerateDraftsUseCase
-	logger     *zap.Logger
-	mu         sync.RWMutex
-	running    bool
-	maxRetries int
+	consumer    *nats.Consumer
+	useCase     GenerateDraftsUseCase
+	jobRepo     JobRepository
+	logger      *zap.Logger
+	mu          sync.RWMutex
+	running     bool
+	maxRetries  int
 	// Metrics
 	messagesProcessedTotal  int64
 	processingErrorsTotal   int64
@@ -66,6 +89,7 @@ type DraftGenerationWorker struct {
 type WorkerConfig struct {
 	Consumer   *nats.Consumer
 	UseCase    GenerateDraftsUseCase
+	JobRepo    JobRepository
 	MaxRetries int
 	Logger     *zap.Logger
 }
@@ -93,6 +117,7 @@ func NewDraftGenerationWorker(config WorkerConfig) (*DraftGenerationWorker, erro
 	return &DraftGenerationWorker{
 		consumer:   config.Consumer,
 		useCase:    config.UseCase,
+		jobRepo:    config.JobRepo,
 		logger:     logger,
 		maxRetries: maxRetries,
 		running:    false,
@@ -170,11 +195,24 @@ func (w *DraftGenerationWorker) processMessage(ctx context.Context, msgData []by
 	w.logger.Info("processing draft generation request",
 		zap.String("user_id", msg.UserID),
 		zap.String("idea_id", msg.IdeaID),
+		zap.String("job_id", msg.JobID),
 		zap.Int("retry_count", msg.RetryCount),
 	)
 
+	// Update job status to processing if jobRepo is available
+	if w.jobRepo != nil {
+		job, err := w.jobRepo.FindByID(ctx, msg.JobID)
+		if err == nil && job != nil && job.Status == "pending" {
+			now := time.Now()
+			job.Status = "processing"
+			job.StartedAt = &now
+			job.UpdatedAt = now
+			_ = w.jobRepo.Update(ctx, job)
+		}
+	}
+
 	// Execute use case
-	_, err := w.useCase.Execute(ctx, GenerateDraftsInput{
+	drafts, err := w.useCase.Execute(ctx, GenerateDraftsInput{
 		UserID: msg.UserID,
 		IdeaID: msg.IdeaID,
 	})
@@ -183,6 +221,7 @@ func (w *DraftGenerationWorker) processMessage(ctx context.Context, msgData []by
 		w.logger.Error("use case execution failed",
 			zap.String("user_id", msg.UserID),
 			zap.String("idea_id", msg.IdeaID),
+			zap.String("job_id", msg.JobID),
 			zap.Error(err),
 		)
 
@@ -195,24 +234,57 @@ func (w *DraftGenerationWorker) processMessage(ctx context.Context, msgData []by
 
 		// Max retries reached - mark as failed
 		w.incrementGenerationFailures()
-		w.logger.Error("max retries reached, marking draft as GENERATION_FAILED",
+		w.logger.Error("max retries reached, marking job as failed",
 			zap.String("user_id", msg.UserID),
 			zap.String("idea_id", msg.IdeaID),
+			zap.String("job_id", msg.JobID),
 			zap.Int("retry_count", msg.RetryCount),
 		)
 
-		// TODO: Update draft status to GENERATION_FAILED in repository
-		// This would require access to DraftRepository
-		// For now, just return error
+		// Update job status to failed
+		if w.jobRepo != nil {
+			job, findErr := w.jobRepo.FindByID(ctx, msg.JobID)
+			if findErr == nil && job != nil {
+				now := time.Now()
+				job.Status = "failed"
+				job.Error = err.Error()
+				job.CompletedAt = &now
+				job.UpdatedAt = now
+				_ = w.jobRepo.Update(ctx, job)
+			}
+		}
 
 		return fmt.Errorf("draft generation failed after %d retries: %w",
 			msg.RetryCount, err)
+	}
+
+	// Update job status to completed
+	if w.jobRepo != nil {
+		job, findErr := w.jobRepo.FindByID(ctx, msg.JobID)
+		if findErr == nil && job != nil {
+			now := time.Now()
+			job.Status = "completed"
+			job.CompletedAt = &now
+			job.UpdatedAt = now
+			
+			// Extract draft IDs
+			if len(drafts) > 0 {
+				job.DraftIDs = make([]string, len(drafts))
+				for i, draft := range drafts {
+					job.DraftIDs[i] = draft.ID
+				}
+			}
+			
+			_ = w.jobRepo.Update(ctx, job)
+		}
 	}
 
 	w.incrementMessagesProcessed()
 	w.logger.Info("draft generation completed successfully",
 		zap.String("user_id", msg.UserID),
 		zap.String("idea_id", msg.IdeaID),
+		zap.String("job_id", msg.JobID),
+		zap.Int("drafts_generated", len(drafts)),
 	)
 
 	return nil

@@ -20,6 +20,7 @@ const (
 	ErrorCodeInvalidInput   ErrorCode = "INVALID_INPUT"
 	ErrorCodeAlreadyExists  ErrorCode = "RESOURCE_ALREADY_EXISTS"
 	ErrorCodeLimitExceeded  ErrorCode = "LIMIT_EXCEEDED"
+	ErrorCodeDatabaseError  ErrorCode = "DATABASE_ERROR"
 )
 
 // ErrorResponse represents the standard error response format
