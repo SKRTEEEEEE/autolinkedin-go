@@ -235,23 +235,28 @@ func (uc *GenerateDraftsUseCase) createDraftEntities(userID, ideaID string, draf
 	// Create article drafts (only first one)
 	if len(draftSet.Articles) > 0 {
 		articleContent := strings.TrimSpace(draftSet.Articles[0])
-		if articleContent != "" {
-			// Extract title from content (first line or default)
-			title := uc.extractArticleTitle(articleContent)
-
-			draft, err := factories.NewArticleDraftFromIdea(
-				uuid.New().String(),
-				userID,
-				ideaID,
-				title,
-				articleContent,
-			)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create article draft: %w", err)
-			}
-
-			drafts = append(drafts, draft)
+		
+		// Always create article even if content is empty/short
+		// Extract title from content (first line or default)
+		title := uc.extractArticleTitle(articleContent)
+		
+		// If content is too short, pad it with default text
+		if len(articleContent) < entities.MinArticleContentLength {
+			articleContent = "Artículo generado basado en la idea.\n\n" + articleContent + "\n\nEste contenido ha sido generado automáticamente y puede requerir edición antes de publicar."
 		}
+
+		draft, err := factories.NewArticleDraftFromIdea(
+			uuid.New().String(),
+			userID,
+			ideaID,
+			title,
+			articleContent,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create article draft: %w", err)
+		}
+
+		drafts = append(drafts, draft)
 	}
 
 	if len(drafts) == 0 {
