@@ -30,6 +30,7 @@ func NewJobRepository(collection *mongo.Collection) interfaces.JobRepository {
 
 // jobDocument represents the MongoDB document structure for Job
 type jobDocument struct {
+	JobID       string               `bson:"job_id"` // UUID string, not ObjectID
 	ID          primitive.ObjectID   `bson:"_id,omitempty"`
 	UserID      primitive.ObjectID   `bson:"user_id"`
 	Type        string               `bson:"type"`
@@ -55,23 +56,13 @@ func (r *jobRepository) toDocument(job *entities.Job) (*jobDocument, error) {
 	}
 
 	doc := &jobDocument{
+		JobID:     job.ID, // Store UUID as string
 		UserID:    userObjectID,
 		Type:      string(job.Type),
 		Status:    string(job.Status),
 		Error:     job.Error,
 		CreatedAt: primitive.NewDateTimeFromTime(job.CreatedAt),
 		UpdatedAt: primitive.NewDateTimeFromTime(job.UpdatedAt),
-	}
-
-	// Only set ID if it's valid
-	if job.ID != "" {
-		objectID, err := primitive.ObjectIDFromHex(job.ID)
-		if err != nil {
-			// If job.ID is a UUID, create a new ObjectID
-			doc.ID = primitive.NewObjectID()
-		} else {
-			doc.ID = objectID
-		}
 	}
 
 	// Set idea ID if present
@@ -117,7 +108,7 @@ func (r *jobRepository) toEntity(doc *jobDocument) *entities.Job {
 	}
 
 	job := &entities.Job{
-		ID:        doc.ID.Hex(),
+		ID:        doc.JobID, // Use JobID (UUID string), not MongoDB _id
 		UserID:    doc.UserID.Hex(),
 		Type:      entities.JobType(doc.Type),
 		Status:    entities.JobStatus(doc.Status),
@@ -175,15 +166,10 @@ func (r *jobRepository) Create(ctx context.Context, job *entities.Job) (string, 
 	return insertedID.Hex(), nil
 }
 
-// FindByID retrieves a job by its unique ID
+// FindByID retrieves a job by its unique ID (UUID string)
 func (r *jobRepository) FindByID(ctx context.Context, jobID string) (*entities.Job, error) {
-	objectID, err := primitive.ObjectIDFromHex(jobID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid job ID: %w", err)
-	}
-
 	var doc jobDocument
-	err = r.collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&doc)
+	err := r.collection.FindOne(ctx, bson.M{"job_id": jobID}).Decode(&doc)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
@@ -208,7 +194,7 @@ func (r *jobRepository) Update(ctx context.Context, job *entities.Job) error {
 	// Update timestamp
 	doc.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
-	filter := bson.M{"_id": doc.ID}
+	filter := bson.M{"job_id": doc.JobID} // Use job_id (UUID), not _id
 	update := bson.M{
 		"$set": bson.M{
 			"status":       doc.Status,

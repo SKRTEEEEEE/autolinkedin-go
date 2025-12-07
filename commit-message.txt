@@ -1,51 +1,35 @@
-feat(phase-2): implement job tracking system for async draft generation
+fix(phase-2): correct job storage and article title extraction
 
-Implements the complete job tracking system as specified in Fase 2 of
-flujo-app.md, enabling async draft generation status monitoring.
+Fix critical issues preventing draft generation:
 
-New features:
-- Job entity with states: pending, processing, completed, failed
-- JobRepository interface and MongoDB implementation
-- GET /v1/drafts/jobs/{jobId} endpoint to query job status
-- Worker updates job status throughout draft generation lifecycle
-- Handler validates ideas before creating jobs
-- Jobs persist draft_ids when generation completes
+1. Job ID storage (UUID vs ObjectID):
+   - Job IDs are UUIDs (string), not MongoDB ObjectIDs
+   - Store job_id as string field in MongoDB
+   - Query and update by job_id field instead of _id
+   - Fixes "invalid job ID: not a valid ObjectID" error
+
+2. Article title extraction:
+   - Improve title extraction with multiple fallback strategies
+   - Handle empty content gracefully
+   - Ensure minimum title length requirement is met
+   - Fixes "article title cannot be empty" validation error
 
 Changes:
-Domain layer:
-- Add Job entity with validation and state transitions
-- Add JobRepository interface
+Infrastructure:
+- Store job_id as separate string field in jobDocument
+- Remove ObjectID conversion for job.ID
+- Update FindByID to query by job_id field
+- Update Update method to filter by job_id field
 
-Infrastructure layer:
-- Implement JobRepository with MongoDB persistence
-- Add "jobs" collection constant
-- Convert between domain Job and worker Job via adapter
+Application:
+- Enhance extractArticleTitle with 3-pass strategy
+- Add content length validation before extraction
+- Truncate long titles to max length
+- Use content substring as fallback title
 
-Application layer:
-- Update DraftGenerationWorker to accept JobRepository
-- Worker marks job as processing/completed/failed with timestamps
-- Worker stores generated draft IDs in completed jobs
-
-Interface layer:
-- Update DraftsHandler to create and persist jobs
-- Add GetJobStatus endpoint
-- Validate idea exists and not used before job creation
-- Add DATABASE_ERROR code for job persistence errors
-
-Main application:
-- Initialize JobRepository with jobs collection
-- Wire JobRepository to DraftsHandler and worker
-- Add jobRepositoryAdapter for worker integration
-
-Documentation:
-- Update workflow-example.http with job status endpoint
-- Add Paso 6c to check job status during generation
-- Document complete async flow with job tracking
-
-This implements the required Fase 2 functionality:
-- Section 2.2: Job created and queued to NATS
-- Section 2.3: Worker updates job status
-- Section 2.4: GET endpoint to query job status
+These fixes enable the complete async draft generation flow:
+POST /v1/drafts/generate → worker processes → drafts created
+GET /v1/drafts/jobs/{jobId} → returns actual job status
 
 CO-CREATED by Agent666 — ⟦ Product of SKRTEEEEEE ⟧
 Co-authored-by: Agent666 <agent666@skrte.ai>

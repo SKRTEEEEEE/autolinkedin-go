@@ -15,11 +15,11 @@
 @devUserId = 000000000000000000000001
 
 # ⚠️ IMPORTANTE: Reemplaza estos IDs con los valores reales de las respuestas
-@ideaId = REPLACE_WITH_ACTUAL_IDEA_ID
+@ideaId = 6935acef7ffdf94df341c95b
 @draftId = REPLACE_WITH_ACTUAL_DRAFT_ID
 @topicId = REPLACE_WITH_ACTUAL_TOPIC_ID
 @promptId = REPLACE_WITH_ACTUAL_PROMPT_ID
-@jobId = REPLACE_WITH_ACTUAL_JOB_ID
+@jobId = 00d32a5a-7fa8-47f4-817f-4ddcaabff43e
 
 ###
 # Health Check Endpoints

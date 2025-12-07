@@ -263,23 +263,49 @@ func (uc *GenerateDraftsUseCase) createDraftEntities(userID, ideaID string, draf
 
 // extractArticleTitle extracts or generates a title from article content
 func (uc *GenerateDraftsUseCase) extractArticleTitle(content string) string {
+	if content == "" {
+		return "LinkedIn Article"
+	}
+
 	lines := strings.Split(content, "\n")
+	
+	// First pass: Look for markdown headers
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
-		// Look for lines starting with # (markdown header)
 		if strings.HasPrefix(trimmed, "#") {
-			title := strings.TrimSpace(strings.TrimPrefix(trimmed, "#"))
-			if len(title) > 0 && len(title) <= entities.MaxArticleTitleLength {
+			// Remove all # symbols and trim
+			title := strings.TrimSpace(strings.TrimLeft(trimmed, "#"))
+			if len(title) >= entities.MinArticleTitleLength && len(title) <= entities.MaxArticleTitleLength {
 				return title
 			}
 		}
-		// Use first non-empty line if reasonable length
-		if trimmed != "" && len(trimmed) >= entities.MinArticleTitleLength && len(trimmed) <= entities.MaxArticleTitleLength {
-			return trimmed
+	}
+	
+	// Second pass: Look for first non-empty line
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed != "" {
+			// Truncate if too long
+			if len(trimmed) > entities.MaxArticleTitleLength {
+				return trimmed[:entities.MaxArticleTitleLength]
+			}
+			// Ensure minimum length
+			if len(trimmed) >= entities.MinArticleTitleLength {
+				return trimmed
+			}
 		}
 	}
+	
+	// Third pass: Use first 100 chars of content if available
+	trimmedContent := strings.TrimSpace(content)
+	if len(trimmedContent) >= entities.MinArticleTitleLength {
+		if len(trimmedContent) > entities.MaxArticleTitleLength {
+			return trimmedContent[:entities.MaxArticleTitleLength]
+		}
+		return trimmedContent
+	}
 
-	// Default title if extraction fails
+	// Fallback to default title
 	return "LinkedIn Article"
 }
 
