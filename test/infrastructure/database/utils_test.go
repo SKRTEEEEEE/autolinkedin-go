@@ -235,11 +235,11 @@ func TestQueryBuilderHelpers(t *testing.T) {
 // This test will FAIL until aggregation builders are implemented
 func TestAggregationPipelineBuilders(t *testing.T) {
 	tests := []struct {
-		name            string
-		pipelineType    string
-		stages          []string
+		name             string
+		pipelineType     string
+		stages           []string
 		expectedPipeline string
-		expectError     bool
+		expectError      bool
 	}{
 		{
 			name:         "build simple match pipeline",
@@ -390,10 +390,10 @@ func TestPaginationCalculators(t *testing.T) {
 // This test will FAIL until BSON helpers are implemented
 func TestBSONConversionHelpers(t *testing.T) {
 	tests := []struct {
-		name          string
-		input         interface{}
-		expectedBSON  string
-		expectError   bool
+		name         string
+		input        interface{}
+		expectedBSON string
+		expectError  bool
 	}{
 		{
 			name: "convert struct to BSON",
@@ -420,10 +420,10 @@ func TestBSONConversionHelpers(t *testing.T) {
 			expectError:  false,
 		},
 		{
-			name:          "convert nil to BSON",
-			input:         nil,
-			expectedBSON:  "",
-			expectError:   true,
+			name:         "convert nil to BSON",
+			input:        nil,
+			expectedBSON: "",
+			expectError:  true,
 		},
 	}
 

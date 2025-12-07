@@ -10,7 +10,7 @@ import (
 // NewUser creates a new User entity with validation
 func NewUser(id, email string) (*entities.User, error) {
 	now := time.Now()
-	
+
 	user := &entities.User{
 		ID:            id,
 		Email:         email,
@@ -37,7 +37,7 @@ func NewUserWithCredentials(id, email, linkedInToken string, apiKeys map[string]
 	}
 
 	user.LinkedInToken = linkedInToken
-	
+
 	if apiKeys != nil {
 		user.APIKeys = apiKeys
 	}

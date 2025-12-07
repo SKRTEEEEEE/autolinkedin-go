@@ -74,13 +74,13 @@ func TestEndToEndConfigLoading(t *testing.T) {
 // This test will FAIL until precedence integration is implemented
 func TestConfigPrecedenceIntegration(t *testing.T) {
 	tests := []struct {
-		name             string
-		fileValue        string
-		envValue         string
-		flagValue        string
-		expectedValue    string
-		configKey        string
-		wantErr          bool
+		name          string
+		fileValue     string
+		envValue      string
+		flagValue     string
+		expectedValue string
+		configKey     string
+		wantErr       bool
 	}{
 		{
 			name:          "flags > env > file - all present",
@@ -167,10 +167,10 @@ func TestLoadValidateAndApply(t *testing.T) {
 // This test will FAIL until secrets integration is implemented
 func TestSecretsIntegrationWithConfig(t *testing.T) {
 	tests := []struct {
-		name       string
-		config     map[string]interface{}
-		secrets    map[string]string
-		wantErr    bool
+		name    string
+		config  map[string]interface{}
+		secrets map[string]string
+		wantErr bool
 	}{
 		{
 			name: "load config with secrets",
@@ -206,12 +206,12 @@ func TestSecretsIntegrationWithConfig(t *testing.T) {
 // This test will FAIL until watcher integration is implemented
 func TestConfigWatcherIntegration(t *testing.T) {
 	tests := []struct {
-		name              string
-		initialConfig     map[string]interface{}
-		updatedConfig     map[string]interface{}
-		expectReload      bool
+		name               string
+		initialConfig      map[string]interface{}
+		updatedConfig      map[string]interface{}
+		expectReload       bool
 		expectNotification bool
-		wantErr           bool
+		wantErr            bool
 	}{
 		{
 			name: "watcher triggers reload on file change",
@@ -251,10 +251,10 @@ func TestConfigWatcherIntegration(t *testing.T) {
 // This test will FAIL until multi-environment support is implemented
 func TestMultiEnvironmentIntegration(t *testing.T) {
 	tests := []struct {
-		name        string
-		environment string
+		name         string
+		environment  string
 		expectedFile string
-		wantErr     bool
+		wantErr      bool
 	}{
 		{
 			name:         "development environment",
@@ -336,10 +336,10 @@ func TestConfigDependencyInjection(t *testing.T) {
 // This test will FAIL until complete defaults/overrides integration is implemented
 func TestDefaultsWithOverridesIntegration(t *testing.T) {
 	tests := []struct {
-		name              string
-		providedConfig    map[string]interface{}
-		expectedDefaults  map[string]interface{}
-		wantErr           bool
+		name             string
+		providedConfig   map[string]interface{}
+		expectedDefaults map[string]interface{}
+		wantErr          bool
 	}{
 		{
 			name: "apply defaults for missing fields",
@@ -347,12 +347,12 @@ func TestDefaultsWithOverridesIntegration(t *testing.T) {
 				"mongodb_uri": "mongodb://localhost:27017",
 			},
 			expectedDefaults: map[string]interface{}{
-				"server_port":           8000,
-				"server_host":           "0.0.0.0",
-				"scheduler_interval":    "6h",
-				"scheduler_batch_size":  100,
-				"log_level":             "info",
-				"log_format":            "json",
+				"server_port":          8000,
+				"server_host":          "0.0.0.0",
+				"scheduler_interval":   "6h",
+				"scheduler_batch_size": 100,
+				"log_level":            "info",
+				"log_format":           "json",
 			},
 			wantErr: false,
 		},
@@ -363,10 +363,10 @@ func TestDefaultsWithOverridesIntegration(t *testing.T) {
 				"log_level":   "debug",
 			},
 			expectedDefaults: map[string]interface{}{
-				"server_port":          9000,
-				"log_level":            "debug",
-				"server_host":          "0.0.0.0",
-				"scheduler_interval":   "6h",
+				"server_port":        9000,
+				"log_level":          "debug",
+				"server_host":        "0.0.0.0",
+				"scheduler_interval": "6h",
 			},
 			wantErr: false,
 		},
@@ -384,11 +384,11 @@ func TestDefaultsWithOverridesIntegration(t *testing.T) {
 // This test will FAIL until thread-safe access is implemented
 func TestConcurrentConfigAccess(t *testing.T) {
 	tests := []struct {
-		name            string
-		numReaders      int
-		numWriters      int
-		duration        time.Duration
-		wantErr         bool
+		name       string
+		numReaders int
+		numWriters int
+		duration   time.Duration
+		wantErr    bool
 	}{
 		{
 			name:       "concurrent reads",
@@ -426,11 +426,11 @@ func TestConfigValidationIntegration(t *testing.T) {
 		{
 			name: "valid config passes all validations",
 			config: map[string]interface{}{
-				"server_port":       8000,
-				"mongodb_uri":       "mongodb://localhost:27017",
-				"nats_url":          "nats://localhost:4222",
-				"llm_endpoint":      "http://localhost:8080",
-				"log_level":         "info",
+				"server_port":        8000,
+				"mongodb_uri":        "mongodb://localhost:27017",
+				"nats_url":           "nats://localhost:4222",
+				"llm_endpoint":       "http://localhost:8080",
+				"log_level":          "info",
 				"scheduler_interval": "6h",
 			},
 			expectValidation: true,
@@ -439,9 +439,9 @@ func TestConfigValidationIntegration(t *testing.T) {
 		{
 			name: "invalid config fails validation",
 			config: map[string]interface{}{
-				"server_port":       99999,
-				"mongodb_uri":       "invalid",
-				"log_level":         "unknown",
+				"server_port":        99999,
+				"mongodb_uri":        "invalid",
+				"log_level":          "unknown",
 				"scheduler_interval": "invalid",
 			},
 			expectValidation: false,
@@ -461,11 +461,11 @@ func TestConfigValidationIntegration(t *testing.T) {
 // This test will FAIL until callback execution is implemented
 func TestHotReloadWithCallbacks(t *testing.T) {
 	tests := []struct {
-		name               string
-		callbacks          []string
-		configChange       map[string]interface{}
-		expectCallbacks    bool
-		wantErr            bool
+		name            string
+		callbacks       []string
+		configChange    map[string]interface{}
+		expectCallbacks bool
+		wantErr         bool
 	}{
 		{
 			name:      "execute callbacks on successful reload",
@@ -533,10 +533,10 @@ func TestConfigMigration(t *testing.T) {
 // This test will FAIL until config export is implemented
 func TestConfigExport(t *testing.T) {
 	tests := []struct {
-		name       string
-		format     string
+		name        string
+		format      string
 		maskSecrets bool
-		wantErr    bool
+		wantErr     bool
 	}{
 		{
 			name:        "export to YAML with masked secrets",

@@ -15,12 +15,12 @@ func TestValidateRequiredFields(t *testing.T) {
 		{
 			name: "all required fields present",
 			config: map[string]interface{}{
-				"server_port":     8000,
-				"mongodb_uri":     "mongodb://localhost:27017",
+				"server_port":      8000,
+				"mongodb_uri":      "mongodb://localhost:27017",
 				"mongodb_database": "linkgenai",
-				"nats_url":        "nats://localhost:4222",
-				"llm_endpoint":    "http://localhost:8080",
-				"llm_api_key":     "test-key",
+				"nats_url":         "nats://localhost:4222",
+				"llm_endpoint":     "http://localhost:8080",
+				"llm_api_key":      "test-key",
 			},
 			wantErr: false,
 		},
@@ -35,8 +35,8 @@ func TestValidateRequiredFields(t *testing.T) {
 		{
 			name: "missing llm_api_key",
 			config: map[string]interface{}{
-				"server_port": 8000,
-				"mongodb_uri": "mongodb://localhost:27017",
+				"server_port":  8000,
+				"mongodb_uri":  "mongodb://localhost:27017",
 				"llm_endpoint": "http://localhost:8080",
 			},
 			wantErr: true,

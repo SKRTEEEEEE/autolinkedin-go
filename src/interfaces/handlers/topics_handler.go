@@ -17,10 +17,10 @@ import (
 
 // TopicsHandler handles topic-related HTTP requests
 type TopicsHandler struct {
-	topicRepo        interfaces.TopicRepository
-	userRepo         interfaces.UserRepository
-	generateIdeasUC  GenerateIdeasUseCase
-	logger           *zap.Logger
+	topicRepo       interfaces.TopicRepository
+	userRepo        interfaces.UserRepository
+	generateIdeasUC GenerateIdeasUseCase
+	logger          *zap.Logger
 }
 
 // GenerateIdeasUseCase defines the interface for generating ideas

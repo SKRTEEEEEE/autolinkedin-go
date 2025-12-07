@@ -52,11 +52,11 @@ var watcherMutex sync.Mutex
 func GetWatcher() *ConfigWatcher {
 	watcherMutex.Lock()
 	defer watcherMutex.Unlock()
-	
+
 	if globalWatcher == nil {
 		globalWatcher = NewWatcher()
 	}
-	
+
 	return globalWatcher
 }
 
@@ -76,24 +76,24 @@ func (w *ConfigWatcher) WatchConfigFile(filePath string) error {
 	if filePath == "" {
 		return errors.New("empty file path")
 	}
-	
+
 	// Check if file exists
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return fmt.Errorf("file not found: %s", filePath)
 	}
-	
+
 	w.runningMutex.Lock()
 	defer w.runningMutex.Unlock()
-	
+
 	if w.running {
 		return ErrWatcherAlreadyRunning
 	}
-	
+
 	w.filePaths = append(w.filePaths, filePath)
 	w.running = true
-	
+
 	go w.watchLoop()
-	
+
 	return nil
 }
 
@@ -104,19 +104,19 @@ func (w *ConfigWatcher) WatchMultipleFiles(filePaths []string) error {
 			return fmt.Errorf("file not found: %s", path)
 		}
 	}
-	
+
 	w.runningMutex.Lock()
 	defer w.runningMutex.Unlock()
-	
+
 	if w.running {
 		return ErrWatcherAlreadyRunning
 	}
-	
+
 	w.filePaths = filePaths
 	w.running = true
-	
+
 	go w.watchLoop()
-	
+
 	return nil
 }
 
@@ -124,15 +124,15 @@ func (w *ConfigWatcher) WatchMultipleFiles(filePaths []string) error {
 func (w *ConfigWatcher) StopWatching() error {
 	w.runningMutex.Lock()
 	defer w.runningMutex.Unlock()
-	
+
 	if !w.running {
 		// Already stopped, not an error
 		return nil
 	}
-	
+
 	w.stopChan <- true
 	w.running = false
-	
+
 	return nil
 }
 
@@ -141,14 +141,14 @@ func (w *ConfigWatcher) RegisterReloadCallback(name string, callback ReloadCallb
 	if name == "" {
 		return errors.New("empty callback name")
 	}
-	
+
 	w.callbacksMutex.Lock()
 	defer w.callbacksMutex.Unlock()
-	
+
 	if _, exists := w.callbacks[name]; exists {
 		return fmt.Errorf("%w: %s", ErrCallbackExists, name)
 	}
-	
+
 	w.callbacks[name] = callback
 	return nil
 }
@@ -157,11 +157,11 @@ func (w *ConfigWatcher) RegisterReloadCallback(name string, callback ReloadCallb
 func (w *ConfigWatcher) UnregisterReloadCallback(name string) error {
 	w.callbacksMutex.Lock()
 	defer w.callbacksMutex.Unlock()
-	
+
 	if _, exists := w.callbacks[name]; !exists {
 		return fmt.Errorf("%w: %s", ErrCallbackNotFound, name)
 	}
-	
+
 	delete(w.callbacks, name)
 	return nil
 }
@@ -170,7 +170,7 @@ func (w *ConfigWatcher) UnregisterReloadCallback(name string) error {
 func (w *ConfigWatcher) GetConfigVersion() int {
 	w.reloadMutex.Lock()
 	defer w.reloadMutex.Unlock()
-	
+
 	return w.version
 }
 
@@ -178,7 +178,7 @@ func (w *ConfigWatcher) GetConfigVersion() int {
 func (w *ConfigWatcher) GetMetrics() WatcherMetrics {
 	w.metricsMutex.Lock()
 	defer w.metricsMutex.Unlock()
-	
+
 	return w.metrics
 }
 
@@ -186,16 +186,16 @@ func (w *ConfigWatcher) GetMetrics() WatcherMetrics {
 func (w *ConfigWatcher) watchLoop() {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
-	
+
 	fileStates := make(map[string]time.Time)
-	
+
 	// Initialize file states
 	for _, path := range w.filePaths {
 		if info, err := os.Stat(path); err == nil {
 			fileStates[path] = info.ModTime()
 		}
 	}
-	
+
 	for {
 		select {
 		case <-w.stopChan:
@@ -213,14 +213,14 @@ func (w *ConfigWatcher) checkForChanges(fileStates map[string]time.Time) {
 		if err != nil {
 			continue
 		}
-		
+
 		lastMod, exists := fileStates[path]
 		if !exists || info.ModTime().After(lastMod) {
 			// File changed, check debounce
 			if w.shouldDebounce() {
 				continue
 			}
-			
+
 			fileStates[path] = info.ModTime()
 			w.handleFileChange(path)
 		}
@@ -231,50 +231,50 @@ func (w *ConfigWatcher) checkForChanges(fileStates map[string]time.Time) {
 func (w *ConfigWatcher) shouldDebounce() bool {
 	w.reloadMutex.Lock()
 	defer w.reloadMutex.Unlock()
-	
+
 	if time.Since(w.lastReload) < w.debounceInterval {
 		return true
 	}
-	
+
 	return false
 }
 
 // handleFileChange handles a file change event
 func (w *ConfigWatcher) handleFileChange(filePath string) {
 	oldConfig := GetConfig()
-	
+
 	// Try to reload config
 	newConfig, err := LoadFromFile(filePath)
 	if err != nil {
 		w.recordFailedReload()
 		return
 	}
-	
+
 	// Validate new config
 	if err := ValidateCompleteConfig(newConfig); err != nil {
 		w.recordFailedReload()
 		return
 	}
-	
+
 	// Check if config actually changed
 	if !configChanged(oldConfig, newConfig) {
 		return
 	}
-	
+
 	// Update version
 	w.reloadMutex.Lock()
 	w.version++
 	newConfig.version = w.version
 	w.lastReload = time.Now()
 	w.reloadMutex.Unlock()
-	
+
 	// Execute callbacks
 	if err := w.executeCallbacks(oldConfig, newConfig); err != nil {
 		// Rollback on callback failure
 		w.recordFailedReload()
 		return
 	}
-	
+
 	// Apply new config
 	SetConfig(newConfig)
 	w.recordSuccessfulReload()
@@ -284,13 +284,13 @@ func (w *ConfigWatcher) handleFileChange(filePath string) {
 func (w *ConfigWatcher) executeCallbacks(oldConfig, newConfig *Config) error {
 	w.callbacksMutex.RLock()
 	defer w.callbacksMutex.RUnlock()
-	
+
 	for name, callback := range w.callbacks {
 		if err := callback(oldConfig, newConfig); err != nil {
 			return fmt.Errorf("callback %s failed: %w", name, err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -298,7 +298,7 @@ func (w *ConfigWatcher) executeCallbacks(oldConfig, newConfig *Config) error {
 func (w *ConfigWatcher) recordSuccessfulReload() {
 	w.metricsMutex.Lock()
 	defer w.metricsMutex.Unlock()
-	
+
 	w.metrics.SuccessfulReloads++
 	w.metrics.TotalReloads++
 }
@@ -307,7 +307,7 @@ func (w *ConfigWatcher) recordSuccessfulReload() {
 func (w *ConfigWatcher) recordFailedReload() {
 	w.metricsMutex.Lock()
 	defer w.metricsMutex.Unlock()
-	
+
 	w.metrics.FailedReloads++
 	w.metrics.TotalReloads++
 }
@@ -327,22 +327,22 @@ func configChanged(old, new *Config) bool {
 	if old.Scheduler.BatchSize != new.Scheduler.BatchSize {
 		return true
 	}
-	
+
 	return false
 }
 
 // IsReloadable checks if a config field supports hot reload
 func IsReloadable(field string) bool {
 	reloadableFields := map[string]bool{
-		"log_level":          true,
-		"log_format":         true,
-		"scheduler_interval": true,
+		"log_level":            true,
+		"log_format":           true,
+		"scheduler_interval":   true,
 		"scheduler_batch_size": true,
-		"server_port":        false,
-		"mongodb_uri":        false,
-		"nats_url":           false,
+		"server_port":          false,
+		"mongodb_uri":          false,
+		"nats_url":             false,
 	}
-	
+
 	return reloadableFields[field]
 }
 
@@ -350,6 +350,6 @@ func IsReloadable(field string) bool {
 func (w *ConfigWatcher) SetDebounceInterval(interval time.Duration) {
 	w.reloadMutex.Lock()
 	defer w.reloadMutex.Unlock()
-	
+
 	w.debounceInterval = interval
 }

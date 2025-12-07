@@ -52,10 +52,10 @@ func TestDraftType_Validation(t *testing.T) {
 // This test will FAIL until DraftType character limit logic is implemented
 func TestDraftType_CharacterLimits(t *testing.T) {
 	tests := []struct {
-		name          string
-		draftType     string
-		wantMinChars  int
-		wantMaxChars  int
+		name         string
+		draftType    string
+		wantMinChars int
+		wantMaxChars int
 	}{
 		{
 			name:         "POST limits",
@@ -83,11 +83,11 @@ func TestDraftType_CharacterLimits(t *testing.T) {
 // This test will FAIL until DraftType validation rules are implemented
 func TestDraftType_ValidationRules(t *testing.T) {
 	tests := []struct {
-		name        string
-		draftType   string
-		title       string
-		content     string
-		wantValid   bool
+		name      string
+		draftType string
+		title     string
+		content   string
+		wantValid bool
 	}{
 		{
 			name:      "valid POST - no title required",
@@ -184,63 +184,63 @@ func TestDraftStatus_Validation(t *testing.T) {
 // This test will FAIL until DraftStatus transition logic is implemented
 func TestDraftStatus_StateTransitions(t *testing.T) {
 	tests := []struct {
-		name       string
-		fromStatus string
-		toStatus   string
+		name        string
+		fromStatus  string
+		toStatus    string
 		wantAllowed bool
 	}{
 		{
-			name:       "DRAFT to REFINED - allowed",
-			fromStatus: "DRAFT",
-			toStatus:   "REFINED",
+			name:        "DRAFT to REFINED - allowed",
+			fromStatus:  "DRAFT",
+			toStatus:    "REFINED",
 			wantAllowed: true,
 		},
 		{
-			name:       "DRAFT to PUBLISHED - allowed",
-			fromStatus: "DRAFT",
-			toStatus:   "PUBLISHED",
+			name:        "DRAFT to PUBLISHED - allowed",
+			fromStatus:  "DRAFT",
+			toStatus:    "PUBLISHED",
 			wantAllowed: true,
 		},
 		{
-			name:       "REFINED to PUBLISHED - allowed",
-			fromStatus: "REFINED",
-			toStatus:   "PUBLISHED",
+			name:        "REFINED to PUBLISHED - allowed",
+			fromStatus:  "REFINED",
+			toStatus:    "PUBLISHED",
 			wantAllowed: true,
 		},
 		{
-			name:       "REFINED to DRAFT - allowed (re-edit)",
-			fromStatus: "REFINED",
-			toStatus:   "DRAFT",
+			name:        "REFINED to DRAFT - allowed (re-edit)",
+			fromStatus:  "REFINED",
+			toStatus:    "DRAFT",
 			wantAllowed: true,
 		},
 		{
-			name:       "PUBLISHED to DRAFT - not allowed",
-			fromStatus: "PUBLISHED",
-			toStatus:   "DRAFT",
+			name:        "PUBLISHED to DRAFT - not allowed",
+			fromStatus:  "PUBLISHED",
+			toStatus:    "DRAFT",
 			wantAllowed: false,
 		},
 		{
-			name:       "PUBLISHED to REFINED - not allowed",
-			fromStatus: "PUBLISHED",
-			toStatus:   "REFINED",
+			name:        "PUBLISHED to REFINED - not allowed",
+			fromStatus:  "PUBLISHED",
+			toStatus:    "REFINED",
 			wantAllowed: false,
 		},
 		{
-			name:       "any to FAILED - allowed",
-			fromStatus: "DRAFT",
-			toStatus:   "FAILED",
+			name:        "any to FAILED - allowed",
+			fromStatus:  "DRAFT",
+			toStatus:    "FAILED",
 			wantAllowed: true,
 		},
 		{
-			name:       "FAILED to DRAFT - allowed (retry)",
-			fromStatus: "FAILED",
-			toStatus:   "DRAFT",
+			name:        "FAILED to DRAFT - allowed (retry)",
+			fromStatus:  "FAILED",
+			toStatus:    "DRAFT",
 			wantAllowed: true,
 		},
 		{
-			name:       "FAILED to PUBLISHED - not allowed directly",
-			fromStatus: "FAILED",
-			toStatus:   "PUBLISHED",
+			name:        "FAILED to PUBLISHED - not allowed directly",
+			fromStatus:  "FAILED",
+			toStatus:    "PUBLISHED",
 			wantAllowed: false,
 		},
 	}

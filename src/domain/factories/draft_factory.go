@@ -10,7 +10,7 @@ import (
 // NewDraft creates a new Draft entity with type-specific setup
 func NewDraft(id, userID string, draftType entities.DraftType, content string) (*entities.Draft, error) {
 	now := time.Now()
-	
+
 	draft := &entities.Draft{
 		ID:                id,
 		UserID:            userID,

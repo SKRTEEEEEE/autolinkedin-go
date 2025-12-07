@@ -11,12 +11,12 @@ import (
 // This test will FAIL until RefineDraftUseCase is implemented
 func TestRefineDraftUseCase_Success(t *testing.T) {
 	tests := []struct {
-		name         string
-		draftID      string
-		userPrompt   string
+		name            string
+		draftID         string
+		userPrompt      string
 		originalContent string
 		refinedContent  string
-		wantErr      bool
+		wantErr         bool
 	}{
 		{
 			name:            "refine draft with custom prompt",
@@ -203,46 +203,46 @@ func TestRefineDraftUseCase_RefinementLimit(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name              string
-		draftID           string
+		name                string
+		draftID             string
 		existingRefinements int
-		maxRefinements    int
-		userPrompt        string
-		wantErr           bool
-		errMsg            string
+		maxRefinements      int
+		userPrompt          string
+		wantErr             bool
+		errMsg              string
 	}{
 		{
-			name:              "success with no refinements",
-			draftID:           "draft123",
+			name:                "success with no refinements",
+			draftID:             "draft123",
 			existingRefinements: 0,
-			maxRefinements:    10,
-			userPrompt:        "Make it better",
-			wantErr:           false,
+			maxRefinements:      10,
+			userPrompt:          "Make it better",
+			wantErr:             false,
 		},
 		{
-			name:              "success with some refinements",
-			draftID:           "draft456",
+			name:                "success with some refinements",
+			draftID:             "draft456",
 			existingRefinements: 5,
-			maxRefinements:    10,
-			userPrompt:        "Make it better",
-			wantErr:           false,
+			maxRefinements:      10,
+			userPrompt:          "Make it better",
+			wantErr:             false,
 		},
 		{
-			name:              "success at limit minus one",
-			draftID:           "draft789",
+			name:                "success at limit minus one",
+			draftID:             "draft789",
 			existingRefinements: 9,
-			maxRefinements:    10,
-			userPrompt:        "Make it better",
-			wantErr:           false,
+			maxRefinements:      10,
+			userPrompt:          "Make it better",
+			wantErr:             false,
 		},
 		{
-			name:              "error when at refinement limit",
-			draftID:           "draft101",
+			name:                "error when at refinement limit",
+			draftID:             "draft101",
 			existingRefinements: 10,
-			maxRefinements:    10,
-			userPrompt:        "Make it better",
-			wantErr:           true,
-			errMsg:            "refinement limit exceeded",
+			maxRefinements:      10,
+			userPrompt:          "Make it better",
+			wantErr:             true,
+			errMsg:              "refinement limit exceeded",
 		},
 	}
 
@@ -268,8 +268,8 @@ func TestRefineDraftUseCase_HistoryExtraction(t *testing.T) {
 		wantErr           bool
 	}{
 		{
-			name:    "extract history with no refinements",
-			draftID: "draft123",
+			name:              "extract history with no refinements",
+			draftID:           "draft123",
 			refinementHistory: []map[string]interface{}{},
 			expectedHistory:   0,
 			wantErr:           false,
@@ -327,12 +327,12 @@ func TestRefineDraftUseCase_LLMIntegration(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name            string
-		draftContent    string
-		userPrompt      string
-		history         []string
-		llmResponse     string
-		wantErr         bool
+		name         string
+		draftContent string
+		userPrompt   string
+		history      []string
+		llmResponse  string
+		wantErr      bool
 	}{
 		{
 			name:         "successful LLM refinement with no history",
@@ -450,13 +450,13 @@ func TestRefineDraftUseCase_HistoryUpdate(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name              string
-		draftID           string
-		existingHistory   int
-		userPrompt        string
-		refinedContent    string
-		expectedVersion   int
-		wantErr           bool
+		name            string
+		draftID         string
+		existingHistory int
+		userPrompt      string
+		refinedContent  string
+		expectedVersion int
+		wantErr         bool
 	}{
 		{
 			name:            "append first refinement to history",
@@ -502,25 +502,25 @@ func TestRefineDraftUseCase_StatusUpdate(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name          string
-		draftID       string
+		name           string
+		draftID        string
 		originalStatus string
 		expectedStatus string
-		wantErr       bool
+		wantErr        bool
 	}{
 		{
-			name:          "status changes from DRAFT to REFINED",
-			draftID:       "draft123",
+			name:           "status changes from DRAFT to REFINED",
+			draftID:        "draft123",
 			originalStatus: "DRAFT",
 			expectedStatus: "REFINED",
-			wantErr:       false,
+			wantErr:        false,
 		},
 		{
-			name:          "status stays REFINED after multiple refinements",
-			draftID:       "draft456",
+			name:           "status stays REFINED after multiple refinements",
+			draftID:        "draft456",
 			originalStatus: "REFINED",
 			expectedStatus: "REFINED",
-			wantErr:       false,
+			wantErr:        false,
 		},
 	}
 

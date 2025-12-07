@@ -174,14 +174,14 @@ func maskSecret(secret string) string {
 	if secret == "" {
 		return ""
 	}
-	
+
 	// Mask passwords in URIs
 	if strings.Contains(secret, "://") && strings.Contains(secret, ":") && strings.Contains(secret, "@") {
 		parts := strings.Split(secret, "@")
 		if len(parts) >= 2 {
 			authPart := parts[0]
 			hostPart := strings.Join(parts[1:], "@")
-			
+
 			authSubparts := strings.Split(authPart, ":")
 			if len(authSubparts) >= 2 {
 				protocol := authSubparts[0]
@@ -193,7 +193,7 @@ func maskSecret(secret string) string {
 			}
 		}
 	}
-	
+
 	// Mask plain secrets
 	return "***"
 }

@@ -24,19 +24,19 @@ const (
 
 // HealthCheckResult contains health check information
 type HealthCheckResult struct {
-	Status          HealthStatus      `json:"status"`
-	Latency         time.Duration     `json:"latency"`
-	DatabaseVersion string            `json:"db_version,omitempty"`
+	Status          HealthStatus         `json:"status"`
+	Latency         time.Duration        `json:"latency"`
+	DatabaseVersion string               `json:"db_version,omitempty"`
 	PoolStats       *ConnectionPoolStats `json:"pool_stats,omitempty"`
-	Error           string            `json:"error,omitempty"`
-	Timestamp       time.Time         `json:"timestamp"`
+	Error           string               `json:"error,omitempty"`
+	Timestamp       time.Time            `json:"timestamp"`
 }
 
 // ConnectionPoolStats contains connection pool statistics
 type ConnectionPoolStats struct {
-	ActiveConnections int `json:"active_connections"`
-	MaxConnections    int `json:"max_connections"`
-	IdleConnections   int `json:"idle_connections"`
+	ActiveConnections int     `json:"active_connections"`
+	MaxConnections    int     `json:"max_connections"`
+	IdleConnections   int     `json:"idle_connections"`
 	PoolUsage         float64 `json:"pool_usage_percent"`
 }
 

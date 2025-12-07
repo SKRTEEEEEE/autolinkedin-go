@@ -8,40 +8,40 @@ import (
 // This test will FAIL until collections.go is implemented
 func TestCollectionConstants(t *testing.T) {
 	tests := []struct {
-		name               string
-		constantName       string
-		expectedValue      string
-		shouldExist        bool
+		name          string
+		constantName  string
+		expectedValue string
+		shouldExist   bool
 	}{
 		{
-			name:               "users collection constant",
-			constantName:       "CollectionUsers",
-			expectedValue:      "users",
-			shouldExist:        true,
+			name:          "users collection constant",
+			constantName:  "CollectionUsers",
+			expectedValue: "users",
+			shouldExist:   true,
 		},
 		{
-			name:               "topics collection constant",
-			constantName:       "CollectionTopics",
-			expectedValue:      "topics",
-			shouldExist:        true,
+			name:          "topics collection constant",
+			constantName:  "CollectionTopics",
+			expectedValue: "topics",
+			shouldExist:   true,
 		},
 		{
-			name:               "ideas collection constant",
-			constantName:       "CollectionIdeas",
-			expectedValue:      "ideas",
-			shouldExist:        true,
+			name:          "ideas collection constant",
+			constantName:  "CollectionIdeas",
+			expectedValue: "ideas",
+			shouldExist:   true,
 		},
 		{
-			name:               "drafts collection constant",
-			constantName:       "CollectionDrafts",
-			expectedValue:      "drafts",
-			shouldExist:        true,
+			name:          "drafts collection constant",
+			constantName:  "CollectionDrafts",
+			expectedValue: "drafts",
+			shouldExist:   true,
 		},
 		{
-			name:               "user topics collection constant",
-			constantName:       "CollectionUserTopics",
-			expectedValue:      "userTopics",
-			shouldExist:        true,
+			name:          "user topics collection constant",
+			constantName:  "CollectionUserTopics",
+			expectedValue: "userTopics",
+			shouldExist:   true,
 		},
 	}
 
@@ -57,76 +57,76 @@ func TestCollectionConstants(t *testing.T) {
 // This test will FAIL until index definitions are implemented
 func TestIndexDefinitions(t *testing.T) {
 	tests := []struct {
-		name           string
-		collection     string
-		indexField     string
-		isUnique       bool
-		isCompound     bool
-		expectDefined  bool
+		name          string
+		collection    string
+		indexField    string
+		isUnique      bool
+		isCompound    bool
+		expectDefined bool
 	}{
 		{
-			name:           "users email unique index",
-			collection:     "users",
-			indexField:     "email",
-			isUnique:       true,
-			isCompound:     false,
-			expectDefined:  true,
+			name:          "users email unique index",
+			collection:    "users",
+			indexField:    "email",
+			isUnique:      true,
+			isCompound:    false,
+			expectDefined: true,
 		},
 		{
-			name:           "users linkedin_id unique index",
-			collection:     "users",
-			indexField:     "linkedin_id",
-			isUnique:       true,
-			isCompound:     false,
-			expectDefined:  true,
+			name:          "users linkedin_id unique index",
+			collection:    "users",
+			indexField:    "linkedin_id",
+			isUnique:      true,
+			isCompound:    false,
+			expectDefined: true,
 		},
 		{
-			name:           "ideas user_id index",
-			collection:     "ideas",
-			indexField:     "user_id",
-			isUnique:       false,
-			isCompound:     false,
-			expectDefined:  true,
+			name:          "ideas user_id index",
+			collection:    "ideas",
+			indexField:    "user_id",
+			isUnique:      false,
+			isCompound:    false,
+			expectDefined: true,
 		},
 		{
-			name:           "ideas created_at index",
-			collection:     "ideas",
-			indexField:     "created_at",
-			isUnique:       false,
-			isCompound:     false,
-			expectDefined:  true,
+			name:          "ideas created_at index",
+			collection:    "ideas",
+			indexField:    "created_at",
+			isUnique:      false,
+			isCompound:    false,
+			expectDefined: true,
 		},
 		{
-			name:           "ideas compound index user_id + topic",
-			collection:     "ideas",
-			indexField:     "user_id,topic",
-			isUnique:       false,
-			isCompound:     true,
-			expectDefined:  true,
+			name:          "ideas compound index user_id + topic",
+			collection:    "ideas",
+			indexField:    "user_id,topic",
+			isUnique:      false,
+			isCompound:    true,
+			expectDefined: true,
 		},
 		{
-			name:           "drafts user_id index",
-			collection:     "drafts",
-			indexField:     "user_id",
-			isUnique:       false,
-			isCompound:     false,
-			expectDefined:  true,
+			name:          "drafts user_id index",
+			collection:    "drafts",
+			indexField:    "user_id",
+			isUnique:      false,
+			isCompound:    false,
+			expectDefined: true,
 		},
 		{
-			name:           "drafts status index",
-			collection:     "drafts",
-			indexField:     "status",
-			isUnique:       false,
-			isCompound:     false,
-			expectDefined:  true,
+			name:          "drafts status index",
+			collection:    "drafts",
+			indexField:    "status",
+			isUnique:      false,
+			isCompound:    false,
+			expectDefined: true,
 		},
 		{
-			name:           "topics user_id index",
-			collection:     "topics",
-			indexField:     "user_id",
-			isUnique:       false,
-			isCompound:     false,
-			expectDefined:  true,
+			name:          "topics user_id index",
+			collection:    "topics",
+			indexField:    "user_id",
+			isUnique:      false,
+			isCompound:    false,
+			expectDefined: true,
 		},
 	}
 
@@ -208,34 +208,34 @@ func TestValidationSchemas(t *testing.T) {
 // This test will FAIL until collection getters are implemented
 func TestCollectionGetters(t *testing.T) {
 	tests := []struct {
-		name          string
-		getterFunc    string
-		expectedColl  string
-		expectError   bool
+		name         string
+		getterFunc   string
+		expectedColl string
+		expectError  bool
 	}{
 		{
-			name:          "get users collection",
-			getterFunc:    "GetUsersCollection",
-			expectedColl:  "users",
-			expectError:   false,
+			name:         "get users collection",
+			getterFunc:   "GetUsersCollection",
+			expectedColl: "users",
+			expectError:  false,
 		},
 		{
-			name:          "get topics collection",
-			getterFunc:    "GetTopicsCollection",
-			expectedColl:  "topics",
-			expectError:   false,
+			name:         "get topics collection",
+			getterFunc:   "GetTopicsCollection",
+			expectedColl: "topics",
+			expectError:  false,
 		},
 		{
-			name:          "get ideas collection",
-			getterFunc:    "GetIdeasCollection",
-			expectedColl:  "ideas",
-			expectError:   false,
+			name:         "get ideas collection",
+			getterFunc:   "GetIdeasCollection",
+			expectedColl: "ideas",
+			expectError:  false,
 		},
 		{
-			name:          "get drafts collection",
-			getterFunc:    "GetDraftsCollection",
-			expectedColl:  "drafts",
-			expectError:   false,
+			name:         "get drafts collection",
+			getterFunc:   "GetDraftsCollection",
+			expectedColl: "drafts",
+			expectError:  false,
 		},
 	}
 
@@ -251,34 +251,34 @@ func TestCollectionGetters(t *testing.T) {
 // This test will FAIL until index creation is implemented
 func TestIndexCreation(t *testing.T) {
 	tests := []struct {
-		name          string
-		collection    string
-		indexCount    int
-		expectError   bool
+		name        string
+		collection  string
+		indexCount  int
+		expectError bool
 	}{
 		{
-			name:          "create all indexes for users collection",
-			collection:    "users",
-			indexCount:    2,
-			expectError:   false,
+			name:        "create all indexes for users collection",
+			collection:  "users",
+			indexCount:  2,
+			expectError: false,
 		},
 		{
-			name:          "create all indexes for ideas collection",
-			collection:    "ideas",
-			indexCount:    3,
-			expectError:   false,
+			name:        "create all indexes for ideas collection",
+			collection:  "ideas",
+			indexCount:  3,
+			expectError: false,
 		},
 		{
-			name:          "create all indexes for drafts collection",
-			collection:    "drafts",
-			indexCount:    2,
-			expectError:   false,
+			name:        "create all indexes for drafts collection",
+			collection:  "drafts",
+			indexCount:  2,
+			expectError: false,
 		},
 		{
-			name:          "create indexes for non-existent collection",
-			collection:    "invalid",
-			indexCount:    0,
-			expectError:   true,
+			name:        "create indexes for non-existent collection",
+			collection:  "invalid",
+			indexCount:  0,
+			expectError: true,
 		},
 	}
 
@@ -294,34 +294,34 @@ func TestIndexCreation(t *testing.T) {
 // This test will FAIL until initialization is implemented
 func TestCollectionInitialization(t *testing.T) {
 	tests := []struct {
-		name              string
-		createIndexes     bool
-		applyValidation   bool
-		expectError       bool
+		name            string
+		createIndexes   bool
+		applyValidation bool
+		expectError     bool
 	}{
 		{
-			name:              "initialize all collections with indexes",
-			createIndexes:     true,
-			applyValidation:   false,
-			expectError:       false,
+			name:            "initialize all collections with indexes",
+			createIndexes:   true,
+			applyValidation: false,
+			expectError:     false,
 		},
 		{
-			name:              "initialize all collections with validation",
-			createIndexes:     false,
-			applyValidation:   true,
-			expectError:       false,
+			name:            "initialize all collections with validation",
+			createIndexes:   false,
+			applyValidation: true,
+			expectError:     false,
 		},
 		{
-			name:              "initialize all collections with indexes and validation",
-			createIndexes:     true,
-			applyValidation:   true,
-			expectError:       false,
+			name:            "initialize all collections with indexes and validation",
+			createIndexes:   true,
+			applyValidation: true,
+			expectError:     false,
 		},
 		{
-			name:              "initialize without database connection",
-			createIndexes:     true,
-			applyValidation:   true,
-			expectError:       true,
+			name:            "initialize without database connection",
+			createIndexes:   true,
+			applyValidation: true,
+			expectError:     true,
 		},
 	}
 

@@ -28,7 +28,7 @@ var (
 // LoadFromEnvironment loads configuration from environment variables
 func LoadFromEnvironment() (*Config, error) {
 	cfg := NewDefaultConfig()
-	
+
 	// Server configuration
 	if port := os.Getenv("LINKGEN_SERVER_PORT"); port != "" {
 		p, err := strconv.Atoi(port)
@@ -37,104 +37,104 @@ func LoadFromEnvironment() (*Config, error) {
 		}
 		cfg.Server.Port = p
 	}
-	
+
 	if host := os.Getenv("LINKGEN_SERVER_HOST"); host != "" {
 		cfg.Server.Host = host
 	}
-	
+
 	if readTimeout := os.Getenv("LINKGEN_SERVER_READ_TIMEOUT"); readTimeout != "" {
 		d, err := time.ParseDuration(readTimeout + "s")
 		if err == nil {
 			cfg.Server.ReadTimeout = d
 		}
 	}
-	
+
 	if writeTimeout := os.Getenv("LINKGEN_SERVER_WRITE_TIMEOUT"); writeTimeout != "" {
 		d, err := time.ParseDuration(writeTimeout + "s")
 		if err == nil {
 			cfg.Server.WriteTimeout = d
 		}
 	}
-	
+
 	// Database configuration
 	if uri := os.Getenv("LINKGEN_MONGODB_URI"); uri != "" {
 		cfg.Database.URI = uri
 	}
-	
+
 	if database := os.Getenv("LINKGEN_MONGODB_DATABASE"); database != "" {
 		cfg.Database.Database = database
 	}
-	
+
 	if maxPoolSize := os.Getenv("LINKGEN_MONGODB_MAX_POOL_SIZE"); maxPoolSize != "" {
 		size, err := strconv.Atoi(maxPoolSize)
 		if err == nil {
 			cfg.Database.MaxPoolSize = size
 		}
 	}
-	
+
 	if minPoolSize := os.Getenv("LINKGEN_MONGODB_MIN_POOL_SIZE"); minPoolSize != "" {
 		size, err := strconv.Atoi(minPoolSize)
 		if err == nil {
 			cfg.Database.MinPoolSize = size
 		}
 	}
-	
+
 	// NATS configuration
 	if natsURL := os.Getenv("LINKGEN_NATS_URL"); natsURL != "" {
 		cfg.NATS.URL = natsURL
 	}
-	
+
 	if queue := os.Getenv("LINKGEN_NATS_QUEUE"); queue != "" {
 		cfg.NATS.Queue = queue
 	}
-	
+
 	// LLM configuration
 	if endpoint := os.Getenv("LINKGEN_LLM_ENDPOINT"); endpoint != "" {
 		cfg.LLM.Endpoint = endpoint
 	}
-	
+
 	if model := os.Getenv("LINKGEN_LLM_MODEL"); model != "" {
 		cfg.LLM.Model = model
 	}
-	
+
 	if apiKey := os.Getenv("LINKGEN_LLM_API_KEY"); apiKey != "" {
 		cfg.LLM.APIKey = apiKey
 	}
-	
+
 	if timeout := os.Getenv("LINKGEN_LLM_TIMEOUT"); timeout != "" {
 		t, err := strconv.Atoi(timeout)
 		if err == nil {
 			cfg.LLM.Timeout = time.Duration(t) * time.Second
 		}
 	}
-	
+
 	if maxTokens := os.Getenv("LINKGEN_LLM_MAX_TOKENS"); maxTokens != "" {
 		tokens, err := strconv.Atoi(maxTokens)
 		if err == nil {
 			cfg.LLM.MaxTokens = tokens
 		}
 	}
-	
+
 	if temperature := os.Getenv("LINKGEN_LLM_TEMPERATURE"); temperature != "" {
 		temp, err := strconv.ParseFloat(temperature, 64)
 		if err == nil {
 			cfg.LLM.Temperature = temp
 		}
 	}
-	
+
 	// LinkedIn configuration
 	if apiURL := os.Getenv("LINKGEN_LINKEDIN_API_URL"); apiURL != "" {
 		cfg.LinkedIn.APIURL = apiURL
 	}
-	
+
 	if clientID := os.Getenv("LINKGEN_LINKEDIN_CLIENT_ID"); clientID != "" {
 		cfg.LinkedIn.ClientID = clientID
 	}
-	
+
 	if clientSecret := os.Getenv("LINKGEN_LINKEDIN_CLIENT_SECRET"); clientSecret != "" {
 		cfg.LinkedIn.ClientSecret = clientSecret
 	}
-	
+
 	// Scheduler configuration
 	if interval := os.Getenv("LINKGEN_SCHEDULER_INTERVAL"); interval != "" {
 		d, err := time.ParseDuration(interval)
@@ -142,28 +142,28 @@ func LoadFromEnvironment() (*Config, error) {
 			cfg.Scheduler.Interval = d
 		}
 	}
-	
+
 	if batchSize := os.Getenv("LINKGEN_SCHEDULER_BATCH_SIZE"); batchSize != "" {
 		size, err := strconv.Atoi(batchSize)
 		if err == nil {
 			cfg.Scheduler.BatchSize = size
 		}
 	}
-	
+
 	// Logging configuration
 	if logLevel := os.Getenv("LINKGEN_LOG_LEVEL"); logLevel != "" {
 		cfg.Logging.Level = logLevel
 	}
-	
+
 	if logFormat := os.Getenv("LINKGEN_LOG_FORMAT"); logFormat != "" {
 		cfg.Logging.Format = logFormat
 	}
-	
+
 	// Validate configuration
 	if err := ValidateRequiredFields(cfg); err != nil {
 		return nil, err
 	}
-	
+
 	return cfg, nil
 }
 
@@ -176,14 +176,14 @@ func LoadFromFile(filePath string) (*Config, error) {
 		}
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
-	
+
 	var rawConfig map[string]interface{}
 	if err := yaml.Unmarshal(data, &rawConfig); err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidYAML, err)
 	}
-	
+
 	cfg := NewDefaultConfig()
-	
+
 	// Parse server configuration
 	if server, ok := rawConfig["server"].(map[string]interface{}); ok {
 		if host, ok := server["host"].(string); ok {
@@ -199,7 +199,7 @@ func LoadFromFile(filePath string) (*Config, error) {
 			cfg.Server.WriteTimeout = time.Duration(writeTimeout) * time.Second
 		}
 	}
-	
+
 	// Parse database configuration
 	if database, ok := rawConfig["database"].(map[string]interface{}); ok {
 		if uri, ok := database["uri"].(string); ok {
@@ -215,7 +215,7 @@ func LoadFromFile(filePath string) (*Config, error) {
 			cfg.Database.MinPoolSize = minPoolSize
 		}
 	}
-	
+
 	// Parse NATS configuration
 	if nats, ok := rawConfig["nats"].(map[string]interface{}); ok {
 		if url, ok := nats["url"].(string); ok {
@@ -225,7 +225,7 @@ func LoadFromFile(filePath string) (*Config, error) {
 			cfg.NATS.Queue = queue
 		}
 	}
-	
+
 	// Parse LLM configuration
 	if llm, ok := rawConfig["llm"].(map[string]interface{}); ok {
 		if endpoint, ok := llm["endpoint"].(string); ok {
@@ -247,7 +247,7 @@ func LoadFromFile(filePath string) (*Config, error) {
 			cfg.LLM.Temperature = temperature
 		}
 	}
-	
+
 	// Parse LinkedIn configuration
 	if linkedin, ok := rawConfig["linkedin"].(map[string]interface{}); ok {
 		if apiURL, ok := linkedin["api_url"].(string); ok {
@@ -260,7 +260,7 @@ func LoadFromFile(filePath string) (*Config, error) {
 			cfg.LinkedIn.ClientSecret = clientSecret
 		}
 	}
-	
+
 	// Parse scheduler configuration
 	if scheduler, ok := rawConfig["scheduler"].(map[string]interface{}); ok {
 		if interval, ok := scheduler["interval"].(string); ok {
@@ -276,7 +276,7 @@ func LoadFromFile(filePath string) (*Config, error) {
 			cfg.Scheduler.Enabled = enabled
 		}
 	}
-	
+
 	// Parse logging configuration
 	if logging, ok := rawConfig["logging"].(map[string]interface{}); ok {
 		if level, ok := logging["level"].(string); ok {
@@ -289,14 +289,14 @@ func LoadFromFile(filePath string) (*Config, error) {
 			cfg.Logging.Output = output
 		}
 	}
-	
+
 	return cfg, nil
 }
 
 // LoadFromFlags loads configuration from command-line flags
 func LoadFromFlags() (*Config, error) {
 	cfg := NewDefaultConfig()
-	
+
 	serverPort := flag.Int("server-port", cfg.Server.Port, "Server port")
 	serverHost := flag.String("server-host", cfg.Server.Host, "Server host")
 	mongodbURI := flag.String("mongodb-uri", cfg.Database.URI, "MongoDB URI")
@@ -306,9 +306,9 @@ func LoadFromFlags() (*Config, error) {
 	llmAPIKey := flag.String("llm-api-key", cfg.LLM.APIKey, "LLM API key")
 	logLevel := flag.String("log-level", cfg.Logging.Level, "Log level")
 	logFormat := flag.String("log-format", cfg.Logging.Format, "Log format")
-	
+
 	flag.Parse()
-	
+
 	cfg.Server.Port = *serverPort
 	cfg.Server.Host = *serverHost
 	cfg.Database.URI = *mongodbURI
@@ -318,14 +318,14 @@ func LoadFromFlags() (*Config, error) {
 	cfg.LLM.APIKey = *llmAPIKey
 	cfg.Logging.Level = *logLevel
 	cfg.Logging.Format = *logFormat
-	
+
 	// Validate flags
 	if cfg.Server.Port != 0 {
 		if err := ValidatePortRange(cfg.Server.Port); err != nil {
 			return nil, err
 		}
 	}
-	
+
 	return cfg, nil
 }
 
@@ -333,7 +333,7 @@ func LoadFromFlags() (*Config, error) {
 func LoadWithPrecedence(filePath string) (*Config, error) {
 	// Start with defaults
 	cfg := NewDefaultConfig()
-	
+
 	// Load from file if provided
 	if filePath != "" {
 		fileCfg, err := LoadFromFile(filePath)
@@ -344,13 +344,13 @@ func LoadWithPrecedence(filePath string) (*Config, error) {
 			cfg = fileCfg
 		}
 	}
-	
+
 	// Override with environment variables
 	envCfg, err := LoadFromEnvironment()
 	if err == nil {
 		mergeConfigs(cfg, envCfg)
 	}
-	
+
 	// Override with flags (if parsed)
 	if flag.Parsed() {
 		flagCfg, err := LoadFromFlags()
@@ -358,12 +358,12 @@ func LoadWithPrecedence(filePath string) (*Config, error) {
 			mergeConfigs(cfg, flagCfg)
 		}
 	}
-	
+
 	// Validate final configuration
 	if err := ValidateCompleteConfig(cfg); err != nil {
 		return nil, err
 	}
-	
+
 	return cfg, nil
 }
 
@@ -373,7 +373,7 @@ func AutoDetectConfigFile() (string, error) {
 	if environment == "" {
 		environment = "development"
 	}
-	
+
 	filename := fmt.Sprintf("%s.yaml", environment)
 	searchPaths := []string{
 		"./configs",
@@ -381,14 +381,14 @@ func AutoDetectConfigFile() (string, error) {
 		"../../configs",
 		"/etc/linkgen",
 	}
-	
+
 	for _, path := range searchPaths {
 		fullPath := filepath.Join(path, filename)
 		if _, err := os.Stat(fullPath); err == nil {
 			return fullPath, nil
 		}
 	}
-	
+
 	return "", fmt.Errorf("%w: searched for %s in %v", ErrConfigFileNotFound, filename, searchPaths)
 }
 
@@ -446,14 +446,14 @@ func ReloadConfig(filePath string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	configMutex.Lock()
 	defer configMutex.Unlock()
-	
+
 	if globalConfig != nil {
 		newCfg.version = globalConfig.version + 1
 	}
-	
+
 	globalConfig = newCfg
 	return nil
 }
@@ -462,11 +462,11 @@ func ReloadConfig(filePath string) error {
 func GetConfig() *Config {
 	configMutex.RLock()
 	defer configMutex.RUnlock()
-	
+
 	if globalConfig == nil {
 		return NewDefaultConfig()
 	}
-	
+
 	return globalConfig
 }
 
@@ -474,7 +474,7 @@ func GetConfig() *Config {
 func SetConfig(cfg *Config) {
 	configMutex.Lock()
 	defer configMutex.Unlock()
-	
+
 	globalConfig = cfg
 }
 
@@ -487,7 +487,7 @@ func mergeConfigs(dst, src *Config) {
 	if src.Server.Port != 0 && src.Server.Port != 8000 {
 		dst.Server.Port = src.Server.Port
 	}
-	
+
 	// Database
 	if src.Database.URI != "" {
 		dst.Database.URI = src.Database.URI
@@ -495,12 +495,12 @@ func mergeConfigs(dst, src *Config) {
 	if src.Database.Database != "" && src.Database.Database != "linkgenai" {
 		dst.Database.Database = src.Database.Database
 	}
-	
+
 	// NATS
 	if src.NATS.URL != "" {
 		dst.NATS.URL = src.NATS.URL
 	}
-	
+
 	// LLM
 	if src.LLM.Endpoint != "" {
 		dst.LLM.Endpoint = src.LLM.Endpoint
@@ -511,7 +511,7 @@ func mergeConfigs(dst, src *Config) {
 	if src.LLM.APIKey != "" {
 		dst.LLM.APIKey = src.LLM.APIKey
 	}
-	
+
 	// Scheduler
 	if src.Scheduler.Interval != 6*time.Hour && src.Scheduler.Interval != 0 {
 		dst.Scheduler.Interval = src.Scheduler.Interval
@@ -519,7 +519,7 @@ func mergeConfigs(dst, src *Config) {
 	if src.Scheduler.BatchSize != 100 && src.Scheduler.BatchSize != 0 {
 		dst.Scheduler.BatchSize = src.Scheduler.BatchSize
 	}
-	
+
 	// Logging
 	if src.Logging.Level != "" && src.Logging.Level != "info" {
 		dst.Logging.Level = src.Logging.Level

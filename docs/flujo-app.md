@@ -198,8 +198,6 @@ Colección `prompts`:
 }
 ```
 
----
-## 🏗️ 👁️ TO CHECK
 
 
 ## Fase 2 — Generación de Drafts
@@ -216,6 +214,8 @@ El usuario solicita generar drafts desde una idea:
   "style": "professional"  // opcional, usa prompt vinculado al estilo
 }
 ```
+
+- [ ] **Es opcional el campo style**, si el usuario no se introduce se usa por default, professional
 
 ### 2.2 Encolado en NATS
 
@@ -277,6 +277,9 @@ GET /v1/drafts/jobs/:jobId
 ```
 
 Responde con `status: pending|processing|completed|failed`
+
+---
+## 🏗️ 👁️ TO CHECK
 
 
 ## Fase 3 — Refinamiento de Drafts

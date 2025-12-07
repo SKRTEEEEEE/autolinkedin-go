@@ -197,7 +197,7 @@ func TestGenerateIdeas(t *testing.T) {
 					MaxRetries: 0,
 				}
 				client, _ := llmclient.NewLLMHTTPClient(config)
-				
+
 				ctx := context.Background()
 				ideas, err := client.GenerateIdeas(ctx, tt.topic, tt.count)
 

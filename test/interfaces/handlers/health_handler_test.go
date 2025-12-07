@@ -12,44 +12,44 @@ import (
 // This test will FAIL until health endpoint with worker status is implemented
 func TestHealthCheckEndpoint(t *testing.T) {
 	tests := []struct {
-		name               string
-		dbConnected        bool
-		natsConnected      bool
-		workerRunning      bool
-		expectedStatus     int
-		expectedHealthy    bool
+		name            string
+		dbConnected     bool
+		natsConnected   bool
+		workerRunning   bool
+		expectedStatus  int
+		expectedHealthy bool
 	}{
 		{
-			name:               "all components healthy",
-			dbConnected:        true,
-			natsConnected:      true,
-			workerRunning:      true,
-			expectedStatus:     http.StatusOK,
-			expectedHealthy:    true,
+			name:            "all components healthy",
+			dbConnected:     true,
+			natsConnected:   true,
+			workerRunning:   true,
+			expectedStatus:  http.StatusOK,
+			expectedHealthy: true,
 		},
 		{
-			name:               "database disconnected",
-			dbConnected:        false,
-			natsConnected:      true,
-			workerRunning:      true,
-			expectedStatus:     http.StatusServiceUnavailable,
-			expectedHealthy:    false,
+			name:            "database disconnected",
+			dbConnected:     false,
+			natsConnected:   true,
+			workerRunning:   true,
+			expectedStatus:  http.StatusServiceUnavailable,
+			expectedHealthy: false,
 		},
 		{
-			name:               "nats disconnected",
-			dbConnected:        true,
-			natsConnected:      false,
-			workerRunning:      true,
-			expectedStatus:     http.StatusServiceUnavailable,
-			expectedHealthy:    false,
+			name:            "nats disconnected",
+			dbConnected:     true,
+			natsConnected:   false,
+			workerRunning:   true,
+			expectedStatus:  http.StatusServiceUnavailable,
+			expectedHealthy: false,
 		},
 		{
-			name:               "worker not running",
-			dbConnected:        true,
-			natsConnected:      true,
-			workerRunning:      false,
-			expectedStatus:     http.StatusServiceUnavailable,
-			expectedHealthy:    false,
+			name:            "worker not running",
+			dbConnected:     true,
+			natsConnected:   true,
+			workerRunning:   false,
+			expectedStatus:  http.StatusServiceUnavailable,
+			expectedHealthy: false,
 		},
 	}
 
@@ -65,8 +65,8 @@ func TestHealthCheckEndpoint(t *testing.T) {
 // This test will FAIL until proper response format is implemented
 func TestHealthCheckResponseFormat(t *testing.T) {
 	tests := []struct {
-		name             string
-		expectedFields   []string
+		name           string
+		expectedFields []string
 	}{
 		{
 			name: "response contains all required fields",
@@ -93,19 +93,19 @@ func TestHealthCheckResponseFormat(t *testing.T) {
 // This test will FAIL until worker status integration is implemented
 func TestHealthCheckWorkerStatus(t *testing.T) {
 	tests := []struct {
-		name                  string
-		workerRunning         bool
-		expectedWorkerStatus  string
+		name                 string
+		workerRunning        bool
+		expectedWorkerStatus string
 	}{
 		{
-			name:                  "worker running - status 'running'",
-			workerRunning:         true,
-			expectedWorkerStatus:  "running",
+			name:                 "worker running - status 'running'",
+			workerRunning:        true,
+			expectedWorkerStatus: "running",
 		},
 		{
-			name:                  "worker stopped - status 'stopped'",
-			workerRunning:         false,
-			expectedWorkerStatus:  "stopped",
+			name:                 "worker stopped - status 'stopped'",
+			workerRunning:        false,
+			expectedWorkerStatus: "stopped",
 		},
 	}
 
@@ -121,19 +121,19 @@ func TestHealthCheckWorkerStatus(t *testing.T) {
 // This test will FAIL until database status integration is implemented
 func TestHealthCheckDatabaseStatus(t *testing.T) {
 	tests := []struct {
-		name                  string
-		dbConnected           bool
-		expectedDBStatus      string
+		name             string
+		dbConnected      bool
+		expectedDBStatus string
 	}{
 		{
-			name:                  "database connected - status 'connected'",
-			dbConnected:           true,
-			expectedDBStatus:      "connected",
+			name:             "database connected - status 'connected'",
+			dbConnected:      true,
+			expectedDBStatus: "connected",
 		},
 		{
-			name:                  "database disconnected - status 'disconnected'",
-			dbConnected:           false,
-			expectedDBStatus:      "disconnected",
+			name:             "database disconnected - status 'disconnected'",
+			dbConnected:      false,
+			expectedDBStatus: "disconnected",
 		},
 	}
 
@@ -149,19 +149,19 @@ func TestHealthCheckDatabaseStatus(t *testing.T) {
 // This test will FAIL until NATS status integration is implemented
 func TestHealthCheckNATSStatus(t *testing.T) {
 	tests := []struct {
-		name                  string
-		natsConnected         bool
-		expectedNATSStatus    string
+		name               string
+		natsConnected      bool
+		expectedNATSStatus string
 	}{
 		{
-			name:                  "nats connected - status 'connected'",
-			natsConnected:         true,
-			expectedNATSStatus:    "connected",
+			name:               "nats connected - status 'connected'",
+			natsConnected:      true,
+			expectedNATSStatus: "connected",
 		},
 		{
-			name:                  "nats disconnected - status 'disconnected'",
-			natsConnected:         false,
-			expectedNATSStatus:    "disconnected",
+			name:               "nats disconnected - status 'disconnected'",
+			natsConnected:      false,
+			expectedNATSStatus: "disconnected",
 		},
 	}
 
@@ -215,16 +215,16 @@ func TestHealthCheckHTTPMethod(t *testing.T) {
 // This test will FAIL until latency optimization is implemented
 func TestHealthCheckLatency(t *testing.T) {
 	tests := []struct {
-		name            string
-		maxLatency      time.Duration
+		name       string
+		maxLatency time.Duration
 	}{
 		{
-			name:            "health check responds within 100ms",
-			maxLatency:      100 * time.Millisecond,
+			name:       "health check responds within 100ms",
+			maxLatency: 100 * time.Millisecond,
 		},
 		{
-			name:            "health check responds within 50ms",
-			maxLatency:      50 * time.Millisecond,
+			name:       "health check responds within 50ms",
+			maxLatency: 50 * time.Millisecond,
 		},
 	}
 
@@ -240,19 +240,19 @@ func TestHealthCheckLatency(t *testing.T) {
 // This test will FAIL until caching mechanism is implemented
 func TestHealthCheckCaching(t *testing.T) {
 	tests := []struct {
-		name              string
-		cacheDuration     time.Duration
-		expectCached      bool
+		name          string
+		cacheDuration time.Duration
+		expectCached  bool
 	}{
 		{
-			name:              "cache health check for 5 seconds",
-			cacheDuration:     5 * time.Second,
-			expectCached:      true,
+			name:          "cache health check for 5 seconds",
+			cacheDuration: 5 * time.Second,
+			expectCached:  true,
 		},
 		{
-			name:              "no cache - always fresh",
-			cacheDuration:     0,
-			expectCached:      false,
+			name:          "no cache - always fresh",
+			cacheDuration: 0,
+			expectCached:  false,
 		},
 	}
 
@@ -268,24 +268,24 @@ func TestHealthCheckCaching(t *testing.T) {
 // This test will FAIL until concurrent safety is implemented
 func TestHealthCheckConcurrency(t *testing.T) {
 	tests := []struct {
-		name                 string
-		concurrentRequests   int
-		expectAllSucceed     bool
+		name               string
+		concurrentRequests int
+		expectAllSucceed   bool
 	}{
 		{
-			name:                 "handle 10 concurrent requests",
-			concurrentRequests:   10,
-			expectAllSucceed:     true,
+			name:               "handle 10 concurrent requests",
+			concurrentRequests: 10,
+			expectAllSucceed:   true,
 		},
 		{
-			name:                 "handle 100 concurrent requests",
-			concurrentRequests:   100,
-			expectAllSucceed:     true,
+			name:               "handle 100 concurrent requests",
+			concurrentRequests: 100,
+			expectAllSucceed:   true,
 		},
 		{
-			name:                 "handle 1000 concurrent requests",
-			concurrentRequests:   1000,
-			expectAllSucceed:     true,
+			name:               "handle 1000 concurrent requests",
+			concurrentRequests: 1000,
+			expectAllSucceed:   true,
 		},
 	}
 
@@ -301,13 +301,13 @@ func TestHealthCheckConcurrency(t *testing.T) {
 // This test will FAIL until worker metrics integration is implemented
 func TestHealthCheckWorkerMetrics(t *testing.T) {
 	tests := []struct {
-		name                    string
-		includeMetrics          bool
-		expectedMetricsFields   []string
+		name                  string
+		includeMetrics        bool
+		expectedMetricsFields []string
 	}{
 		{
-			name:                    "include worker metrics in health check",
-			includeMetrics:          true,
+			name:           "include worker metrics in health check",
+			includeMetrics: true,
 			expectedMetricsFields: []string{
 				"messages_processed_total",
 				"processing_errors_total",
@@ -369,28 +369,28 @@ func TestHealthCheckJSONEncoding(t *testing.T) {
 // This test will FAIL until error handling is implemented
 func TestHealthCheckErrorHandling(t *testing.T) {
 	tests := []struct {
-		name                string
-		dbError             error
-		natsError           error
-		workerError         error
-		expectedStatus      int
-		expectErrorInBody   bool
+		name              string
+		dbError           error
+		natsError         error
+		workerError       error
+		expectedStatus    int
+		expectErrorInBody bool
 	}{
 		{
-			name:                "handle database connection error",
-			dbError:             context.DeadlineExceeded,
-			natsError:           nil,
-			workerError:         nil,
-			expectedStatus:      http.StatusServiceUnavailable,
-			expectErrorInBody:   true,
+			name:              "handle database connection error",
+			dbError:           context.DeadlineExceeded,
+			natsError:         nil,
+			workerError:       nil,
+			expectedStatus:    http.StatusServiceUnavailable,
+			expectErrorInBody: true,
 		},
 		{
-			name:                "handle NATS connection error",
-			dbError:             nil,
-			natsError:           context.DeadlineExceeded,
-			workerError:         nil,
-			expectedStatus:      http.StatusServiceUnavailable,
-			expectErrorInBody:   true,
+			name:              "handle NATS connection error",
+			dbError:           nil,
+			natsError:         context.DeadlineExceeded,
+			workerError:       nil,
+			expectedStatus:    http.StatusServiceUnavailable,
+			expectErrorInBody: true,
 		},
 	}
 

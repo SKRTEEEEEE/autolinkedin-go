@@ -24,10 +24,10 @@ type LLMHTTPClient struct {
 
 // Config holds configuration for LLM HTTP client
 type Config struct {
-	BaseURL     string
-	Timeout     time.Duration
-	MaxRetries  int
-	Model       string
+	BaseURL    string
+	Timeout    time.Duration
+	MaxRetries int
+	Model      string
 }
 
 // LLMRequest represents a request to the LLM API
@@ -46,7 +46,7 @@ type Message struct {
 
 // LLMResponse represents a response from the LLM API
 type LLMResponse struct {
-	Choices []Choice `json:"choices"`
+	Choices []Choice  `json:"choices"`
 	Error   *APIError `json:"error,omitempty"`
 }
 
@@ -147,7 +147,7 @@ func (c *LLMHTTPClient) GenerateIdeas(ctx context.Context, topic string, count i
 	}
 
 	prompt := BuildIdeasPrompt(topic, count)
-	
+
 	response, err := c.sendRequest(ctx, prompt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate ideas: %w", err)
@@ -172,7 +172,7 @@ func (c *LLMHTTPClient) GenerateDrafts(ctx context.Context, idea string, userCon
 	}
 
 	prompt := BuildDraftsPrompt(idea, userContext)
-	
+
 	response, err := c.sendRequest(ctx, prompt)
 	if err != nil {
 		return interfaces.DraftSet{}, fmt.Errorf("failed to generate drafts: %w", err)
@@ -204,7 +204,7 @@ func (c *LLMHTTPClient) RefineDraft(ctx context.Context, draft string, userPromp
 	}
 
 	prompt := BuildRefinementPrompt(draft, userPrompt, history)
-	
+
 	response, err := c.sendRequest(ctx, prompt)
 	if err != nil {
 		return "", fmt.Errorf("failed to refine draft: %w", err)

@@ -176,7 +176,7 @@ func (c *Client) GetMongoClient() (*mongo.Client, error) {
 // Check performs a health check on the database connection
 func (c *Client) Check(ctx context.Context) *HealthCheckResult {
 	start := time.Now()
-	
+
 	c.mu.RLock()
 	client := c.connection.GetClient()
 	c.mu.RUnlock()

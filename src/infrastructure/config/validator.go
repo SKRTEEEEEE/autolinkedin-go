@@ -69,21 +69,21 @@ func ValidateMongoDBURI(uri string) error {
 	if uri == "" {
 		return fmt.Errorf("%w: empty URI", ErrInvalidMongoDBURI)
 	}
-	
+
 	if !strings.HasPrefix(uri, "mongodb://") && !strings.HasPrefix(uri, "mongodb+srv://") {
 		return fmt.Errorf("%w: must start with mongodb:// or mongodb+srv://", ErrInvalidMongoDBURI)
 	}
-	
+
 	// Basic validation - just check it's not just the protocol
 	if uri == "mongodb://" || uri == "mongodb+srv://" {
 		return fmt.Errorf("%w: incomplete URI", ErrInvalidMongoDBURI)
 	}
-	
+
 	// Check for invalid characters in database name (if present)
 	if strings.Contains(uri, "/ ") || strings.Contains(uri, " /") {
 		return fmt.Errorf("%w: invalid characters in database name", ErrInvalidMongoDBURI)
 	}
-	
+
 	return nil
 }
 
@@ -92,15 +92,15 @@ func ValidateNATSURL(natsURL string) error {
 	if natsURL == "" {
 		return fmt.Errorf("%w: empty URL", ErrInvalidNATSURL)
 	}
-	
+
 	if !strings.HasPrefix(natsURL, "nats://") && !strings.HasPrefix(natsURL, "tls://") {
 		return fmt.Errorf("%w: must start with nats:// or tls://", ErrInvalidNATSURL)
 	}
-	
+
 	if natsURL == "nats://" || natsURL == "tls://" {
 		return fmt.Errorf("%w: incomplete URL", ErrInvalidNATSURL)
 	}
-	
+
 	return nil
 }
 
@@ -109,20 +109,20 @@ func ValidateHTTPURL(httpURL string) error {
 	if httpURL == "" {
 		return fmt.Errorf("%w: empty URL", ErrInvalidHTTPURL)
 	}
-	
+
 	if !strings.HasPrefix(httpURL, "http://") && !strings.HasPrefix(httpURL, "https://") {
 		return fmt.Errorf("%w: must start with http:// or https://", ErrInvalidHTTPURL)
 	}
-	
+
 	parsedURL, err := url.Parse(httpURL)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidHTTPURL, err)
 	}
-	
+
 	if parsedURL.Host == "" {
 		return fmt.Errorf("%w: missing host", ErrInvalidHTTPURL)
 	}
-	
+
 	return nil
 }
 
@@ -131,7 +131,7 @@ func ValidateLogLevel(level string) error {
 	if level == "" {
 		return fmt.Errorf("%w: empty log level", ErrInvalidLogLevel)
 	}
-	
+
 	validLevels := map[string]bool{
 		"debug": true,
 		"info":  true,
@@ -139,11 +139,11 @@ func ValidateLogLevel(level string) error {
 		"error": true,
 		"fatal": true,
 	}
-	
+
 	if !validLevels[level] {
 		return fmt.Errorf("%w: must be one of [debug, info, warn, error, fatal], got %s", ErrInvalidLogLevel, level)
 	}
-	
+
 	return nil
 }
 
@@ -152,11 +152,11 @@ func ValidateLogFormat(format string) error {
 	if format == "" {
 		return fmt.Errorf("%w: empty log format", ErrInvalidLogFormat)
 	}
-	
+
 	if format != "json" && format != "text" {
 		return fmt.Errorf("%w: must be 'json' or 'text', got %s", ErrInvalidLogFormat, format)
 	}
-	
+
 	return nil
 }
 
@@ -182,16 +182,16 @@ func ValidateSchedulerInterval(interval string) error {
 	if interval == "" {
 		return fmt.Errorf("%w: empty interval", ErrInvalidSchedulerInterval)
 	}
-	
+
 	duration, err := time.ParseDuration(interval)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidSchedulerInterval, err)
 	}
-	
+
 	if duration < 60*time.Second {
 		return fmt.Errorf("%w: interval too short (minimum 60s), got %s", ErrInvalidSchedulerInterval, interval)
 	}
-	
+
 	return nil
 }
 
@@ -220,47 +220,47 @@ func ValidateCompleteConfig(cfg *Config) error {
 	if err := ValidateRequiredFields(cfg); err != nil {
 		return err
 	}
-	
+
 	// Port validation
 	if err := ValidatePortRange(cfg.Server.Port); err != nil {
 		return err
 	}
-	
+
 	// MongoDB URI validation
 	if err := ValidateMongoDBURI(cfg.Database.URI); err != nil {
 		return err
 	}
-	
+
 	// Pool size validation
 	if err := ValidatePoolSize(cfg.Database.MinPoolSize, cfg.Database.MaxPoolSize); err != nil {
 		return err
 	}
-	
+
 	// NATS URL validation
 	if err := ValidateNATSURL(cfg.NATS.URL); err != nil {
 		return err
 	}
-	
+
 	// LLM endpoint validation
 	if err := ValidateHTTPURL(cfg.LLM.Endpoint); err != nil {
 		return err
 	}
-	
+
 	// LLM temperature validation
 	if err := ValidateLLMTemperature(cfg.LLM.Temperature); err != nil {
 		return err
 	}
-	
+
 	// Log level validation
 	if err := ValidateLogLevel(cfg.Logging.Level); err != nil {
 		return err
 	}
-	
+
 	// Log format validation
 	if err := ValidateLogFormat(cfg.Logging.Format); err != nil {
 		return err
 	}
-	
+
 	// Scheduler interval validation (if enabled)
 	if cfg.Scheduler.Enabled && cfg.Scheduler.Interval > 0 {
 		intervalStr := cfg.Scheduler.Interval.String()
@@ -268,13 +268,13 @@ func ValidateCompleteConfig(cfg *Config) error {
 			return err
 		}
 	}
-	
+
 	// Batch size validation (if scheduler enabled)
 	if cfg.Scheduler.Enabled {
 		if err := ValidateBatchSize(cfg.Scheduler.BatchSize); err != nil {
 			return err
 		}
 	}
-	
+
 	return nil
 }

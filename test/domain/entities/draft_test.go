@@ -113,28 +113,28 @@ func TestDraftEntity_Creation(t *testing.T) {
 // This test will FAIL until Draft.CanBeRefined() is implemented
 func TestDraftEntity_CanBeRefined(t *testing.T) {
 	tests := []struct {
-		name        string
-		status      string
+		name          string
+		status        string
 		wantCanRefine bool
 	}{
 		{
-			name:        "can refine DRAFT status",
-			status:      "DRAFT",
+			name:          "can refine DRAFT status",
+			status:        "DRAFT",
 			wantCanRefine: true,
 		},
 		{
-			name:        "can refine REFINED status",
-			status:      "REFINED",
+			name:          "can refine REFINED status",
+			status:        "REFINED",
 			wantCanRefine: true,
 		},
 		{
-			name:        "cannot refine PUBLISHED status",
-			status:      "PUBLISHED",
+			name:          "cannot refine PUBLISHED status",
+			status:        "PUBLISHED",
 			wantCanRefine: false,
 		},
 		{
-			name:        "cannot refine FAILED status",
-			status:      "FAILED",
+			name:          "cannot refine FAILED status",
+			status:        "FAILED",
 			wantCanRefine: false,
 		},
 	}
@@ -151,52 +151,52 @@ func TestDraftEntity_CanBeRefined(t *testing.T) {
 // This test will FAIL until Draft.CanBePublished() is implemented
 func TestDraftEntity_CanBePublished(t *testing.T) {
 	tests := []struct {
-		name            string
-		status          string
-		content         string
-		draftType       string
+		name           string
+		status         string
+		content        string
+		draftType      string
 		wantCanPublish bool
 	}{
 		{
-			name:            "can publish DRAFT with valid content",
-			status:          "DRAFT",
-			content:         "Valid post content here",
-			draftType:       "POST",
+			name:           "can publish DRAFT with valid content",
+			status:         "DRAFT",
+			content:        "Valid post content here",
+			draftType:      "POST",
 			wantCanPublish: true,
 		},
 		{
-			name:            "can publish REFINED status",
-			status:          "REFINED",
-			content:         "Refined content",
-			draftType:       "POST",
+			name:           "can publish REFINED status",
+			status:         "REFINED",
+			content:        "Refined content",
+			draftType:      "POST",
 			wantCanPublish: true,
 		},
 		{
-			name:            "cannot publish already PUBLISHED",
-			status:          "PUBLISHED",
-			content:         "Content",
-			draftType:       "POST",
+			name:           "cannot publish already PUBLISHED",
+			status:         "PUBLISHED",
+			content:        "Content",
+			draftType:      "POST",
 			wantCanPublish: false,
 		},
 		{
-			name:            "cannot publish FAILED",
-			status:          "FAILED",
-			content:         "Content",
-			draftType:       "POST",
+			name:           "cannot publish FAILED",
+			status:         "FAILED",
+			content:        "Content",
+			draftType:      "POST",
 			wantCanPublish: false,
 		},
 		{
-			name:            "cannot publish - content too short for POST",
-			status:          "DRAFT",
-			content:         "Hi",
-			draftType:       "POST",
+			name:           "cannot publish - content too short for POST",
+			status:         "DRAFT",
+			content:        "Hi",
+			draftType:      "POST",
 			wantCanPublish: false,
 		},
 		{
-			name:            "cannot publish - article without title",
-			status:          "DRAFT",
-			content:         "Article content",
-			draftType:       "ARTICLE",
+			name:           "cannot publish - article without title",
+			status:         "DRAFT",
+			content:        "Article content",
+			draftType:      "ARTICLE",
 			wantCanPublish: false,
 		},
 	}
@@ -213,46 +213,46 @@ func TestDraftEntity_CanBePublished(t *testing.T) {
 // This test will FAIL until Draft.AddRefinement() is implemented
 func TestDraftEntity_AddRefinement(t *testing.T) {
 	tests := []struct {
-		name            string
+		name               string
 		currentRefinements int
-		newContent      string
-		prompt          string
-		wantErr         bool
+		newContent         string
+		prompt             string
+		wantErr            bool
 	}{
 		{
-			name:            "add first refinement",
+			name:               "add first refinement",
 			currentRefinements: 0,
-			newContent:      "Refined content version 1",
-			prompt:          "Make it more professional",
-			wantErr:         false,
+			newContent:         "Refined content version 1",
+			prompt:             "Make it more professional",
+			wantErr:            false,
 		},
 		{
-			name:            "add multiple refinements",
+			name:               "add multiple refinements",
 			currentRefinements: 3,
-			newContent:      "Refined content version 4",
-			prompt:          "Add more technical details",
-			wantErr:         false,
+			newContent:         "Refined content version 4",
+			prompt:             "Add more technical details",
+			wantErr:            false,
 		},
 		{
-			name:            "refinement limit exceeded",
+			name:               "refinement limit exceeded",
 			currentRefinements: 10,
-			newContent:      "More refinements",
-			prompt:          "Refine again",
-			wantErr:         true,
+			newContent:         "More refinements",
+			prompt:             "Refine again",
+			wantErr:            true,
 		},
 		{
-			name:            "empty refinement content",
+			name:               "empty refinement content",
 			currentRefinements: 1,
-			newContent:      "",
-			prompt:          "Make it better",
-			wantErr:         true,
+			newContent:         "",
+			prompt:             "Make it better",
+			wantErr:            true,
 		},
 		{
-			name:            "empty refinement prompt",
+			name:               "empty refinement prompt",
 			currentRefinements: 1,
-			newContent:      "New content",
-			prompt:          "",
-			wantErr:         true,
+			newContent:         "New content",
+			prompt:             "",
+			wantErr:            true,
 		},
 	}
 
@@ -311,10 +311,10 @@ func TestDraftEntity_MarkAsPublished(t *testing.T) {
 // This test will FAIL until Draft.GetLatestVersion() is implemented
 func TestDraftEntity_GetLatestVersion(t *testing.T) {
 	tests := []struct {
-		name               string
-		originalContent    string
-		refinementCount    int
-		wantLatestContent  string
+		name              string
+		originalContent   string
+		refinementCount   int
+		wantLatestContent string
 	}{
 		{
 			name:              "no refinements - return original",
@@ -498,7 +498,7 @@ func TestDraftEntity_Metadata(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "valid metadata - empty",
+			name:     "valid metadata - empty",
 			metadata: map[string]interface{}{},
 			wantErr:  false,
 		},

@@ -257,7 +257,7 @@ func (cm *CollectionManager) createIndexes(ctx context.Context, db *mongo.Databa
 	indexDefs := GetAllIndexDefinitions()
 	for _, indexDef := range indexDefs {
 		collection := db.Collection(indexDef.Collection)
-		
+
 		indexModel := mongo.IndexModel{
 			Keys:    indexDef.Keys,
 			Options: indexDef.Options,

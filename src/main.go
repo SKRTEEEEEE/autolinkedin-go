@@ -49,10 +49,10 @@ type Application struct {
 	refineDraftUC    *usecases.RefineDraftUseCase
 
 	// Workers
-	draftWorker *workers.DraftGenerationWorker
-	workerCtx   context.Context
+	draftWorker  *workers.DraftGenerationWorker
+	workerCtx    context.Context
 	workerCancel context.CancelFunc
-	workerWg    sync.WaitGroup
+	workerWg     sync.WaitGroup
 
 	// HTTP Server
 	httpServer *httpServer.Server
@@ -118,7 +118,7 @@ func (wr *WorkerRegistry) MarkStopped(name string, err error) {
 func (wr *WorkerRegistry) GetStatus() map[string]*WorkerStatus {
 	wr.mu.RLock()
 	defer wr.mu.RUnlock()
-	
+
 	// Create a copy to avoid race conditions
 	status := make(map[string]*WorkerStatus)
 	for name, ws := range wr.workers {
@@ -136,7 +136,7 @@ func (wr *WorkerRegistry) GetStatus() map[string]*WorkerStatus {
 func (wr *WorkerRegistry) IsHealthy() bool {
 	wr.mu.RLock()
 	defer wr.mu.RUnlock()
-	
+
 	for _, ws := range wr.workers {
 		if !ws.Running {
 			return false
@@ -206,12 +206,12 @@ func (a *Application) initialize(ctx context.Context) error {
 
 	// Initialize database client
 	dbConfig := &database.ConnectionConfig{
-		URI:                cfg.Database.URI,
-		Database:           cfg.Database.Database,
-		MinPoolSize:        uint64(cfg.Database.MinPoolSize),
-		MaxPoolSize:        uint64(cfg.Database.MaxPoolSize),
-		ConnectTimeout:     cfg.Database.ConnectTimeout,
-		MaxRetries:         3,
+		URI:            cfg.Database.URI,
+		Database:       cfg.Database.Database,
+		MinPoolSize:    uint64(cfg.Database.MinPoolSize),
+		MaxPoolSize:    uint64(cfg.Database.MaxPoolSize),
+		ConnectTimeout: cfg.Database.ConnectTimeout,
+		MaxRetries:     3,
 	}
 	dbClient := database.GetClient(dbConfig, a.logger)
 	a.dbClient = dbClient
@@ -280,7 +280,7 @@ func (a *Application) initialize(ctx context.Context) error {
 	// Connect to NATS (non-blocking - workers will retry)
 	connectCtx, connectCancel := context.WithTimeout(ctx, 10*time.Second)
 	defer connectCancel()
-	
+
 	if err := natsClient.Connect(connectCtx, 10*time.Second); err != nil {
 		a.logger.Warn("Failed to connect to NATS initially, workers will retry", zap.Error(err))
 		// Don't fail app startup if NATS is not available
@@ -338,7 +338,7 @@ func (a *Application) seedDevelopmentData(ctx context.Context) error {
 		a.llmClient,
 		a.logger,
 	)
-	
+
 	if err := seeder.SeedAll(ctx); err != nil {
 		return fmt.Errorf("failed to seed development data: %w", err)
 	}
@@ -376,10 +376,10 @@ func (a *Application) initializeHTTPServer() error {
 
 	// Create adapter for database health checker
 	dbHealthChecker := &dbHealthAdapter{client: a.dbClient}
-	
+
 	// Create adapter for worker registry
 	workerRegistryAdapter := &workerRegistryAdapter{registry: a.workerRegistry}
-	
+
 	// Register health handler
 	healthHandler := handlers.NewHealthHandler(
 		dbHealthChecker,
@@ -488,10 +488,10 @@ func (a *Application) start(ctx context.Context) error {
 	}
 
 	// TODO: Start scheduler
-	
+
 	a.logger.Info("Application services started successfully")
 	fmt.Printf("LinkGen AI is running on http://%s:%d\n", a.config.Server.Host, a.config.Server.Port)
-	
+
 	return nil
 }
 
@@ -503,18 +503,18 @@ func (a *Application) startWorkers(ctx context.Context) error {
 	a.workerWg.Add(1)
 	go func() {
 		defer a.workerWg.Done()
-		
+
 		a.logger.Info("Starting draft generation worker...")
-		
+
 		if err := a.draftWorker.Start(ctx); err != nil {
 			a.logger.Error("Draft generation worker failed to start", zap.Error(err))
 			a.workerRegistry.MarkStopped("draft_generation", err)
 			return
 		}
-		
+
 		a.workerRegistry.MarkRunning("draft_generation")
 		a.logger.Info("Draft generation worker started successfully")
-		
+
 		// Wait for context cancellation
 		<-ctx.Done()
 		a.logger.Info("Draft generation worker context cancelled")

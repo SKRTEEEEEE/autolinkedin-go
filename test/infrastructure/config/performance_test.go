@@ -11,10 +11,10 @@ import (
 // This test will FAIL until config loading is implemented
 func TestConfigLoadPerformance(t *testing.T) {
 	tests := []struct {
-		name            string
-		numIterations   int
-		maxDuration     time.Duration
-		wantErr         bool
+		name          string
+		numIterations int
+		maxDuration   time.Duration
+		wantErr       bool
 	}{
 		{
 			name:          "load config 1000 times under 1 second",
@@ -42,11 +42,11 @@ func TestConfigLoadPerformance(t *testing.T) {
 // This test will FAIL until concurrent read support is implemented
 func TestConcurrentConfigReads(t *testing.T) {
 	tests := []struct {
-		name           string
-		numGoroutines  int
+		name            string
+		numGoroutines   int
 		readsPerRoutine int
-		maxDuration    time.Duration
-		wantErr        bool
+		maxDuration     time.Duration
+		wantErr         bool
 	}{
 		{
 			name:            "100 goroutines reading 1000 times",
@@ -76,10 +76,10 @@ func TestConcurrentConfigReads(t *testing.T) {
 // This test will FAIL until hot reload is implemented
 func TestHotReloadPerformance(t *testing.T) {
 	tests := []struct {
-		name           string
-		numReloads     int
-		maxDuration    time.Duration
-		wantErr        bool
+		name        string
+		numReloads  int
+		maxDuration time.Duration
+		wantErr     bool
 	}{
 		{
 			name:        "100 hot reloads under 5 seconds",
@@ -107,10 +107,10 @@ func TestHotReloadPerformance(t *testing.T) {
 // This test will FAIL until validation is implemented
 func TestValidationPerformance(t *testing.T) {
 	tests := []struct {
-		name          string
+		name           string
 		numValidations int
-		maxDuration   time.Duration
-		wantErr       bool
+		maxDuration    time.Duration
+		wantErr        bool
 	}{
 		{
 			name:           "validate config 10000 times under 1 second",
@@ -175,11 +175,11 @@ func TestSecretMaskingPerformance(t *testing.T) {
 // This test will FAIL until file watcher is implemented
 func TestFileWatcherPerformance(t *testing.T) {
 	tests := []struct {
-		name         string
-		numFiles     int
-		numChanges   int
-		maxDuration  time.Duration
-		wantErr      bool
+		name        string
+		numFiles    int
+		numChanges  int
+		maxDuration time.Duration
+		wantErr     bool
 	}{
 		{
 			name:        "watch 10 files with 100 changes each",
@@ -240,11 +240,11 @@ func TestMemoryUsageUnderLoad(t *testing.T) {
 // This test will FAIL until concurrent reload is implemented
 func TestConcurrentReloadPerformance(t *testing.T) {
 	tests := []struct {
-		name           string
-		numGoroutines  int
+		name              string
+		numGoroutines     int
 		reloadsPerRoutine int
-		maxDuration    time.Duration
-		wantErr        bool
+		maxDuration       time.Duration
+		wantErr           bool
 	}{
 		{
 			name:              "10 goroutines reloading 100 times",
@@ -342,12 +342,12 @@ func TestDebouncePerformance(t *testing.T) {
 // This test will FAIL until thread-safe config is implemented
 func TestLockContentionUnderLoad(t *testing.T) {
 	tests := []struct {
-		name          string
-		numReaders    int
-		numWriters    int
-		duration      time.Duration
-		minOpsPerSec  int
-		wantErr       bool
+		name         string
+		numReaders   int
+		numWriters   int
+		duration     time.Duration
+		minOpsPerSec int
+		wantErr      bool
 	}{
 		{
 			name:         "high read contention - 1000 readers, 10 writers",
@@ -451,25 +451,25 @@ func TestRateLimitedReload(t *testing.T) {
 // This test will FAIL until caching is implemented
 func TestConfigCachingPerformance(t *testing.T) {
 	tests := []struct {
-		name           string
-		cacheEnabled   bool
-		numReads       int
+		name            string
+		cacheEnabled    bool
+		numReads        int
 		expectedSpeedup float64
-		wantErr        bool
+		wantErr         bool
 	}{
 		{
-			name:           "10000 reads with cache - 10x speedup",
-			cacheEnabled:   true,
-			numReads:       10000,
+			name:            "10000 reads with cache - 10x speedup",
+			cacheEnabled:    true,
+			numReads:        10000,
 			expectedSpeedup: 10.0,
-			wantErr:        false,
+			wantErr:         false,
 		},
 		{
-			name:           "100000 reads with cache - 20x speedup",
-			cacheEnabled:   true,
-			numReads:       100000,
+			name:            "100000 reads with cache - 20x speedup",
+			cacheEnabled:    true,
+			numReads:        100000,
 			expectedSpeedup: 20.0,
-			wantErr:        false,
+			wantErr:         false,
 		},
 	}
 

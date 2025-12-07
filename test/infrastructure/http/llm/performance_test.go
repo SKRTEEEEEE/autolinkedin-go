@@ -15,12 +15,12 @@ func TestLLMPerformanceGenerateIdeas(t *testing.T) {
 	}
 
 	tests := []struct {
-		name            string
-		topic           string
-		count           int
-		maxLatency      time.Duration
-		iterations      int
-		expectUnderMax  bool
+		name           string
+		topic          string
+		count          int
+		maxLatency     time.Duration
+		iterations     int
+		expectUnderMax bool
 	}{
 		{
 			name:           "single idea generation under 5 seconds",
@@ -146,11 +146,11 @@ func TestLLMConcurrentPerformance(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		operation      string
-		numGoroutines  int
+		name            string
+		operation       string
+		numGoroutines   int
 		callsPerRoutine int
-		maxTotalTime   time.Duration
+		maxTotalTime    time.Duration
 	}{
 		{
 			name:            "10 goroutines generating ideas",
@@ -191,12 +191,12 @@ func TestLLMLatencyP50P95P99(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		operation  string
-		samples    int
-		maxP50     time.Duration
-		maxP95     time.Duration
-		maxP99     time.Duration
+		name      string
+		operation string
+		samples   int
+		maxP50    time.Duration
+		maxP95    time.Duration
+		maxP99    time.Duration
 	}{
 		{
 			name:      "GenerateIdeas latency percentiles",
@@ -240,11 +240,11 @@ func TestLLMThroughput(t *testing.T) {
 	}
 
 	tests := []struct {
-		name             string
-		operation        string
-		duration         time.Duration
-		minThroughput    int // requests per second
-		concurrency      int
+		name          string
+		operation     string
+		duration      time.Duration
+		minThroughput int // requests per second
+		concurrency   int
 	}{
 		{
 			name:          "GenerateIdeas throughput",
@@ -285,10 +285,10 @@ func TestLLMMemoryUsage(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		operation      string
-		iterations     int
-		maxMemoryMB    int64
+		name        string
+		operation   string
+		iterations  int
+		maxMemoryMB int64
 	}{
 		{
 			name:        "GenerateIdeas memory usage",
@@ -326,10 +326,10 @@ func TestLLMConnectionPooling(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		numConnections int
+		name            string
+		numConnections  int
 		requestsPerConn int
-		maxDuration    time.Duration
+		maxDuration     time.Duration
 	}{
 		{
 			name:            "reuse 10 connections for 100 requests",

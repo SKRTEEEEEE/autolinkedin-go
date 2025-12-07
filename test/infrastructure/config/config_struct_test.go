@@ -16,24 +16,24 @@ func TestConfigStructValidation(t *testing.T) {
 		{
 			name: "complete valid configuration",
 			config: map[string]interface{}{
-				"server_host":            "localhost",
-				"server_port":            8000,
-				"server_read_timeout":    30,
-				"server_write_timeout":   30,
-				"mongodb_uri":            "mongodb://localhost:27017",
-				"mongodb_database":       "linkgenai",
-				"mongodb_max_pool_size":  100,
-				"mongodb_min_pool_size":  10,
-				"nats_url":               "nats://localhost:4222",
-				"nats_queue":             "linkgen-queue",
-				"llm_endpoint":           "http://localhost:8080",
-				"llm_api_key":            "test-key",
-				"llm_timeout":            60,
-				"linkedin_api_url":       "https://api.linkedin.com/v2",
-				"scheduler_interval":     "6h",
-				"scheduler_batch_size":   100,
-				"log_level":              "info",
-				"log_format":             "json",
+				"server_host":           "localhost",
+				"server_port":           8000,
+				"server_read_timeout":   30,
+				"server_write_timeout":  30,
+				"mongodb_uri":           "mongodb://localhost:27017",
+				"mongodb_database":      "linkgenai",
+				"mongodb_max_pool_size": 100,
+				"mongodb_min_pool_size": 10,
+				"nats_url":              "nats://localhost:4222",
+				"nats_queue":            "linkgen-queue",
+				"llm_endpoint":          "http://localhost:8080",
+				"llm_api_key":           "test-key",
+				"llm_timeout":           60,
+				"linkedin_api_url":      "https://api.linkedin.com/v2",
+				"scheduler_interval":    "6h",
+				"scheduler_batch_size":  100,
+				"log_level":             "info",
+				"log_format":            "json",
 			},
 			wantErr: false,
 		},
@@ -67,14 +67,14 @@ func TestConfigStructValidation(t *testing.T) {
 // This test will FAIL until ServerConfig struct is implemented
 func TestServerConfigDefaults(t *testing.T) {
 	tests := []struct {
-		name             string
-		providedHost     string
-		providedPort     int
-		expectedHost     string
-		expectedPort     int
-		readTimeout      time.Duration
-		writeTimeout     time.Duration
-		shutdownTimeout  time.Duration
+		name            string
+		providedHost    string
+		providedPort    int
+		expectedHost    string
+		expectedPort    int
+		readTimeout     time.Duration
+		writeTimeout    time.Duration
+		shutdownTimeout time.Duration
 	}{
 		{
 			name:            "default server host",
@@ -110,13 +110,13 @@ func TestServerConfigDefaults(t *testing.T) {
 // This test will FAIL until DatabaseConfig struct is implemented
 func TestDatabaseConfigStructure(t *testing.T) {
 	tests := []struct {
-		name            string
-		uri             string
-		database        string
-		maxPoolSize     int
-		minPoolSize     int
-		connectTimeout  time.Duration
-		wantErr         bool
+		name           string
+		uri            string
+		database       string
+		maxPoolSize    int
+		minPoolSize    int
+		connectTimeout time.Duration
+		wantErr        bool
 	}{
 		{
 			name:           "valid database config with defaults",
@@ -262,15 +262,15 @@ func TestLLMConfigStructure(t *testing.T) {
 // This test will FAIL until LinkedInAPIConfig struct is implemented
 func TestLinkedInAPIConfigStructure(t *testing.T) {
 	tests := []struct {
-		name           string
-		apiURL         string
-		clientID       string
-		clientSecret   string
-		redirectURI    string
-		timeout        time.Duration
-		rateLimit      int
+		name            string
+		apiURL          string
+		clientID        string
+		clientSecret    string
+		redirectURI     string
+		timeout         time.Duration
+		rateLimit       int
 		rateLimitWindow time.Duration
-		wantErr        bool
+		wantErr         bool
 	}{
 		{
 			name:            "valid LinkedIn API config",
@@ -308,13 +308,13 @@ func TestLinkedInAPIConfigStructure(t *testing.T) {
 // This test will FAIL until SchedulerConfig struct is implemented
 func TestSchedulerConfigStructure(t *testing.T) {
 	tests := []struct {
-		name             string
-		interval         time.Duration
-		batchSize        int
-		maxRetries       int
-		retryDelay       time.Duration
-		enabled          bool
-		wantErr          bool
+		name       string
+		interval   time.Duration
+		batchSize  int
+		maxRetries int
+		retryDelay time.Duration
+		enabled    bool
+		wantErr    bool
 	}{
 		{
 			name:       "valid scheduler config",

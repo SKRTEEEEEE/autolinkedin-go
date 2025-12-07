@@ -69,16 +69,16 @@ func NewHealthHandler(
 
 // HealthResponse represents the health check response
 type HealthResponse struct {
-	Status     string                        `json:"status"`
-	Timestamp  time.Time                     `json:"timestamp"`
-	Components HealthComponentsResponse      `json:"components"`
+	Status     string                   `json:"status"`
+	Timestamp  time.Time                `json:"timestamp"`
+	Components HealthComponentsResponse `json:"components"`
 }
 
 // HealthComponentsResponse represents the status of each component
 type HealthComponentsResponse struct {
-	Database string                       `json:"database"`
-	NATS     string                       `json:"nats"`
-	Workers  map[string]WorkerHealthInfo  `json:"workers"`
+	Database string                      `json:"database"`
+	NATS     string                      `json:"nats"`
+	Workers  map[string]WorkerHealthInfo `json:"workers"`
 }
 
 // WorkerHealthInfo represents worker health information
@@ -108,13 +108,13 @@ func (h *HealthHandler) HandleHealth(w http.ResponseWriter, r *http.Request) {
 	// Check worker status
 	workerHealth := make(map[string]WorkerHealthInfo)
 	overallWorkerStatus := "healthy"
-	
+
 	if h.workerRegistry != nil {
 		workerStatuses := h.workerRegistry.GetStatus()
 		for name, ws := range workerStatuses {
 			status := "stopped"
 			errorMsg := ""
-			
+
 			if ws.Running {
 				status = "running"
 			} else if ws.Error != nil {
@@ -167,7 +167,7 @@ func (h *HealthHandler) HandleHealth(w http.ResponseWriter, r *http.Request) {
 	// Send response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	
+
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		h.logger.Error("Failed to encode health response", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)

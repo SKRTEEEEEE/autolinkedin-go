@@ -109,33 +109,33 @@ func TestUserEntity_ValidateCredentials(t *testing.T) {
 // This test will FAIL until User.CanPublish() is implemented
 func TestUserEntity_CanPublish(t *testing.T) {
 	tests := []struct {
-		name          string
-		linkedInToken string
-		isActive      bool
+		name           string
+		linkedInToken  string
+		isActive       bool
 		wantCanPublish bool
 	}{
 		{
-			name:          "active user with valid token",
-			linkedInToken: "valid-token",
-			isActive:      true,
+			name:           "active user with valid token",
+			linkedInToken:  "valid-token",
+			isActive:       true,
 			wantCanPublish: true,
 		},
 		{
-			name:          "inactive user with valid token",
-			linkedInToken: "valid-token",
-			isActive:      false,
+			name:           "inactive user with valid token",
+			linkedInToken:  "valid-token",
+			isActive:       false,
 			wantCanPublish: false,
 		},
 		{
-			name:          "active user without token",
-			linkedInToken: "",
-			isActive:      true,
+			name:           "active user without token",
+			linkedInToken:  "",
+			isActive:       true,
 			wantCanPublish: false,
 		},
 		{
-			name:          "inactive user without token",
-			linkedInToken: "",
-			isActive:      false,
+			name:           "inactive user without token",
+			linkedInToken:  "",
+			isActive:       false,
 			wantCanPublish: false,
 		},
 	}
@@ -188,11 +188,11 @@ func TestUserEntity_UpdateConfiguration(t *testing.T) {
 		{
 			name: "valid configuration update",
 			currentConfig: map[string]interface{}{
-				"theme": "light",
+				"theme":         "light",
 				"notifications": true,
 			},
 			newConfig: map[string]interface{}{
-				"theme": "dark",
+				"theme":         "dark",
 				"notifications": false,
 			},
 			wantErr: false,
@@ -200,7 +200,7 @@ func TestUserEntity_UpdateConfiguration(t *testing.T) {
 		{
 			name: "partial configuration update",
 			currentConfig: map[string]interface{}{
-				"theme": "light",
+				"theme":         "light",
 				"notifications": true,
 			},
 			newConfig: map[string]interface{}{
@@ -338,9 +338,9 @@ func TestUserEntity_EmailValidation(t *testing.T) {
 // This test will FAIL until token encryption logic is implemented
 func TestUserEntity_TokenEncryption(t *testing.T) {
 	tests := []struct {
-		name      string
-		token     string
-		wantErr   bool
+		name    string
+		token   string
+		wantErr bool
 	}{
 		{
 			name:    "encrypt valid token",

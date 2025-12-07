@@ -189,12 +189,12 @@ func TestPrompt_UpdateTemplate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			oldUpdatedAt := tt.prompt.UpdatedAt
 			err := tt.prompt.UpdateTemplate(tt.newTemplate)
-			
+
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Prompt.UpdateTemplate() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			
+
 			if !tt.wantErr {
 				if tt.prompt.PromptTemplate != tt.newTemplate {
 					t.Errorf("Prompt.UpdateTemplate() template = %v, want %v", tt.prompt.PromptTemplate, tt.newTemplate)

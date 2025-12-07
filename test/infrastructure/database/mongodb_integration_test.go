@@ -196,14 +196,14 @@ func TestHealthCheckIntegration(t *testing.T) {
 	}
 
 	tests := []struct {
-		name            string
-		expectHealthy   bool
-		maxLatency      time.Duration
+		name          string
+		expectHealthy bool
+		maxLatency    time.Duration
 	}{
 		{
-			name:            "health check returns healthy status",
-			expectHealthy:   true,
-			maxLatency:      100 * time.Millisecond,
+			name:          "health check returns healthy status",
+			expectHealthy: true,
+			maxLatency:    100 * time.Millisecond,
 		},
 	}
 
@@ -223,9 +223,9 @@ func TestConnectionRecoveryIntegration(t *testing.T) {
 	}
 
 	tests := []struct {
-		name             string
+		name               string
 		simulateDisconnect bool
-		expectRecovery   bool
+		expectRecovery     bool
 	}{
 		{
 			name:               "recover from temporary disconnection",

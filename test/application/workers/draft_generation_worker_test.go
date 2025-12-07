@@ -145,22 +145,22 @@ func TestDraftGenerationWorkerProcessMessage(t *testing.T) {
 // This test will FAIL until use case execution logic is implemented
 func TestDraftGenerationWorkerUseCaseExecution(t *testing.T) {
 	tests := []struct {
-		name             string
-		useCaseSuccess   bool
-		expectError      bool
-		expectRetry      bool
+		name           string
+		useCaseSuccess bool
+		expectError    bool
+		expectRetry    bool
 	}{
 		{
-			name:             "use case executes successfully",
-			useCaseSuccess:   true,
-			expectError:      false,
-			expectRetry:      false,
+			name:           "use case executes successfully",
+			useCaseSuccess: true,
+			expectError:    false,
+			expectRetry:    false,
 		},
 		{
-			name:             "use case fails - should retry",
-			useCaseSuccess:   false,
-			expectError:      true,
-			expectRetry:      true,
+			name:           "use case fails - should retry",
+			useCaseSuccess: false,
+			expectError:    true,
+			expectRetry:    true,
 		},
 	}
 
@@ -176,39 +176,39 @@ func TestDraftGenerationWorkerUseCaseExecution(t *testing.T) {
 // This test will FAIL until retry logic is implemented
 func TestDraftGenerationWorkerRetryLogic(t *testing.T) {
 	tests := []struct {
-		name               string
-		currentRetryCount  int
-		maxRetries         int
-		expectRetry        bool
-		expectMarkFailed   bool
+		name              string
+		currentRetryCount int
+		maxRetries        int
+		expectRetry       bool
+		expectMarkFailed  bool
 	}{
 		{
-			name:               "retry - first failure",
-			currentRetryCount:  0,
-			maxRetries:         2,
-			expectRetry:        true,
-			expectMarkFailed:   false,
+			name:              "retry - first failure",
+			currentRetryCount: 0,
+			maxRetries:        2,
+			expectRetry:       true,
+			expectMarkFailed:  false,
 		},
 		{
-			name:               "retry - within limit",
-			currentRetryCount:  1,
-			maxRetries:         2,
-			expectRetry:        true,
-			expectMarkFailed:   false,
+			name:              "retry - within limit",
+			currentRetryCount: 1,
+			maxRetries:        2,
+			expectRetry:       true,
+			expectMarkFailed:  false,
 		},
 		{
-			name:               "no retry - max retries reached",
-			currentRetryCount:  2,
-			maxRetries:         2,
-			expectRetry:        false,
-			expectMarkFailed:   true,
+			name:              "no retry - max retries reached",
+			currentRetryCount: 2,
+			maxRetries:        2,
+			expectRetry:       false,
+			expectMarkFailed:  true,
 		},
 		{
-			name:               "no retry - exceeded max retries",
-			currentRetryCount:  3,
-			maxRetries:         2,
-			expectRetry:        false,
-			expectMarkFailed:   true,
+			name:              "no retry - exceeded max retries",
+			currentRetryCount: 3,
+			maxRetries:        2,
+			expectRetry:       false,
+			expectMarkFailed:  true,
 		},
 	}
 
@@ -224,34 +224,34 @@ func TestDraftGenerationWorkerRetryLogic(t *testing.T) {
 // This test will FAIL until error handling is implemented
 func TestDraftGenerationWorkerErrorHandling(t *testing.T) {
 	tests := []struct {
-		name              string
-		errorType         string
-		expectRecovery    bool
-		expectLogging     bool
+		name           string
+		errorType      string
+		expectRecovery bool
+		expectLogging  bool
 	}{
 		{
-			name:              "handle validation error",
-			errorType:         "validation",
-			expectRecovery:    false,
-			expectLogging:     true,
+			name:           "handle validation error",
+			errorType:      "validation",
+			expectRecovery: false,
+			expectLogging:  true,
 		},
 		{
-			name:              "handle database error",
-			errorType:         "database",
-			expectRecovery:    true,
-			expectLogging:     true,
+			name:           "handle database error",
+			errorType:      "database",
+			expectRecovery: true,
+			expectLogging:  true,
 		},
 		{
-			name:              "handle LLM timeout error",
-			errorType:         "llm_timeout",
-			expectRecovery:    true,
-			expectLogging:     true,
+			name:           "handle LLM timeout error",
+			errorType:      "llm_timeout",
+			expectRecovery: true,
+			expectLogging:  true,
 		},
 		{
-			name:              "handle unknown error",
-			errorType:         "unknown",
-			expectRecovery:    false,
-			expectLogging:     true,
+			name:           "handle unknown error",
+			errorType:      "unknown",
+			expectRecovery: false,
+			expectLogging:  true,
 		},
 	}
 
@@ -301,28 +301,28 @@ func TestDraftGenerationWorkerContextCancellation(t *testing.T) {
 // This test will FAIL until concurrency is implemented
 func TestDraftGenerationWorkerConcurrency(t *testing.T) {
 	tests := []struct {
-		name             string
-		maxConcurrent    int
-		messageCount     int
-		expectAllDone    bool
+		name          string
+		maxConcurrent int
+		messageCount  int
+		expectAllDone bool
 	}{
 		{
-			name:             "process messages sequentially",
-			maxConcurrent:    1,
-			messageCount:     10,
-			expectAllDone:    true,
+			name:          "process messages sequentially",
+			maxConcurrent: 1,
+			messageCount:  10,
+			expectAllDone: true,
 		},
 		{
-			name:             "process messages with concurrency 5",
-			maxConcurrent:    5,
-			messageCount:     20,
-			expectAllDone:    true,
+			name:          "process messages with concurrency 5",
+			maxConcurrent: 5,
+			messageCount:  20,
+			expectAllDone: true,
 		},
 		{
-			name:             "process high volume with high concurrency",
-			maxConcurrent:    10,
-			messageCount:     100,
-			expectAllDone:    true,
+			name:          "process high volume with high concurrency",
+			maxConcurrent: 10,
+			messageCount:  100,
+			expectAllDone: true,
 		},
 	}
 
@@ -338,19 +338,19 @@ func TestDraftGenerationWorkerConcurrency(t *testing.T) {
 // This test will FAIL until health check is implemented
 func TestDraftGenerationWorkerHealthCheck(t *testing.T) {
 	tests := []struct {
-		name            string
-		workerRunning   bool
-		expectHealthy   bool
+		name          string
+		workerRunning bool
+		expectHealthy bool
 	}{
 		{
-			name:            "healthy running worker",
-			workerRunning:   true,
-			expectHealthy:   true,
+			name:          "healthy running worker",
+			workerRunning: true,
+			expectHealthy: true,
 		},
 		{
-			name:            "unhealthy stopped worker",
-			workerRunning:   false,
-			expectHealthy:   false,
+			name:          "unhealthy stopped worker",
+			workerRunning: false,
+			expectHealthy: false,
 		},
 	}
 

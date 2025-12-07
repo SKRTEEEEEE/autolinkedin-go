@@ -167,30 +167,30 @@ func TestDomainErrors_InvalidDraftType(t *testing.T) {
 // This test will FAIL until error type checking is implemented
 func TestDomainErrors_ErrorTypes(t *testing.T) {
 	tests := []struct {
-		name          string
-		errorType     string
-		wantIsUserErr bool
+		name           string
+		errorType      string
+		wantIsUserErr  bool
 		wantIsNotFound bool
 		wantIsBusiness bool
 	}{
 		{
-			name:          "InvalidUserCredentials is business error",
-			errorType:     "InvalidUserCredentials",
+			name:           "InvalidUserCredentials is business error",
+			errorType:      "InvalidUserCredentials",
 			wantIsBusiness: true,
 		},
 		{
-			name:          "TopicNotFound is not found error",
-			errorType:     "TopicNotFound",
+			name:           "TopicNotFound is not found error",
+			errorType:      "TopicNotFound",
 			wantIsNotFound: true,
 		},
 		{
-			name:          "IdeaExpired is business error",
-			errorType:     "IdeaExpired",
+			name:           "IdeaExpired is business error",
+			errorType:      "IdeaExpired",
 			wantIsBusiness: true,
 		},
 		{
-			name:          "DraftAlreadyPublished is business error",
-			errorType:     "DraftAlreadyPublished",
+			name:           "DraftAlreadyPublished is business error",
+			errorType:      "DraftAlreadyPublished",
 			wantIsBusiness: true,
 		},
 	}
