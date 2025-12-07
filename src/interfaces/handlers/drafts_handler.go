@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -45,9 +46,11 @@ func NewDraftsHandler(
 
 // DraftGenerationMessage represents the message queued to NATS
 type DraftGenerationMessage struct {
-	JobID  string `json:"job_id"`
-	UserID string `json:"user_id"`
-	IdeaID string `json:"idea_id,omitempty"`
+	JobID      string    `json:"job_id"`
+	UserID     string    `json:"user_id"`
+	IdeaID     string    `json:"idea_id,omitempty"`
+	Timestamp  time.Time `json:"timestamp"`
+	RetryCount int       `json:"retry_count"`
 }
 
 // GenerateDraftsResponse represents the response for draft generation request
@@ -79,9 +82,11 @@ func (h *DraftsHandler) GenerateDrafts(w http.ResponseWriter, r *http.Request) {
 
 	// Create message for NATS
 	message := DraftGenerationMessage{
-		JobID:  jobID,
-		UserID: req.UserID,
-		IdeaID: req.IdeaID,
+		JobID:      jobID,
+		UserID:     req.UserID,
+		IdeaID:     req.IdeaID,
+		Timestamp:  time.Now(),
+		RetryCount: 0,
 	}
 
 	// Publish to NATS queue

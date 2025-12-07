@@ -12,10 +12,11 @@
 ###
 
 @baseUrl = http://localhost:8080
-@devUserId = 675337baf901e2d790aabbcc
-@ideaId = REPLACE_WITH_ACTUAL_IDEA_ID
+@devUserId = 000000000000000000000001
+
+@ideaId = 6935acef7ffdf94df341c964
 @draftId = REPLACE_WITH_ACTUAL_DRAFT_ID
-@topicId = REPLACE_WITH_ACTUAL_TOPIC_ID
+@topicId = 6935acdb7ffdf94df341c95a
 @promptId = REPLACE_WITH_ACTUAL_PROMPT_ID
 
 ###
@@ -290,6 +291,7 @@ Content-Type: application/json
 # El worker procesa la solicitud de forma asíncrona y genera:
 # - 5 posts (type: POST)
 # - 1 artículo (type: ARTICLE)
+# ⚠️ COPIA el job_id de la respuesta para usarlo en el siguiente paso
 POST {{baseUrl}}/v1/drafts/generate HTTP/1.1
 Content-Type: application/json
 
@@ -297,6 +299,11 @@ Content-Type: application/json
   "user_id": "{{devUserId}}",
   "idea_id": "{{ideaId}}"
 }
+
+###
+### Paso 6b: OPCIONAL - Verificar Logs del Worker
+# Si quieres ver el progreso de la generación, revisa los logs:
+# docker-compose logs -f app | grep "draft generation"
 
 ###
 ### Paso 7: Esperar unos segundos y Ver Drafts Generados
@@ -393,8 +400,16 @@ Content-Type: application/json
 # 
 # TROUBLESHOOTING:
 # - Si GET /v1/drafts/{userId} retorna array vacío, verifica:
-#   1. Que el worker NATS esté funcionando (docker-compose logs -f app)
+#   1. Que el worker NATS esté funcionando correctamente:
+#      - Ejecuta: docker-compose logs -f app | grep "draft"
+#      - Deberías ver logs como: "draft generation worker started" y "processing draft generation request"
 #   2. Que hayas esperado 5-10 segundos después de POST /v1/drafts/generate
 #   3. Que el job_id retornado sea válido
 #   4. Que la idea_id usada sea válida y no esté ya marcada como "used: true"
+#   5. Si ves errores como "timestamp is required" en los logs:
+#      - Esto indica que el código necesita la corrección del timestamp en el mensaje NATS
+#      - Asegúrate de tener la última versión del código
+#   6. Verifica que NATS esté conectado:
+#      - Ejecuta: docker-compose ps
+#      - Ambos servicios 'app' y 'nats' deben estar 'running'
 ###
