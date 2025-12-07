@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/domain/factories"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // GenerateIdeasUseCase orchestrates the generation of content ideas
@@ -124,8 +124,11 @@ func (uc *GenerateIdeasUseCase) Execute(ctx context.Context, input GenerateIdeas
 			continue
 		}
 
+		// Generate MongoDB ObjectID
+		ideaID := primitive.NewObjectID().Hex()
+		
 		idea, err := factories.NewIdea(
-			uuid.New().String(),
+			ideaID,
 			input.UserID,
 			topic.ID,
 			trimmed,
