@@ -12,6 +12,9 @@ type DraftSet struct {
 
 // LLMService defines the contract for LLM-based content generation
 type LLMService interface {
+	// SendRequest sends a raw prompt to the LLM and returns the response
+	SendRequest(ctx context.Context, prompt string) (string, error)
+
 	// GenerateIdeas generates content ideas based on a topic
 	// Returns a list of ideas or an error
 	GenerateIdeas(ctx context.Context, topic string, count int) ([]string, error)

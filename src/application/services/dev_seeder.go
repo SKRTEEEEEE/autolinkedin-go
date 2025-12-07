@@ -19,11 +19,12 @@ const (
 
 // DevSeeder handles seeding development data
 type DevSeeder struct {
-	userRepo   interfaces.UserRepository
-	topicRepo  interfaces.TopicRepository
-	ideasRepo  interfaces.IdeasRepository
-	llmService interfaces.LLMService
-	logger     *zap.Logger
+	userRepo    interfaces.UserRepository
+	topicRepo   interfaces.TopicRepository
+	ideasRepo   interfaces.IdeasRepository
+	promptsRepo interfaces.PromptsRepository
+	llmService  interfaces.LLMService
+	logger      *zap.Logger
 }
 
 // NewDevSeeder creates a new development data seeder
@@ -31,15 +32,17 @@ func NewDevSeeder(
 	userRepo interfaces.UserRepository,
 	topicRepo interfaces.TopicRepository,
 	ideasRepo interfaces.IdeasRepository,
+	promptsRepo interfaces.PromptsRepository,
 	llmService interfaces.LLMService,
 	logger *zap.Logger,
 ) *DevSeeder {
 	return &DevSeeder{
-		userRepo:   userRepo,
-		topicRepo:  topicRepo,
-		ideasRepo:  ideasRepo,
-		llmService: llmService,
-		logger:     logger,
+		userRepo:    userRepo,
+		topicRepo:   topicRepo,
+		ideasRepo:   ideasRepo,
+		promptsRepo: promptsRepo,
+		llmService:  llmService,
+		logger:      logger,
 	}
 }
 
@@ -58,6 +61,7 @@ func (s *DevSeeder) SeedDevUser(ctx context.Context) error {
 	user := &entities.User{
 		ID:            DevUserID,
 		Email:         "dev@local.linkgen.ai",
+		Language:      "es", // Spanish by default
 		LinkedInToken: "dev-token-not-needed-for-local",
 		APIKeys:       map[string]string{"dev": "key"},
 		Configuration: map[string]interface{}{
@@ -93,16 +97,16 @@ func (s *DevSeeder) SeedDefaultTopics(ctx context.Context) error {
 		description string
 	}{
 		{
-			name:        "Technology",
-			description: "Software development, AI, cloud computing, and tech innovations",
+			name:        "Inteligencia Artificial",
+			description: "Machine Learning, Deep Learning, aplicaciones de IA y tendencias tecnológicas",
 		},
 		{
-			name:        "Productivity",
-			description: "Time management, work efficiency, and productivity hacks",
+			name:        "Desarrollo Backend",
+			description: "Arquitecturas de servidor, APIs, bases de datos y mejores prácticas de backend",
 		},
 		{
-			name:        "Leadership",
-			description: "Team management, leadership skills, and organizational culture",
+			name:        "TypeScript",
+			description: "Desarrollo con TypeScript, frameworks modernos y patrones de diseño",
 		},
 	}
 
@@ -277,10 +281,100 @@ func (s *DevSeeder) SeedInitialIdeas(ctx context.Context) error {
 	return nil
 }
 
+// SeedDefaultPrompts creates default prompts for the dev user if they don't exist
+func (s *DevSeeder) SeedDefaultPrompts(ctx context.Context) error {
+	s.logger.Info("Seeding default prompts for development user...")
+
+	// Check if prompts already exist
+	existingCount, err := s.promptsRepo.CountByUserID(ctx, DevUserID)
+	if err != nil {
+		s.logger.Warn("Failed to check existing prompts count", zap.Error(err))
+	} else if existingCount > 0 {
+		s.logger.Info("Prompts already exist, skipping default generation", 
+			zap.Int64("existing_count", existingCount))
+		return nil
+	}
+
+	now := time.Now()
+
+	// Default prompt for generating ideas (Spanish, from flujo-app.v2.md)
+	ideasPrompt := &entities.Prompt{
+		ID:     primitive.NewObjectID().Hex(),
+		UserID: DevUserID,
+		Type:   entities.PromptTypeIdeas,
+		PromptTemplate: `Eres un experto en {related_topics}.
+Genera {count} ideas únicas sobre {name} para posibles posts o artículos.
+Idioma: {language}
+
+Devuelve SOLO un objeto JSON con este formato exacto:
+{"ideas": ["idea1", "idea2", "idea3", ...]}`,
+		Active:    true,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	if err := ideasPrompt.Validate(); err != nil {
+		return fmt.Errorf("failed to validate ideas prompt: %w", err)
+	}
+
+	if _, err := s.promptsRepo.Create(ctx, ideasPrompt); err != nil {
+		return fmt.Errorf("failed to create ideas prompt: %w", err)
+	}
+
+	s.logger.Info("Created default ideas prompt")
+
+	// Default prompt for generating drafts (professional style, Spanish)
+	draftsPrompt := &entities.Prompt{
+		ID:             primitive.NewObjectID().Hex(),
+		UserID:         DevUserID,
+		Type:           entities.PromptTypeDrafts,
+		StyleName:      "profesional",
+		PromptTemplate: `Eres un experto creador de contenido para LinkedIn.
+
+Basándote en la siguiente idea:
+{idea_content}
+
+Crea contenido atractivo para LinkedIn que:
+- Mantenga un tono profesional pero cercano
+- Use lenguaje claro y conciso
+- Incluya un gancho convincente en la primera frase
+- Proporcione información valiosa o insights accionables
+- Termine con una pregunta reflexiva o llamada a la acción
+- Esté optimizado para el algoritmo de LinkedIn (longitud apropiada, formato, hashtags)
+
+Devuelve SOLO un objeto JSON con este formato exacto:
+{
+  "posts": ["post1", "post2", "post3", "post4", "post5"],
+  "articles": ["article1"]
+}`,
+		Active:    true,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	if err := draftsPrompt.Validate(); err != nil {
+		return fmt.Errorf("failed to validate drafts prompt: %w", err)
+	}
+
+	if _, err := s.promptsRepo.Create(ctx, draftsPrompt); err != nil {
+		return fmt.Errorf("failed to create drafts prompt: %w", err)
+	}
+
+	s.logger.Info("Created default drafts prompt (professional style)")
+
+	s.logger.Info("Default prompts seeding completed")
+	return nil
+}
+
 // SeedAll seeds all development data
 func (s *DevSeeder) SeedAll(ctx context.Context) error {
 	if err := s.SeedDevUser(ctx); err != nil {
 		return fmt.Errorf("failed to seed dev user: %w", err)
+	}
+
+	if err := s.SeedDefaultPrompts(ctx); err != nil {
+		s.logger.Warn("Failed to seed default prompts", zap.Error(err))
+		// Don't fail if prompts seeding fails
 	}
 
 	if err := s.SeedDefaultTopics(ctx); err != nil {

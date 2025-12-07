@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"context"
+
 	"github.com/gorilla/mux"
 	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
@@ -15,15 +17,22 @@ import (
 
 // TopicsHandler handles topic-related HTTP requests
 type TopicsHandler struct {
-	topicRepo interfaces.TopicRepository
-	userRepo  interfaces.UserRepository
-	logger    *zap.Logger
+	topicRepo        interfaces.TopicRepository
+	userRepo         interfaces.UserRepository
+	generateIdeasUC  GenerateIdeasUseCase
+	logger           *zap.Logger
+}
+
+// GenerateIdeasUseCase defines the interface for generating ideas
+type GenerateIdeasUseCase interface {
+	GenerateIdeasForUser(ctx context.Context, userID string, count int) ([]*entities.Idea, error)
 }
 
 // NewTopicsHandler creates a new TopicsHandler instance
 func NewTopicsHandler(
 	topicRepo interfaces.TopicRepository,
 	userRepo interfaces.UserRepository,
+	generateIdeasUC GenerateIdeasUseCase,
 	logger *zap.Logger,
 ) *TopicsHandler {
 	if logger == nil {
@@ -31,9 +40,10 @@ func NewTopicsHandler(
 	}
 
 	return &TopicsHandler{
-		topicRepo: topicRepo,
-		userRepo:  userRepo,
-		logger:    logger,
+		topicRepo:       topicRepo,
+		userRepo:        userRepo,
+		generateIdeasUC: generateIdeasUC,
+		logger:          logger,
 	}
 }
 
@@ -207,6 +217,22 @@ func (h *TopicsHandler) CreateTopic(w http.ResponseWriter, r *http.Request) {
 		statusCode, code, message := MapDomainError(err, h.logger)
 		WriteError(w, statusCode, code, message, nil, h.logger)
 		return
+	}
+
+	// Trigger idea generation for new topic (async, don't block response)
+	if h.generateIdeasUC != nil {
+		go func() {
+			generateCtx := context.Background()
+			_, generateErr := h.generateIdeasUC.GenerateIdeasForUser(generateCtx, req.UserID, 10)
+			if generateErr != nil {
+				h.logger.Warn("Failed to auto-generate ideas for new topic",
+					zap.String("topic_id", topicID),
+					zap.Error(generateErr))
+			} else {
+				h.logger.Info("Auto-generated ideas for new topic",
+					zap.String("topic_id", topicID))
+			}
+		}()
 	}
 
 	// Return created topic

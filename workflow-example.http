@@ -1,19 +1,22 @@
 ###
-# LinkGen AI - API Workflow Examples
-# Base URL: http://localhost:8080
+# LinkGen AI - Ejemplos de Flujo de Trabajo API
+# URL Base: http://localhost:8080
 #
-# Development User: A predefined user is automatically created on startup
+# Usuario de Desarrollo: Se crea automáticamente al iniciar la aplicación
 # - User ID: 000000000000000000000001
-# - Default topics: Technology, Productivity, Leadership
+# - Idioma: Español (es)
+# - Topics por defecto: Inteligencia Artificial, Desarrollo Backend, TypeScript
+# - Prompts en español configurados automáticamente
 #
-# You can create your own topics and manage them through the Topics endpoints
+# Puedes crear tus propios topics y gestionarlos a través de los endpoints de Topics
 ###
 
 @baseUrl = http://localhost:8080
 @devUserId = 000000000000000000000001
-@ideaId = 675319c1f8d4a2e8b7654321
-@draftId = 675319c1f8d4a2e8b9876543
-@topicId = 6934b5767e19b3f296cde3bc
+@ideaId = REPLACE_WITH_ACTUAL_IDEA_ID
+@draftId = REPLACE_WITH_ACTUAL_DRAFT_ID
+@topicId = REPLACE_WITH_ACTUAL_TOPIC_ID
+@promptId = REPLACE_WITH_ACTUAL_PROMPT_ID
 
 ###
 # Health Check Endpoints
@@ -34,37 +37,49 @@ GET {{baseUrl}}/liveness HTTP/1.1
 Content-Type: application/json
 
 ###
-# Topics Management Endpoints
+# Gestión de Topics (Temas)
 ###
 
-### Get All Topics for Dev User
+### Obtener Todos los Topics del Usuario
 GET {{baseUrl}}/v1/topics/{{devUserId}} HTTP/1.1
 Content-Type: application/json
 
 ###
-### Create a New Topic
+### Crear un Nuevo Topic
+# Al crear un topic, se generan automáticamente 10 ideas sobre ese tema
 POST {{baseUrl}}/v1/topics HTTP/1.1
 Content-Type: application/json
 
 {
   "user_id": "{{devUserId}}",
-  "name": "Artificial Intelligence",
-  "description": "Machine learning, deep learning, and AI applications in business"
+  "name": "DevOps y Cloud",
+  "description": "Infraestructura como código, Kubernetes, AWS, Azure y mejores prácticas de DevOps"
 }
 
 ###
-### Update a Topic
+### Crear Topic sobre Testing
+POST {{baseUrl}}/v1/topics HTTP/1.1
+Content-Type: application/json
+
+{
+  "user_id": "{{devUserId}}",
+  "name": "Testing y Calidad de Software",
+  "description": "TDD, BDD, testing automatizado, test unitarios e integración continua"
+}
+
+###
+### Actualizar un Topic
 PUT {{baseUrl}}/v1/topics/{{topicId}} HTTP/1.1
 Content-Type: application/json
 
 {
-  "name": "AI & Machine Learning",
-  "description": "Advanced topics in artificial intelligence and ML",
+  "name": "Inteligencia Artificial Avanzada",
+  "description": "Machine Learning, Deep Learning, LLMs y aplicaciones de IA en la industria",
   "active": true
 }
 
 ###
-### Deactivate a Topic (soft disable)
+### Desactivar un Topic (soft delete)
 PUT {{baseUrl}}/v1/topics/{{topicId}} HTTP/1.1
 Content-Type: application/json
 
@@ -73,37 +88,93 @@ Content-Type: application/json
 }
 
 ###
-### Delete a Topic
+### Eliminar un Topic
 DELETE {{baseUrl}}/v1/topics/{{topicId}} HTTP/1.1
 
 ###
-# Ideas Management Endpoints
+# Gestión de Ideas
+# Las ideas se generan automáticamente en español usando los prompts configurados
 ###
 
-### Get Ideas for Dev User (all ideas)
+### Obtener Todas las Ideas del Usuario
 GET {{baseUrl}}/v1/ideas/{{devUserId}} HTTP/1.1
 Content-Type: application/json
 
 ###
-### Get Ideas with Topic Filter
+### Filtrar Ideas por Topic
 GET {{baseUrl}}/v1/ideas/{{devUserId}}?topic={{topicId}}&limit=10 HTTP/1.1
 Content-Type: application/json
 
 ###
-### Get Ideas with Limit
+### Obtener Primeras 5 Ideas
 GET {{baseUrl}}/v1/ideas/{{devUserId}}?limit=5 HTTP/1.1
 Content-Type: application/json
 
 ###
-### Clear All Ideas for Dev User
+### Limpiar Todas las Ideas del Usuario
 DELETE {{baseUrl}}/v1/ideas/{{devUserId}}/clear HTTP/1.1
 Content-Type: application/json
 
 ###
-# Drafts Management Endpoints
+# Gestión de Prompts (Plantillas de IA)
+# Sistema de prompts personalizables para generar ideas y drafts
 ###
 
-### Generate Draft from Idea (Async - returns job ID)
+### Obtener Todos los Prompts del Usuario
+GET {{baseUrl}}/v1/prompts/{{devUserId}} HTTP/1.1
+Content-Type: application/json
+
+###
+### Filtrar Prompts por Tipo (ideas o drafts)
+GET {{baseUrl}}/v1/prompts/{{devUserId}}?type=ideas HTTP/1.1
+Content-Type: application/json
+
+###
+### Crear Nuevo Prompt para Generar Ideas (estilo técnico)
+POST {{baseUrl}}/v1/prompts HTTP/1.1
+Content-Type: application/json
+
+{
+  "user_id": "{{devUserId}}",
+  "type": "ideas",
+  "prompt_template": "Eres un experto técnico en {related_topics}.\nGenera {count} ideas técnicas y detalladas sobre {name} con ejemplos de código.\nIdioma: {language}\n\nDevuelve SOLO un objeto JSON con este formato exacto:\n{\"ideas\": [\"idea1\", \"idea2\", \"idea3\", ...]}"
+}
+
+###
+### Crear Prompt para Drafts (estilo casual)
+POST {{baseUrl}}/v1/prompts HTTP/1.1
+Content-Type: application/json
+
+{
+  "user_id": "{{devUserId}}",
+  "type": "drafts",
+  "style_name": "casual",
+  "prompt_template": "Eres un creador de contenido cercano para LinkedIn.\n\nBasándote en: {idea_content}\n\nCrea contenido casual y amigable que:\n- Use un tono conversacional\n- Incluya emojis relevantes\n- Sea directo y personal\n- Tenga un gancho fuerte\n\nDevuelve SOLO JSON:\n{\n  \"posts\": [\"post1\", \"post2\", \"post3\", \"post4\", \"post5\"],\n  \"articles\": [\"article1\"]\n}"
+}
+
+###
+### Actualizar Prompt Existente
+PATCH {{baseUrl}}/v1/prompts/{{promptId}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt_template": "Eres un experto en {related_topics}.\nGenera {count} ideas innovadoras sobre {name}.\nIdioma: {language}\n\nJSON: {\"ideas\": [...]}"
+}
+
+###
+### Desactivar un Prompt
+PATCH {{baseUrl}}/v1/prompts/{{promptId}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "active": false
+}
+
+###
+# Gestión de Drafts (Borradores)
+###
+
+### Generar Draft desde una Idea (Asíncrono - retorna job ID)
 POST {{baseUrl}}/v1/drafts/generate HTTP/1.1
 Content-Type: application/json
 
@@ -113,73 +184,80 @@ Content-Type: application/json
 }
 
 ###
-### Get All Drafts for Dev User
+### Obtener Todos los Drafts del Usuario
 GET {{baseUrl}}/v1/drafts/{{devUserId}} HTTP/1.1
 Content-Type: application/json
 
 ###
-### Get Drafts with Status Filter
+### Filtrar Drafts por Estado
 GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=draft&limit=10 HTTP/1.1
 Content-Type: application/json
 
 ###
-### Get Published Drafts Only
+### Obtener Solo Drafts Publicados
 GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=published HTTP/1.1
 Content-Type: application/json
 
 ###
-### Refine Existing Draft
+### Refinar un Draft Existente (hacerlo más profesional)
 POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
 Content-Type: application/json
 
 {
-  "prompt": "Make it more professional and add a call to action",
+  "prompt": "Hazlo más profesional y añade una llamada a la acción al final",
   "user_id": "{{devUserId}}"
 }
 
 ###
-### Refine Draft with Different Prompt
+### Refinar Draft (acortar y añadir datos)
 POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
 Content-Type: application/json
 
 {
-  "prompt": "Shorten it to 200 words and make it more engaging",
+  "prompt": "Acórtalo a 200 palabras, añade métricas o datos concretos y hazlo más atractivo",
   "user_id": "{{devUserId}}"
 }
 
 ###
-# Complete Workflow Example
+# Flujo de Trabajo Completo - Ejemplo Paso a Paso
 ###
 
-### Step 1: Check API Health
+### Paso 1: Verificar Estado de la API
 GET {{baseUrl}}/health HTTP/1.1
 
 ###
-### Step 2: Get or Create Topics for Dev User
+### Paso 2: Obtener Topics del Usuario
 # @name getTopics
 GET {{baseUrl}}/v1/topics/{{devUserId}} HTTP/1.1
 Content-Type: application/json
 
 ###
-### Step 3: Create a New Topic (Optional)
+### Paso 3: Crear un Nuevo Topic (Opcional)
+# ⚠️ Al crear un topic, se generan automáticamente 10 ideas en español
 POST {{baseUrl}}/v1/topics HTTP/1.1
 Content-Type: application/json
 
 {
   "user_id": "{{devUserId}}",
-  "name": "Software Architecture",
-  "description": "System design, microservices, and scalable architectures"
+  "name": "Arquitectura de Software",
+  "description": "Diseño de sistemas, microservicios, patrones de arquitectura y escalabilidad"
 }
 
 ###
-### Step 4: Get Available Ideas for Dev User
+### Paso 4: Obtener Ideas Disponibles (generadas automáticamente)
 # @name getIdeas
 GET {{baseUrl}}/v1/ideas/{{devUserId}}?limit=10 HTTP/1.1
 Content-Type: application/json
 
 ###
-### Step 5: Generate Draft from First Idea
+### Paso 5: Ver Prompts Configurados (en español)
+GET {{baseUrl}}/v1/prompts/{{devUserId}} HTTP/1.1
+Content-Type: application/json
+
+###
+### Paso 6: Generar Draft desde una Idea
 # @name generateDraft
+# Copia un idea_id real de la respuesta del Paso 4 y reemplázalo arriba en @ideaId
 POST {{baseUrl}}/v1/drafts/generate HTTP/1.1
 Content-Type: application/json
 
@@ -189,35 +267,57 @@ Content-Type: application/json
 }
 
 ###
-### Step 6: Wait a few seconds, then Get Drafts to see the generated draft
+### Paso 7: Esperar unos segundos y Ver Drafts Generados
 # @name getDrafts
 GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=draft HTTP/1.1
 Content-Type: application/json
 
 ###
-### Step 7: Refine the Generated Draft
+### Paso 8: Refinar el Draft Generado
+# Copia un draft_id real de la respuesta del Paso 7 y reemplázalo arriba en @draftId
 POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
 Content-Type: application/json
 
 {
-  "prompt": "Make it more concise and add hashtags relevant to the topic",
+  "prompt": "Hazlo más conciso, añade hashtags relevantes y mejora el gancho inicial",
   "user_id": "{{devUserId}}"
 }
 
 ###
-### Step 8: Get Updated Draft
+### Paso 9: Ver Draft Actualizado
 GET {{baseUrl}}/v1/drafts/{{devUserId}} HTTP/1.1
 Content-Type: application/json
 
 ###
-# Notes:
-# - Development user ID is hardcoded: 000000000000000000000001
-# - Default topics (Technology, Productivity, Leadership) are created automatically on startup
-# - You can create, update, and delete topics as needed
-# - Replace @ideaId and @draftId with actual IDs after generating content
-# - The /v1/drafts/generate endpoint is asynchronous and returns a job_id immediately
-# - Draft generation happens in the background via NATS messaging
-# - Use the job_id or check the drafts list after a few seconds to see the generated draft
-# - All dates/times are in ISO 8601 format (e.g., "2024-12-06T15:30:00Z")
-# - Valid draft statuses: "draft", "published", "scheduled"
+# Notas Importantes:
+# 
+# CONFIGURACIÓN POR DEFECTO:
+# - User ID de desarrollo: 000000000000000000000001
+# - Idioma: Español (es)
+# - Topics por defecto: Inteligencia Artificial, Desarrollo Backend, TypeScript
+# - Prompts en español configurados automáticamente
+# 
+# GENERACIÓN AUTOMÁTICA DE IDEAS:
+# - Al crear un nuevo topic, se generan automáticamente 10 ideas en español
+# - Las ideas usan el prompt configurado con variables: {name}, {related_topics}, {language}, {count}
+# - Los prompts se pueden personalizar mediante /v1/prompts
+# 
+# SISTEMA DE PROMPTS:
+# - Tipo "ideas": Para generar ideas de contenido
+# - Tipo "drafts": Para generar borradores (vinculado a un style_name)
+# - Variables disponibles: {name}, {related_topics}, {language}, {count}, {idea_content}
+# 
+# PROCESO ASÍNCRONO:
+# - /v1/drafts/generate retorna un job_id inmediatamente
+# - La generación ocurre en segundo plano vía NATS
+# - Consulta /v1/drafts/{userId} después de unos segundos para ver el resultado
+# 
+# FORMATOS:
+# - Fechas en formato ISO 8601: "2024-12-06T15:30:00Z"
+# - Estados de draft válidos: "draft", "published", "scheduled"
+# - Tipos de prompt: "ideas", "drafts"
+# 
+# REEMPLAZAR IDs:
+# - Después de cada operación, copia los IDs reales de las respuestas
+# - Actualiza las variables @ideaId, @draftId, @topicId, @promptId al inicio del archivo
 ###

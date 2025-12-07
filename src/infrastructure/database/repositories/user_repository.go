@@ -31,6 +31,7 @@ func NewUserRepository(collection *mongo.Collection) interfaces.UserRepository {
 type userDocument struct {
 	ID            primitive.ObjectID         `bson:"_id,omitempty"`
 	Email         string                     `bson:"email"`
+	Language      string                     `bson:"language,omitempty"`
 	LinkedInToken string                     `bson:"linkedin_token"`
 	APIKeys       map[string]string          `bson:"api_keys"`
 	Configuration map[string]interface{}     `bson:"configuration"`
@@ -47,6 +48,7 @@ func (r *userRepository) toDocument(user *entities.User) (*userDocument, error) 
 
 	doc := &userDocument{
 		Email:         user.Email,
+		Language:      user.Language,
 		LinkedInToken: user.LinkedInToken,
 		APIKeys:       user.APIKeys,
 		Configuration: user.Configuration,
@@ -73,9 +75,15 @@ func (r *userRepository) toEntity(doc *userDocument) *entities.User {
 		return nil
 	}
 
+	language := doc.Language
+	if language == "" {
+		language = entities.DefaultLanguage
+	}
+
 	return &entities.User{
 		ID:            doc.ID.Hex(),
 		Email:         doc.Email,
+		Language:      language,
 		LinkedInToken: doc.LinkedInToken,
 		APIKeys:       doc.APIKeys,
 		Configuration: doc.Configuration,

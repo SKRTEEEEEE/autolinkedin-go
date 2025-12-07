@@ -222,6 +222,15 @@ func (c *LLMHTTPClient) RefineDraft(ctx context.Context, draft string, userPromp
 	return refinementResp.Refined, nil
 }
 
+// SendRequest implements LLMService.SendRequest - sends a raw prompt to the LLM
+func (c *LLMHTTPClient) SendRequest(ctx context.Context, prompt string) (string, error) {
+	if prompt == "" {
+		return "", fmt.Errorf("prompt cannot be empty")
+	}
+
+	return c.sendRequest(ctx, prompt)
+}
+
 // sendRequest sends a request to the LLM API with retry logic
 func (c *LLMHTTPClient) sendRequest(ctx context.Context, prompt string) (string, error) {
 	endpoint := c.baseURL + "/v1/chat/completions"

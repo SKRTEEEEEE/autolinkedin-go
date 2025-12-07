@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -13,10 +14,11 @@ import (
 
 // GenerateIdeasUseCase orchestrates the generation of content ideas
 type GenerateIdeasUseCase struct {
-	userRepo   interfaces.UserRepository
-	topicRepo  interfaces.TopicRepository
-	ideasRepo  interfaces.IdeasRepository
-	llmService interfaces.LLMService
+	userRepo    interfaces.UserRepository
+	topicRepo   interfaces.TopicRepository
+	ideasRepo   interfaces.IdeasRepository
+	promptsRepo interfaces.PromptsRepository
+	llmService  interfaces.LLMService
 }
 
 // NewGenerateIdeasUseCase creates a new instance of GenerateIdeasUseCase
@@ -24,13 +26,15 @@ func NewGenerateIdeasUseCase(
 	userRepo interfaces.UserRepository,
 	topicRepo interfaces.TopicRepository,
 	ideasRepo interfaces.IdeasRepository,
+	promptsRepo interfaces.PromptsRepository,
 	llmService interfaces.LLMService,
 ) *GenerateIdeasUseCase {
 	return &GenerateIdeasUseCase{
-		userRepo:   userRepo,
-		topicRepo:  topicRepo,
-		ideasRepo:  ideasRepo,
-		llmService: llmService,
+		userRepo:    userRepo,
+		topicRepo:   topicRepo,
+		ideasRepo:   ideasRepo,
+		promptsRepo: promptsRepo,
+		llmService:  llmService,
 	}
 }
 
@@ -45,6 +49,15 @@ const (
 	MaxIdeaCount     = 100
 	MinIdeaCount     = 1
 )
+
+// GenerateIdeasForUser generates ideas for a user based on a random topic
+func (uc *GenerateIdeasUseCase) GenerateIdeasForUser(ctx context.Context, userID string, count int) ([]*entities.Idea, error) {
+	input := GenerateIdeasInput{
+		UserID: userID,
+		Count:  count,
+	}
+	return uc.Execute(ctx, input)
+}
 
 // Execute generates ideas for a user based on a random topic
 func (uc *GenerateIdeasUseCase) Execute(ctx context.Context, input GenerateIdeasInput) ([]*entities.Idea, error) {
@@ -71,10 +84,31 @@ func (uc *GenerateIdeasUseCase) Execute(ctx context.Context, input GenerateIdeas
 		return nil, fmt.Errorf("no topics configured for user: %s", input.UserID)
 	}
 
-	// Call LLM to generate ideas
-	ideaContents, err := uc.llmService.GenerateIdeas(ctx, topic.Name, input.Count)
+	// Get active ideas prompt for user
+	prompts, err := uc.promptsRepo.FindActiveByUserIDAndType(ctx, input.UserID, entities.PromptTypeIdeas)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find ideas prompt: %w", err)
+	}
+	if len(prompts) == 0 {
+		return nil, fmt.Errorf("no active ideas prompt configured for user: %s", input.UserID)
+	}
+	
+	// Use first active prompt
+	prompt := prompts[0]
+	
+	// Build prompt with variable substitution
+	finalPrompt := uc.buildPromptWithVariables(prompt.PromptTemplate, topic, user, input.Count)
+	
+	// Call LLM with custom prompt
+	response, err := uc.llmService.SendRequest(ctx, finalPrompt)
 	if err != nil {
 		return nil, fmt.Errorf("LLM service error: %w", err)
+	}
+	
+	// Parse JSON response
+	ideaContents, err := uc.parseIdeasResponse(response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse LLM response: %w", err)
 	}
 
 	if len(ideaContents) == 0 {
@@ -131,4 +165,44 @@ func (uc *GenerateIdeasUseCase) validateInput(input GenerateIdeasInput) error {
 	}
 
 	return nil
+}
+
+// buildPromptWithVariables replaces template variables with actual values
+func (uc *GenerateIdeasUseCase) buildPromptWithVariables(template string, topic *entities.Topic, user *entities.User, count int) string {
+	prompt := template
+	
+	// Replace {name} with topic name
+	prompt = strings.ReplaceAll(prompt, "{name}", topic.Name)
+	
+	// Replace {related_topics} with topic name (or keywords if available)
+	relatedTopics := topic.Name
+	if len(topic.Keywords) > 0 {
+		relatedTopics = strings.Join(topic.Keywords, ", ")
+	}
+	prompt = strings.ReplaceAll(prompt, "{related_topics}", relatedTopics)
+	
+	// Replace {language} with user language
+	prompt = strings.ReplaceAll(prompt, "{language}", user.GetLanguage())
+	
+	// Replace {count} with idea count
+	prompt = strings.ReplaceAll(prompt, "{count}", fmt.Sprintf("%d", count))
+	
+	return prompt
+}
+
+// parseIdeasResponse parses the JSON response from LLM
+func (uc *GenerateIdeasUseCase) parseIdeasResponse(response string) ([]string, error) {
+	var result struct {
+		Ideas []string `json:"ideas"`
+	}
+	
+	if err := json.Unmarshal([]byte(response), &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JSON response: %w", err)
+	}
+	
+	if len(result.Ideas) == 0 {
+		return nil, fmt.Errorf("LLM returned empty ideas list")
+	}
+	
+	return result.Ideas, nil
 }

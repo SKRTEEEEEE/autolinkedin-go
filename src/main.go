@@ -35,13 +35,15 @@ type Application struct {
 	llmClient  *llm.LLMHTTPClient
 
 	// Repositories
-	userRepo  interfaces.UserRepository
-	topicRepo interfaces.TopicRepository
-	ideaRepo  interfaces.IdeasRepository
-	draftRepo interfaces.DraftRepository
+	userRepo    interfaces.UserRepository
+	topicRepo   interfaces.TopicRepository
+	ideaRepo    interfaces.IdeasRepository
+	draftRepo   interfaces.DraftRepository
+	promptsRepo interfaces.PromptsRepository
 
 	// Use cases
 	generateDraftsUC *usecases.GenerateDraftsUseCase
+	generateIdeasUC  *usecases.GenerateIdeasUseCase
 	listIdeasUC      *usecases.ListIdeasUseCase
 	clearIdeasUC     *usecases.ClearIdeasUseCase
 	refineDraftUC    *usecases.RefineDraftUseCase
@@ -237,12 +239,17 @@ func (a *Application) initialize(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to get drafts collection: %w", err)
 	}
+	promptsCol, err := dbClient.GetCollection(database.CollectionPrompts)
+	if err != nil {
+		return fmt.Errorf("failed to get prompts collection: %w", err)
+	}
 
 	// Initialize repositories
 	a.userRepo = dbRepos.NewUserRepository(usersCol)
 	a.topicRepo = dbRepos.NewTopicRepository(topicsCol)
 	a.ideaRepo = dbRepos.NewIdeasRepository(ideasCol)
 	a.draftRepo = dbRepos.NewDraftRepository(draftsCol)
+	a.promptsRepo = dbRepos.NewPromptsRepository(promptsCol)
 
 	// Initialize LLM client
 	llmConfig := llm.Config{
@@ -288,6 +295,13 @@ func (a *Application) initialize(ctx context.Context) error {
 		a.draftRepo,
 		a.llmClient,
 	)
+	a.generateIdeasUC = usecases.NewGenerateIdeasUseCase(
+		a.userRepo,
+		a.topicRepo,
+		a.ideaRepo,
+		a.promptsRepo,
+		a.llmClient,
+	)
 	a.listIdeasUC = usecases.NewListIdeasUseCase(a.userRepo, a.ideaRepo)
 	a.clearIdeasUC = usecases.NewClearIdeasUseCase(a.userRepo, a.ideaRepo)
 	a.refineDraftUC = usecases.NewRefineDraftUseCase(a.draftRepo, a.llmClient)
@@ -320,6 +334,7 @@ func (a *Application) seedDevelopmentData(ctx context.Context) error {
 		a.userRepo,
 		a.topicRepo,
 		a.ideaRepo,
+		a.promptsRepo,
 		a.llmClient,
 		a.logger,
 	)
@@ -380,9 +395,18 @@ func (a *Application) initializeHTTPServer() error {
 	topicsHandler := handlers.NewTopicsHandler(
 		a.topicRepo,
 		a.userRepo,
+		a.generateIdeasUC,
 		a.logger,
 	)
 	topicsHandler.RegisterRoutes(router)
+
+	// Register prompts handler
+	promptsHandler := handlers.NewPromptsHandler(
+		a.promptsRepo,
+		a.userRepo,
+		a.logger,
+	)
+	promptsHandler.RegisterRoutes(router)
 
 	// Register ideas handler
 	ideasHandler := handlers.NewIdeasHandler(
