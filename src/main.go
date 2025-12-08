@@ -42,6 +42,7 @@ type Application struct {
 	draftRepo   interfaces.DraftRepository
 	promptsRepo interfaces.PromptsRepository
 	jobRepo     interfaces.JobRepository
+	jobErrorRepo interfaces.JobErrorRepository
 
 	// Use cases
 	generateDraftsUC *usecases.GenerateDraftsUseCase
@@ -249,6 +250,10 @@ func (a *Application) initialize(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to get jobs collection: %w", err)
 	}
+	jobErrorsCol, err := dbClient.GetCollection(database.CollectionJobErrors)
+	if err != nil {
+		return fmt.Errorf("failed to get job errors collection: %w", err)
+	}
 
 	// Initialize repositories
 	a.userRepo = dbRepos.NewUserRepository(usersCol)
@@ -257,6 +262,7 @@ func (a *Application) initialize(ctx context.Context) error {
 	a.draftRepo = dbRepos.NewDraftRepository(draftsCol)
 	a.promptsRepo = dbRepos.NewPromptsRepository(promptsCol)
 	a.jobRepo = dbRepos.NewJobRepository(jobsCol)
+	a.jobErrorRepo = dbRepos.NewJobErrorRepository(jobErrorsCol)
 
 	// Initialize LLM client
 	llmConfig := llm.Config{
@@ -465,11 +471,17 @@ func (a *Application) initializeWorkers() error {
 		repo: a.jobRepo,
 	}
 
+	var jobErrorRepoAdapter *jobErrorRepositoryAdapter
+	if a.jobErrorRepo != nil {
+		jobErrorRepoAdapter = &jobErrorRepositoryAdapter{repo: a.jobErrorRepo}
+	}
+
 	// Create draft generation worker
 	draftWorker, err := workers.NewDraftGenerationWorker(workers.WorkerConfig{
 		Consumer:   consumer,
 		UseCase:    ucAdapter,
 		JobRepo:    jobRepoAdapter,
+		JobErrorRepo: jobErrorRepoAdapter,
 		MaxRetries: 2,
 		Logger:     a.logger,
 	})
@@ -737,4 +749,36 @@ func (a *jobRepositoryAdapter) Update(ctx context.Context, job *workers.Job) err
 	}
 
 	return a.repo.Update(ctx, domainJob)
+}
+
+// jobErrorRepositoryAdapter adapts interfaces.JobErrorRepository to workers.JobErrorRepository
+type jobErrorRepositoryAdapter struct {
+	repo interfaces.JobErrorRepository
+}
+
+// Create adapts the job error repository interface
+func (a *jobErrorRepositoryAdapter) Create(ctx context.Context, jobError *workers.JobError) (string, error) {
+	if a.repo == nil || jobError == nil {
+		return "", fmt.Errorf("job error repository not configured")
+	}
+
+	var ideaID *string
+	if jobError.IdeaID != "" {
+		idea := jobError.IdeaID
+		ideaID = &idea
+	}
+
+	domainJobError := &entities.JobError{
+		JobID:       jobError.JobID,
+		UserID:      jobError.UserID,
+		IdeaID:      ideaID,
+		Stage:       entities.JobErrorStage(jobError.Stage),
+		Error:       jobError.Error,
+		RawResponse: jobError.RawResponse,
+		Prompt:      jobError.Prompt,
+		Attempt:     jobError.Attempt,
+		CreatedAt:   time.Now(),
+	}
+
+	return a.repo.Create(ctx, domainJobError)
 }

@@ -24,32 +24,37 @@ Return ONLY a JSON object with this exact format:
 
 // BuildDraftsPrompt generates a prompt for draft generation
 func BuildDraftsPrompt(idea string, userContext string) string {
-	return fmt.Sprintf(`You are an expert LinkedIn content writer. Create professional LinkedIn content based on this idea:
+	trimmedIdea := strings.TrimSpace(idea)
+	trimmedContext := strings.TrimSpace(userContext)
 
-Idea: %s
+	return fmt.Sprintf(`[PARTE_FIJA][?][Eres experto en LinkedIn.]
+Genera contenido profesional basado en: %s
 
-User Context: %s
+Contexto adicional del usuario:
+%s
 
-Requirements:
-1. Create 5 LinkedIn posts (each 100-300 words):
-   - Engaging opening
-   - Clear value proposition
-   - Professional tone
-   - Include call-to-action
-   - Use emojis sparingly
+Instrucciones clave:
+- Escribe SIEMPRE en español neutro profesional.
+- Cada post debe tener 120-260 palabras, abrir con un gancho potente y cerrar con una CTA o pregunta.
+- El artículo debe tener título atractivo, introducción, desarrollo con viñetas o subtítulos y conclusión clara.
+- No inventes datos sensibles, pero puedes añadir insights inspirados en mejores prácticas.
+- No utilices comillas triples, bloques de código ni texto fuera del JSON.
 
-2. Create 1 LinkedIn article (500-1000 words):
-   - Compelling title
-   - Well-structured with sections
-   - Deep insights and examples
-   - Professional and informative
-   - Include conclusion
-
-Return ONLY a JSON object with this exact format:
+Formato de salida OBLIGATORIO (sin comentarios, sin Markdown, sin texto extra):
 {
-  "posts": ["post1", "post2", "post3", "post4", "post5"],
-  "articles": ["article1"]
-}`, idea, userContext)
+  "posts": [
+    "Post 1 completo en una sola cadena con \n para saltos de línea",
+    "Post 2 completo",
+    "Post 3 completo",
+    "Post 4 completo",
+    "Post 5 completo"
+  ],
+  "articles": [
+    "Título del artículo\n\nCuerpo del artículo con secciones y conclusión"
+  ]
+}
+
+Asegúrate de que el JSON sea válido, escapando caracteres especiales según el estándar.`, trimmedIdea, trimmedContext)
 }
 
 // BuildRefinementPrompt generates a prompt for draft refinement

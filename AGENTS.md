@@ -64,5 +64,8 @@ Los agents deben garantizar dos modos operativos:
 
 *(Los agents nunca deben compartir datos entre contenedores de desarrollo y contenedores de test.)*
 
+## Modelo LLM
+- Actualmente la app esta pensada para utilizar los modelos disponibles en http://100.105.212.98:8317/
+- **NO se quiere respuestas hardcoded, ni servicios mock, ni nada parecido. TODO EL CONTENIDO A DE SER CREADO POR LLM REALES/LOCALES**
 ---
 

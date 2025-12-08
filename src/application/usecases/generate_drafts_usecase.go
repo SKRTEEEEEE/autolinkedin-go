@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/linkgen-ai/backend/src/domain/entities"
+	domainErrors "github.com/linkgen-ai/backend/src/domain/errors"
 	"github.com/linkgen-ai/backend/src/domain/factories"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // GenerateDraftsUseCase orchestrates draft generation from ideas
@@ -78,13 +79,25 @@ func (uc *GenerateDraftsUseCase) Execute(ctx context.Context, input GenerateDraf
 
 	// Validate LLM response
 	if err := uc.validateDraftSet(draftSet); err != nil {
-		return nil, err
+		return nil, domainErrors.NewLLMResponseError(
+			"drafts_validation",
+			err.Error(),
+			draftSet.Prompt,
+			draftSet.RawResponse,
+			err,
+		)
 	}
 
 	// Create draft entities
 	drafts, err := uc.createDraftEntities(input.UserID, input.IdeaID, draftSet)
 	if err != nil {
-		return nil, err
+		return nil, domainErrors.NewLLMResponseError(
+			"drafts_entity_creation",
+			err.Error(),
+			draftSet.Prompt,
+			draftSet.RawResponse,
+			err,
+		)
 	}
 
 	// Save drafts to repository
@@ -220,7 +233,7 @@ func (uc *GenerateDraftsUseCase) createDraftEntities(userID, ideaID string, draf
 		}
 
 		draft, err := factories.NewPostDraftFromIdea(
-			uuid.New().String(),
+			primitive.NewObjectID().Hex(),
 			userID,
 			ideaID,
 			trimmed,
@@ -235,25 +248,41 @@ func (uc *GenerateDraftsUseCase) createDraftEntities(userID, ideaID string, draf
 	// Create article drafts (only first one)
 	if len(draftSet.Articles) > 0 {
 		articleContent := strings.TrimSpace(draftSet.Articles[0])
-		
+
 		// Always create article even if content is empty/short
 		// Extract title from content (first line or default)
 		title := uc.extractArticleTitle(articleContent)
-		
+		title = strings.TrimSpace(title)
+		if title == "" || len(title) < entities.MinArticleTitleLength {
+			title = "LinkedIn Article"
+		}
+
 		// If content is too short, pad it with default text
 		if len(articleContent) < entities.MinArticleContentLength {
 			articleContent = "Artículo generado basado en la idea.\n\n" + articleContent + "\n\nEste contenido ha sido generado automáticamente y puede requerir edición antes de publicar."
 		}
 
 		draft, err := factories.NewArticleDraftFromIdea(
-			uuid.New().String(),
+			primitive.NewObjectID().Hex(),
 			userID,
 			ideaID,
 			title,
 			articleContent,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create article draft: %w", err)
+			if strings.Contains(err.Error(), "article title") {
+				draft, err = factories.NewArticleDraftFromIdea(
+					primitive.NewObjectID().Hex(),
+					userID,
+					ideaID,
+					"LinkedIn Article",
+					articleContent,
+				)
+			}
+
+			if err != nil {
+				return nil, fmt.Errorf("failed to create article draft: %w", err)
+			}
 		}
 
 		drafts = append(drafts, draft)
@@ -273,7 +302,7 @@ func (uc *GenerateDraftsUseCase) extractArticleTitle(content string) string {
 	}
 
 	lines := strings.Split(content, "\n")
-	
+
 	// First pass: Look for markdown headers
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
@@ -285,7 +314,7 @@ func (uc *GenerateDraftsUseCase) extractArticleTitle(content string) string {
 			}
 		}
 	}
-	
+
 	// Second pass: Look for first non-empty line
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
@@ -300,7 +329,7 @@ func (uc *GenerateDraftsUseCase) extractArticleTitle(content string) string {
 			}
 		}
 	}
-	
+
 	// Third pass: Use first 100 chars of content if available
 	trimmedContent := strings.TrimSpace(content)
 	if len(trimmedContent) >= entities.MinArticleTitleLength {

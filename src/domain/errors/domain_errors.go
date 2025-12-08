@@ -213,3 +213,48 @@ func NewValidationError(field, message string) *ErrValidation {
 		Message: message,
 	}
 }
+
+// LLMResponseError represents an invalid or unparsable response from the LLM provider
+type LLMResponseError struct {
+	Operation   string
+	Reason      string
+	Prompt      string
+	RawResponse string
+	Err         error
+}
+
+// Error implements the error interface
+func (e *LLMResponseError) Error() string {
+	base := "llm response error"
+	if e != nil {
+		if e.Operation != "" {
+			base = fmt.Sprintf("%s (%s)", base, e.Operation)
+		}
+		if e.Reason != "" {
+			base = fmt.Sprintf("%s: %s", base, e.Reason)
+		}
+		if e.Err != nil {
+			return fmt.Sprintf("%s: %v", base, e.Err)
+		}
+	}
+	return base
+}
+
+// Unwrap returns the underlying error
+func (e *LLMResponseError) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+	return e.Err
+}
+
+// NewLLMResponseError creates a new LLM response error
+func NewLLMResponseError(operation, reason, prompt, raw string, err error) *LLMResponseError {
+	return &LLMResponseError{
+		Operation:   operation,
+		Reason:      reason,
+		Prompt:      prompt,
+		RawResponse: raw,
+		Err:         err,
+	}
+}

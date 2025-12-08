@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	domainErrors "github.com/linkgen-ai/backend/src/domain/errors"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
 )
 
@@ -180,20 +181,40 @@ func (c *LLMHTTPClient) GenerateDrafts(ctx context.Context, idea string, userCon
 
 	var draftsResp DraftsResponse
 	if err := json.Unmarshal([]byte(response), &draftsResp); err != nil {
-		return interfaces.DraftSet{}, fmt.Errorf("failed to parse drafts response: %w", err)
+		return interfaces.DraftSet{}, domainErrors.NewLLMResponseError(
+			"drafts_unmarshal",
+			"failed to parse drafts response",
+			prompt,
+			response,
+			err,
+		)
 	}
 
 	if len(draftsResp.Posts) == 0 {
-		return interfaces.DraftSet{}, fmt.Errorf("LLM returned empty posts list")
+		return interfaces.DraftSet{}, domainErrors.NewLLMResponseError(
+			"drafts_posts",
+			"LLM returned empty posts list",
+			prompt,
+			response,
+			nil,
+		)
 	}
 
 	if len(draftsResp.Articles) == 0 {
-		return interfaces.DraftSet{}, fmt.Errorf("LLM returned empty articles list")
+		return interfaces.DraftSet{}, domainErrors.NewLLMResponseError(
+			"drafts_articles",
+			"LLM returned empty articles list",
+			prompt,
+			response,
+			nil,
+		)
 	}
 
 	return interfaces.DraftSet{
-		Posts:    draftsResp.Posts,
-		Articles: draftsResp.Articles,
+		Posts:       draftsResp.Posts,
+		Articles:    draftsResp.Articles,
+		RawResponse: response,
+		Prompt:      prompt,
 	}, nil
 }
 

@@ -2,10 +2,13 @@ package factories
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/linkgen-ai/backend/src/domain/entities"
 )
+
+const defaultArticleTitle = "LinkedIn Article"
 
 // NewDraft creates a new Draft entity with type-specific setup
 func NewDraft(id, userID string, draftType entities.DraftType, content string) (*entities.Draft, error) {
@@ -25,6 +28,10 @@ func NewDraft(id, userID string, draftType entities.DraftType, content string) (
 		Metadata:          make(map[string]interface{}),
 		CreatedAt:         now,
 		UpdatedAt:         now,
+	}
+
+	if draftType == entities.DraftTypeArticle && strings.TrimSpace(draft.Title) == "" {
+		draft.Title = defaultArticleTitle
 	}
 
 	if err := draft.Validate(); err != nil {

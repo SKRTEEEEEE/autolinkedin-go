@@ -37,7 +37,6 @@ linters:
     - gosec          # Inspects source code for security problems
     - bodyclose      # Checks whether HTTP response body is closed successfully
     - noctx          # Finds sending http request without context.Context
-    - sqlclose       # Checks that sql.Rows and sql.Stmt are closed
     - rowserrcheck   # Checks whether Err of rows is checked successfully
     - goprintffuncname # Checks that printf-like functions are named with f at the end
     - unconvert      # Removes unnecessary type conversions
