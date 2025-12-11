@@ -7,18 +7,19 @@ import (
 
 // BuildIdeasPrompt generates a prompt for idea generation
 func BuildIdeasPrompt(topic string, count int) string {
-	return fmt.Sprintf(`You are an expert LinkedIn content strategist. Generate %d unique and engaging content ideas about the following topic:
+	return fmt.Sprintf(`Eres un experto en estrategia de contenido para LinkedIn. Genera %d ideas de contenido únicas y atractivas sobre el siguiente tema:
 
-Topic: %s
+Tema: %s
 
-Requirements:
-- Each idea should be specific and actionable
-- Ideas should be diverse and cover different angles
-- Focus on professional value and insights
-- Keep ideas concise (1-2 sentences each)
-- Make them suitable for LinkedIn audience
+Requisitos:
+- Cada idea debe ser específica y accionable
+- Las ideas deben ser diversas y cubrir diferentes ángulos
+- Enfócate en valor profesional e insights
+- Mantén las ideas concisas (1-2 oraciones cada una)
+- Hazlas adecuadas para la audiencia de LinkedIn
+- IMPORTANTE: Genera el contenido SIEMPRE en español
 
-Return ONLY a JSON object with this exact format:
+Devuelve ÚNICAMENTE un objeto JSON con este formato exacto:
 {"ideas": ["idea1", "idea2", "idea3", ...]}`, count, topic)
 }
 
@@ -27,8 +28,10 @@ func BuildDraftsPrompt(idea string, userContext string) string {
 	trimmedIdea := strings.TrimSpace(idea)
 	trimmedContext := strings.TrimSpace(userContext)
 
-	return fmt.Sprintf(`[PARTE_FIJA][?][Eres experto en LinkedIn.]
-Genera contenido profesional basado en: %s
+	return fmt.Sprintf(`Eres un experto creador de contenido para LinkedIn.
+
+Basándote en la siguiente idea:
+%s
 
 Contexto adicional del usuario:
 %s
@@ -39,22 +42,27 @@ Instrucciones clave:
 - El artículo debe tener título atractivo, introducción, desarrollo con viñetas o subtítulos y conclusión clara.
 - No inventes datos sensibles, pero puedes añadir insights inspirados en mejores prácticas.
 - No utilices comillas triples, bloques de código ni texto fuera del JSON.
+- IMPORTANTE: El JSON debe ser 100%% válido, sin errores de sintaxis.
 
-Formato de salida OBLIGATORIO (sin comentarios, sin Markdown, sin texto extra):
+FORMATO OBLIGATORIO: Responde ÚNICAMENTE con el JSON siguiente, sin texto adicional:
 {
   "posts": [
-    "Post 1 completo en una sola cadena con \n para saltos de línea",
+    "Post 1 completo en una sola cadena",
     "Post 2 completo",
     "Post 3 completo",
     "Post 4 completo",
     "Post 5 completo"
   ],
   "articles": [
-    "Título del artículo\n\nCuerpo del artículo con secciones y conclusión"
+    "Título del artículo\\n\\nCuerpo del artículo con secciones y conclusión"
   ]
 }
 
-Asegúrate de que el JSON sea válido, escapando caracteres especiales según el estándar.`, trimmedIdea, trimmedContext)
+VERIFICACIÓN FINAL: Antes de responder, verifica que:
+1. Las comillas están balanceadas
+2. No hay comas extras después del último elemento
+3. Los caracteres especiales están escapados con \\
+4. El JSON es 100%% sintácticamente válido`, trimmedIdea, trimmedContext)
 }
 
 // BuildRefinementPrompt generates a prompt for draft refinement

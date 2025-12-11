@@ -200,6 +200,31 @@ func (c *LLMHTTPClient) GenerateDrafts(ctx context.Context, idea string, userCon
 		)
 	}
 
+	if len(draftsResp.Posts) < 5 {
+		return interfaces.DraftSet{}, domainErrors.NewLLMResponseError(
+			"drafts_posts_count",
+			"LLM returned fewer than 5 posts",
+			prompt,
+			response,
+			nil,
+		)
+	}
+
+	validPosts := make([]string, 0, len(draftsResp.Posts))
+	for idx, post := range draftsResp.Posts {
+		trimmed := strings.TrimSpace(post)
+		if trimmed == "" {
+			return interfaces.DraftSet{}, domainErrors.NewLLMResponseError(
+				"drafts_posts_empty_entry",
+				fmt.Sprintf("LLM returned empty content for post %d", idx+1),
+				prompt,
+				response,
+				nil,
+			)
+		}
+		validPosts = append(validPosts, trimmed)
+	}
+
 	if len(draftsResp.Articles) == 0 {
 		return interfaces.DraftSet{}, domainErrors.NewLLMResponseError(
 			"drafts_articles",
@@ -210,9 +235,34 @@ func (c *LLMHTTPClient) GenerateDrafts(ctx context.Context, idea string, userCon
 		)
 	}
 
+	validArticles := make([]string, 0, len(draftsResp.Articles))
+	for idx, article := range draftsResp.Articles {
+		trimmed := strings.TrimSpace(article)
+		if trimmed == "" {
+			return interfaces.DraftSet{}, domainErrors.NewLLMResponseError(
+				"drafts_articles_empty_entry",
+				fmt.Sprintf("LLM returned empty content for article %d", idx+1),
+				prompt,
+				response,
+				nil,
+			)
+		}
+		validArticles = append(validArticles, trimmed)
+	}
+
+	postsToUse := validPosts
+	if len(postsToUse) > 5 {
+		postsToUse = postsToUse[:5]
+	}
+
+	articlesToUse := validArticles
+	if len(articlesToUse) > 1 {
+		articlesToUse = articlesToUse[:1]
+	}
+
 	return interfaces.DraftSet{
-		Posts:       draftsResp.Posts,
-		Articles:    draftsResp.Articles,
+		Posts:       postsToUse,
+		Articles:    articlesToUse,
 		RawResponse: response,
 		Prompt:      prompt,
 	}, nil
