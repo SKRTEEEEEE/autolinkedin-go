@@ -6,67 +6,51 @@
 
 This project follows **Clean Architecture** with four distinct layers:
 
-- **Domain**: Business logic and entities (User, Topic, Idea, Draft)
-- **Application**: Use cases and orchestration (Idea generation, Draft creation, Publishing)
+- **Domain**: Core entities (User, Topic, Idea, Draft, Prompt) and business rules
+- **Application**: Use cases (Idea generation, Draft creation, Refinement, Publishing) and orchestration
 - **Infrastructure**: External services (MongoDB, NATS, LLM HTTP client, LinkedIn API)
-- **Interfaces**: HTTP handlers and routes
+- **Interfaces**: HTTP handlers and routes for REST API
 
-For detailed architecture documentation, see [docs/arquitectura-app.md](./docs/arquitectura-app.md).
+For detailed architecture documentation, see [docs/flujo-app.md](./docs/flujo-app.md).
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-
 - Go 1.21 or higher
 - Docker and Docker Compose
 - MongoDB
 - NATS
 
-### Local Development
-
-1. Clone the repository:
+### Clone & Setup
 ```bash
 git clone https://github.com/linkgen-ai/backend.git
 cd backend
+cp .env.example .env && nano .env
 ```
 
-2. Copy environment configuration:
+### Install Dependencies
 ```bash
-cp .env.example .env
-# Edit .env with your configuration
+cd src && go mod download && go mod tidy && cd ..
 ```
 
-3. Install dependencies:
+### Run Application
 ```bash
-cd src
-go mod download
-go mod tidy
-cd ..
-```
-
-4. Run with Docker (recommended):
-```bash
+# With Docker (recommended)
 docker-compose up -d
-```
 
-Or run locally:
-```bash
-cd src
-go run main.go
+# Or run locally
+cd src && go run main.go
 ```
 
 The API will be available at `http://localhost:8080`.
 
-### Running Tests
-
-Run all tests:
+### Testing
 ```bash
+# Run all tests locally
 go test -v -race -coverprofile=coverage.out ./test/...
 go tool cover -html=coverage.out -o coverage.html
-```
 
-Run tests in isolated Docker environment:
-```bash
+# Run tests in Docker
 docker-compose -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from app
 docker-compose -f docker-compose.test.yml down -v
 ```
@@ -74,102 +58,37 @@ docker-compose -f docker-compose.test.yml down -v
 ## 📁 Project Structure
 
 ```
-.
-├── src/                      # Source code
-│   ├── domain/              # Business entities and rules
-│   ├── application/         # Use cases and services
-│   ├── infrastructure/      # External implementations
-│   └── interfaces/          # HTTP handlers and routes
-├── test/                    # Tests (mirrors src structure)
-├── docs/                    # Documentation
-├── scripts/                 # Utility scripts
-└── configs/                 # Configuration files
+├── src/              # Source code: domain/app/infra/interfaces
+├── test/             # Tests (mirrors src structure + http folder)
+├── docs/             # Documentation (flujo-app.md)
+├── scripts/          # Utility scripts
+├── configs/          # Configuration files
+└── bin/              # Build output
 ```
 
-## 🔧 Available Commands
 
-### Development
-- `cd src && go build -o ../bin/linkgenai main.go` - Build the application binary
-- `cd src && go run main.go` - Run the application locally
-- `cd src && go mod download && go mod tidy` - Install Go dependencies
-- `cd src && go fmt ./... && cd ../test && go fmt ./...` - Format code
 
-### Testing
-- `go test -v -race -coverprofile=coverage.out ./test/...` - Run all tests locally
-- `docker-compose -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from app` - Run tests in isolated Docker environment
-- `bash scripts/lint.sh` - Run golangci-lint for code quality checks
-- `bash scripts/ci-check.sh` - Run complete CI/CD validation suite
 
-### Docker
-- `docker-compose up -d` - Start development environment with hot reload
-- `docker-compose down && docker-compose -f docker-compose.test.yml down -v` - Stop all Docker containers
-- `bash scripts/validate-docker.sh` - Validate Docker configurations
-
-### Utilities
-- `rm -rf bin/ coverage.out coverage.html && cd src && go clean` - Clean build artifacts and caches
-- `cd src && go get -u ./... && go mod tidy` - Update Go dependencies
-
-## 🐳 Docker Environments
-
-### Development Mode
-Uses hot reload for instant code changes:
-```bash
-docker-compose up -d
-# or
-bash scripts/dev.sh
-```
-
-The development environment includes:
-- **Hot reload** with Air - code changes are detected automatically
-- **Persistent volumes** for MongoDB and NATS data
-- **Volume mounts** for source code (./src:/app)
-- Services: MongoDB (27017), NATS (4222), App (8080)
-
-### Test Mode
-Isolated ephemeral containers with automatic cleanup:
-```bash
-docker-compose -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from app
-docker-compose -f docker-compose.test.yml down -v
-# or
-bash scripts/test.sh
-```
-
-The test environment features:
-- **Ephemeral storage** using tmpfs (RAM-based, no disk writes)
-- **Isolated network** separate from development
-- **Automatic cleanup** after test execution
-- **No persistent volumes** - all data is temporary
-
-### Docker Validation
-Validate your Docker configurations:
-```bash
-bash scripts/validate-docker.sh
-```
-
-This checks:
-- Docker and Docker Compose installation
-- Syntax validation of docker-compose.yml and docker-compose.test.yml
-- Dockerfile multi-stage build validation
 
 ## 📚 Documentation
 
-- [Architecture Overview](./docs/arquitectura-app.md)
+- [Application Flow](./docs/flujo-app.md)
 - [Agent Guidelines](./AGENTS.md)
 - [API Documentation](./docs/api/)
 
 ## 🤝 Contributing
 
-This project follows strict contribution guidelines defined in [AGENTS.md](./AGENTS.md):
-
-- All commits must use Conventional Commits format
-- All commits must be signed
-- Tests must maintain 80%+ coverage
-- Follow Clean Architecture boundaries
+See [AGENTS.md](./AGENTS.md) for guidelines:
+- Conventional Commits format required
+- Signed commits with attribution
+- 80%+ test coverage
+- Clean Architecture boundaries
 
 ## 📝 License
 
 [Add license information]
 
 ## 👥 Authors
-### [SKRTEEEEEE](dev.desarollador.tech): 👿 This project is auto-generated as a part of the training and testing program for Agent666 
+### [SKRTEEEEEE](dev.desarollador.tech)
+👿 *This project is auto-generated as a part of the training and testing program for Agent666*
 #### CO-CREATED by Agent666 — ⟦ Product of SKRTEEEEEE ⟧
