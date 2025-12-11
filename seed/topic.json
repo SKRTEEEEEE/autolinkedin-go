@@ -1,0 +1,39 @@
+[
+    {
+      "user_id": "000000000000000000000001",
+      "name": "Desarrollo Backend",
+      "description": "Arquitecturas de servidor, APIs, bases de datos y mejores prácticas de backend",
+      "category": "General",
+      "priority": 5,
+      "active": true,
+      "related_topics": [
+        "Inteligencia Artificial",
+        "TypeScript"
+      ],
+      "ideas": 2
+    },
+    {
+      "user_id": "000000000000000000000001",
+      "name": "Inteligencia Artificial",
+      "description": "Machine Learning, Deep Learning, aplicaciones de IA y tendencias tecnológicas",
+      "category": "General",
+      "priority": 5,
+      "active": true,
+      "related_topics": [
+        "Desarrollo Backend"
+      ],
+        "ideas": 2
+    },
+    {
+      "user_id": "000000000000000000000001",
+      "name": "TypeScript",
+      "description": "Desarrollo con TypeScript, frameworks modernos y patrones de diseño",
+      "category": "General",
+      "priority": 5,
+      "active": true,
+        "related_topics": [
+            "Desarrollo Backend"
+        ],
+            "ideas": 2
+    }
+  ]

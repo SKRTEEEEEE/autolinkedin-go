@@ -1,48 +1,6 @@
-## Resumen
-
-### App(config)
-- user (hardcoded)
-- idioma: *por implementar, (hardcoded -> es) idioma que se utiliza para generar las ideas*
-
-### Prompt
-- [ ] al iniciar la app se crea un prompt default para generar ideas y otro para generar draft(estilo: profesional)
-- [ ] El usuario puede modificar el prompt que genera las ideas 
-- [ ] El usuario puede vincular a un ESTILO cada prompt que se usara para generar los 'draft' a partir de las 'ideas'
-
-### Topics
-- [ ] al iniciar la app se cargan 3 topics por defecto
-- [ ] el usuario puede introducir nuevos topics, modificar y eliminar topics
-
-*AI, backend, nextjs, typescript, etc..*
-
-- name: nombre descriptivo, usado por la IA y usuario
-- description: para el usuario
-- categoría: *por implementar*
-- priority: *por implementar, importancia a la hora de crear ideas*
-- related_topics: *por implementar, [ARRAY de topics] usados para generar la idea*
-- ideas: *por implementar, [num] cantidad de ideas que se generara en cada schedule sobre dicho topic*
-
-### Ideas
-- [ ] se generan tantas ideas como este indicado para cada topic
-  - [ ] al iniciar la app se crean ideas para los topics por defecto
-  - [ ] cada vez que el usuario introduce un nuevo topic, elimina o modifica un topic
-  - [ ] cada X tiempo 
-
-*AI -> Importancia de la IA en el dia a dia del estudiante..., La burbuja de la IA, ¿verdad o mentira?, etc...*
-*Backend -> El 80% de los programadores backend cobran mas, descubre..., etc...*
-
-### Draft
-- ideaId: id de la idea para crear los draft
-- estilo: *por implementar, estilo vinculado a un prompt para crear los draft*
-
-- [ ] El usuario ejecuta esta función por una 'idea' y se genera:
-  - [ ] 5 'draft' o sugerencias de publicaciones listas para LinkedIn
-  - [ ] 1 articulo, listo para publicar 
-
----
-
-# Flujo Detallado de la Aplicación
-
+# Flujo Detallado de la Aplicación - Fase 0-2
+> *Esta pag contiene el resumen e indice del flujo de la aplicación de las Fases 0, 1 y 2*
+> - Este flujo se puede probar manualmente con los endpoints descritos en [draft-generation.http](../test/http/workflow-example/draft-generation.http)
 ## Fase 0 — Inicialización
 
 ### 0.1 Bootstrap de Usuario (devUser)
@@ -94,11 +52,11 @@ Para cada topic creado, se generan X ideas usando el prompt default de ideas:
 - Se almacenan en colección `ideas` con campo `used: false`
 
 
-## Fase 1 — Generación Periódica de Ideas (Scheduler)
+## Fase 1 — Generación de Ideas 
 
 ### 1.1 Activación 
 
-#### 1.1.1 Activación por Scheduler - FUTURO - NO IMPLEMENTAR AHORA
+#### 1.1.1 Activación por Scheduler - FUTURO -> NO IMPLEMENTAR AHORA
 
 Una goroutine se ejecuta cada **X horas** (configurable):
 
@@ -132,8 +90,8 @@ Configuración:
 
 ### 1.4 Persistencia
 ### 1.5 Endpoints de Ideas
-## Fase 5 — Gestión de Topics
-### 5.1 Crear Topic
+## Fase 0.5 — Gestión de Topics
+### 0.5.1 Crear Topic
 **Endpoint**: `POST /v1/topics`
 
 ```json
@@ -145,7 +103,7 @@ Configuración:
 
 **Trigger automático**: Se generan 10 ideas iniciales para el nuevo topic.
 
-### 5.2 Modificar Topic
+### 0.5.2 Modificar Topic
 
 **Endpoint**: `PATCH /v1/topics/:topicId`
 
@@ -158,7 +116,7 @@ Configuración:
 
 Las ideas previas **no se regeneran**.
 
-### 5.3 Eliminar Topic (Soft Delete)
+### 0.5.3 Eliminar Topic (Soft Delete)
 
 **Endpoint**: `DELETE /v1/topics/:topicId`
 
@@ -167,9 +125,9 @@ Marca el topic como `disabled: true`. El scheduler lo ignora pero las ideas pers
 **Reactivación**: `PATCH /v1/topics/:topicId {"disabled": false}`
 
 
-## Fase 6 — Gestión de Prompts (Por Implementar)
+## Fase 0.6 — Gestión de Prompts (Por Revisar)
 
-### 6.1 Listar Prompts/Estilos
+### 0.6.1 Listar Prompts/Estilos
 
 ```
 GET /v1/prompts
@@ -177,7 +135,7 @@ GET /v1/prompts
 
 Devuelve todos los prompts (ideas y drafts) del usuario.
 
-### 6.2 Crear/Modificar Prompt
+### 0.6.2 Crear/Modificar Prompt
 
 ```
 POST /v1/prompts
@@ -200,7 +158,7 @@ Colección `prompts`:
 
 
 
-## Fase 2 — Generación de Drafts
+## Fase 2 — Generación de Drafts (Por Revisar)
 
 ### 2.1 Trigger Manual
 
@@ -277,83 +235,3 @@ GET /v1/drafts/jobs/:jobId
 ```
 
 Responde con `status: pending|processing|completed|failed`
-
----
-## 🏗️ 👁️ TO CHECK
-
-
-## Fase 3 — Refinamiento de Drafts
-
-### 3.1 Solicitud de Refinamiento
-
-**Endpoint**: `POST /v1/drafts/:draftId/refine`
-
-```json
-{
-  "instruction": "Hazlo más técnico, añade métricas"
-}
-```
-
-### 3.2 Proceso
-
-1. Obtiene draft original
-2. Construye prompt contextual:
-```
-Contenido actual: {draft.content}
-Instrucción: {instruction}
-
-Reescribe aplicando la instrucción.
-```
-3. Llama al LLM **síncronamente** (timeout 45s)
-4. Crea nueva versión del draft:
-```json
-{
-  "parent_draft_id": original_id,
-  "version": 2,
-  "content": "texto refinado",
-  "refinement_instruction": "Hazlo más técnico..."
-}
-```
-5. Responde `200 OK` con draft refinado
-
-Permite **encadenar refinamientos**: v1 → v2 → v3 → ...
-
-
-## Fase 4 — Publicación en LinkedIn
-
-### 4.1 Validación
-
-**Endpoint**: `POST /v1/drafts/:draftId/publish`
-
-Valida:
-1. Usuario tiene `linkedin_access_token` configurado
-2. Token no está expirado (`token_expires_at`)
-3. Draft pertenece al usuario
-
-### 4.2 Publicación según Tipo
-
-**Si `type: "post"`** → LinkedIn UGC Posts API
-
-```
-POST https://api.linkedin.com/v2/ugcPosts
-```
-
-**Si `type: "article"`** → LinkedIn Articles API
-
-```
-POST https://api.linkedin.com/v2/articles
-```
-
-### 4.3 Manejo de Respuesta
-
-- `201 Created` → actualizar draft: `status: "published"`, `published_at: timestamp`
-- `401/403` → `status: "publish_failed"`, `error: "token_invalid"`
-- `429` → `status: "publish_failed"`, `error: "rate_limit"`
-
-
-
-
----
-
-**Versión**: 2.0  
-**Última actualización**: 2025-12-07
