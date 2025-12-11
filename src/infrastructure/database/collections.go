@@ -100,8 +100,8 @@ func GetAllIndexDefinitions() []IndexDefinition {
 		},
 		{
 			Collection: CollectionJobErrors,
-			Keys:       bson.D{{Key: "created_at", Value: -1}},
-			Options:    options.Index().SetName("created_at_desc_idx"),
+			Keys:       bson.D{{Key: "created_at", Value: 1}},
+			Options:    options.Index().SetName("created_at_ttl_idx").SetExpireAfterSeconds(60 * 60 * 24 * 30),
 		},
 	}
 }

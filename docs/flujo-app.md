@@ -4,7 +4,7 @@
 - user (hardcoded)
 - idioma: *por implementar, (hardcoded -> es) idioma que se utiliza para generar las ideas*
 
-### Prompt *por implementar
+### Prompt
 - [ ] al iniciar la app se crea un prompt default para generar ideas y otro para generar draft(estilo: profesional)
 - [ ] El usuario puede modificar el prompt que genera las ideas 
 - [ ] El usuario puede vincular a un ESTILO cada prompt que se usara para generar los 'draft' a partir de las 'ideas'

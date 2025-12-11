@@ -1,0 +1,238 @@
+# # Fast check de la Fase 2 del workflow - flujo-app.md 
+# ## Resumen (usar siempre el LLM real: http://100.105.212.98:8317/)
+@baseUrl = http://localhost:8080
+@llmEndpoint = http://100.105.212.98:8317/
+@devUserId = 000000000000000000000001
+
+# ⚠️ IMPORTANTE: Reemplaza estos IDs con los valores reales de las respuestas
+@ideaId = 693af3de728db46d5cf09405
+@draftId = unknown
+@topicId = unknown
+@promptId = unk
+@jobId = 19fc725c-4ec9-44f7-b01a-36d9eb47d9e3
+
+# ### App(config)
+# - user (hardcoded)
+# - idioma: *por implementar, (hardcoded -> es) idioma que se utiliza para generar las ideas*
+GET {{baseUrl}}/health HTTP/1.1
+Content-Type: application/json
+
+### Ejemplo real (2025-12-10 13:03Z)
+# {
+#   "status": "healthy",
+#   "timestamp": "2025-12-10T13:03:48.927Z",
+#   "components": {
+#     "database": "healthy",
+#     "nats": "connected",
+#     "workers": {
+#       "draft_generation": {
+#         "status": "running",
+#         "started_at": "2025-12-10T12:58:06.120Z"
+#       }
+#     }
+#   }
+# }
+
+# ### Prompt
+# - [ ] al iniciar la app se crea un prompt default para generar ideas y otro para generar draft(estilo: profesional)
+# - [ ] El usuario puede modificar el prompt que genera las ideas 
+# - [ ] El usuario puede vincular a un ESTILO cada prompt que se usara para generar los 'draft' a partir de las 'ideas'
+### Obtener Todos los Prompts del Usuario
+GET {{baseUrl}}/v1/prompts/{{devUserId}} HTTP/1.1
+Content-Type: application/json
+### Ejemplo real
+# {
+#   "count": 2,
+#   "prompts": [
+#     {
+#       "id": "6935bbc043319a458b38abc8",
+#       "type": "ideas",
+#       "prompt_template": "Eres un experto en {related_topics}..."
+#     },
+#     {
+#       "id": "6935bbc043319a458b38abc9",
+#       "type": "drafts",
+#       "style_name": "profesional"
+#     }
+#   ]
+# }
+# ### Topics
+# - [ ] al iniciar la app se cargan 3 topics por defecto
+# - [ ] el usuario puede introducir nuevos topics, modificar y eliminar topics
+
+# *AI, backend, nextjs, typescript, etc..*
+
+# - name: nombre descriptivo, usado por la IA y usuario
+# - description: para el usuario
+# - categoría: *por implementar*
+# - priority: *por implementar, importancia a la hora de crear ideas*
+# - related_topics: *por implementar, [ARRAY de topics] usados para generar la idea*
+# - ideas: *por implementar, [num] cantidad de ideas que se generara en cada schedule sobre dicho topic*
+GET {{baseUrl}}/v1/topics/{{devUserId}} HTTP/1.1
+Content-Type: application/json
+### Ejemplo real
+# {
+#   "count": 4,
+#   "topics": [
+#     { "id": "6935bbc043319a458b38abcb", "name": "Desarrollo Backend" },
+#     { "id": "6935bbc043319a458b38abca", "name": "Inteligencia Artificial" },
+#     { "id": "6935bbc043319a458b38abcc", "name": "TypeScript" },
+#     { "id": "6935d512c95d0eae4a13975e", "name": "DevOps y Cloud" }
+#   ]
+# }
+
+# ### Ideas
+# - [ ] se generan tantas ideas como este indicado para cada topic
+#   - [ ] al iniciar la app se crean ideas para los topics por defecto
+#   - [ ] cada vez que el usuario introduce un nuevo topic, elimina o modifica un topic
+#   - [ ] cada X tiempo 
+
+# *AI -> Importancia de la IA en el dia a dia del estudiante..., La burbuja de la IA, ¿verdad o mentira?, etc...*
+# *Backend -> El 80% de los programadores backend cobran mas, descubre..., etc...*
+
+### Obtener Todas las Ideas del Usuario
+GET {{baseUrl}}/v1/ideas/{{devUserId}} HTTP/1.1
+Content-Type: application/json
+### Ejemplo real (primeras 3 ideas)
+# {
+#   "count": 25,
+#   "ideas": [
+#     {
+#       "id": "6935d53ac95d0eae4a13975f",
+#       "content": "Patrones avanzados con tipos condicionales...",
+#       "used": false
+#     },
+#     {
+#       "id": "6935d53ac95d0eae4a139760",
+#       "content": "Migración de JavaScript a TypeScript en monorepos sin frenar releases",
+#       "used": false
+#     },
+#     {
+#       "id": "6935d53ac95d0eae4a139761",
+#       "content": "Domina el operador 'satisfies'...",
+#       "used": false
+#     }
+#   ]
+# }
+
+### Generar Draft desde una Idea (Asíncrono - retorna job ID)
+# NOTA: Esto genera automáticamente 5 posts + 1 artículo EXCLUSIVAMENTE a partir del endpoint {{llmEndpoint}}
+# El proceso es asíncrono y usa un worker con NATS, no existen mocks en esta fase
+POST {{baseUrl}}/v1/drafts/generate HTTP/1.1
+Content-Type: application/json
+
+{
+  "user_id": "{{devUserId}}",
+  "idea_id": "{{ideaId}}"
+}
+
+### Ejemplo real
+# 202 Accepted
+# {
+#   "message": "Draft generation started",
+#   "job_id": "825372af-f822-417e-a87b-d2bec8110872"
+# }
+
+###
+### Paso 6c: NUEVO - Consultar Estado del Job
+# @name getJobStatus
+# ⚠️ REQUERIDO: Copia el job_id de la respuesta del Paso 6 y reemplázalo arriba en @jobId
+# Este endpoint muestra el estado actual del job: pending, processing, completed, failed
+# También devuelve los draft_ids generados cuando el job está completado
+#
+# Ejemplo de respuesta cuando está en proceso:
+# {
+#   "job_id": "550e8400-e29b-41d4-a716-446655440000",
+#   "status": "processing",
+#   "idea_id": "507f1f77bcf86cd799439011",
+#   "created_at": "2025-12-07T10:30:00Z",
+#   "started_at": "2025-12-07T10:30:01Z"
+# }
+#
+# Ejemplo de respuesta cuando está completado:
+# {
+#   "job_id": "550e8400-e29b-41d4-a716-446655440000",
+#   "status": "completed",
+#   "idea_id": "507f1f77bcf86cd799439011",
+#   "draft_ids": ["507f...", "507f...", "507f...", "507f...", "507f...", "507f..."],
+#   "created_at": "2025-12-07T10:30:00Z",
+#   "started_at": "2025-12-07T10:30:01Z",
+#   "completed_at": "2025-12-07T10:30:15Z"
+# }
+GET {{baseUrl}}/v1/drafts/jobs/{{jobId}} HTTP/1.1
+Content-Type: application/json
+### Ejemplo real (completed)
+# {
+#   "job_id": "825372af-f822-417e-a87b-d2bec8110872",
+#   "status": "completed",
+#   "idea_id": "6935d53ac95d0eae4a139760",
+#   "draft_ids": [
+#     "69396f923587f862431eeef1",
+#     "69396f923587f862431eeef2",
+#     "69396f923587f862431eeef3",
+#     "69396f923587f862431eeef4",
+#     "69396f923587f862431eeef5",
+#     "69396f923587f862431eeef6"
+#   ],
+#   "created_at": "2025-12-10T13:02:29Z",
+#   "started_at": "2025-12-10T13:02:29Z",
+#   "completed_at": "2025-12-10T13:03:14Z"
+# }
+###
+### Paso 7: Esperar unos segundos y Ver Drafts Generados
+# @name getDrafts
+# El worker puede tardar 5-10 segundos en procesar la solicitud
+# Primero verifica el estado del job en el Paso 6c
+# Cuando el job esté en "completed", ejecuta este endpoint
+# Deberías ver 6 drafts (5 posts + 1 artículo) GENERADOS CON EL LLM LOCAL {{llmEndpoint}}
+GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=DRAFT HTTP/1.1
+Content-Type: application/json
+### Ejemplo real (limit=6)
+# {
+#   "count": 6,
+#   "drafts": [
+#     {
+#       "id": "69396f923587f862431eeef1",
+#       "type": "POST",
+#       "content": "¿Migrar a TypeScript en un monorepo sin congelar releases?..."
+#     },
+#     {
+#       "id": "69396f923587f862431eeef2",
+#       "type": "POST",
+#       "content": "El mayor error al migrar a TypeScript en monorepos es empezar por la app..."
+#     },
+#     {
+#       "id": "69396f923587f862431eeef3",
+#       "type": "POST",
+#       "content": "La migración a TypeScript no es solo técnica..."
+#     },
+#     {
+#       "id": "69396f923587f862431eeef4",
+#       "type": "POST",
+#       "content": "Rendimiento del compilador no siempre iguala productividad..."
+#     },
+#     {
+#       "id": "69396f923587f862431eeef5",
+#       "type": "POST",
+#       "content": "Tu pipeline define el éxito de la migración más que el código..."
+#     },
+#     {
+#       "id": "69396f923587f862431eeef6",
+#       "type": "ARTICLE",
+#       "title": "Guía práctica: migrar de JavaScript a TypeScript en monorepos sin frenar releases"
+#     }
+#   ]
+# }
+
+### Paso 7d: Diagnóstico rápido de fallos
+# Si el job pasa a FAILED revisa la colección jobErrors en Mongo (requiere CLI):
+# mongo "mongodb://localhost:27017/linkgenai" --quiet --eval 'db.jobErrors.find({job_id: "{{jobId}}"}).sort({created_at:-1}).limit(1)' | jq
+
+
+# ### Draft
+# - ideaId: id de la idea para crear los draft
+# - estilo: *por implementar, estilo vinculado a un prompt para crear los draft*
+
+# - [ ] El usuario ejecuta esta función por una 'idea' y se genera:
+#   - [ ] 5 'draft' o sugerencias de publicaciones listas para LinkedIn
+#   - [ ] 1 articulo, listo para publicar 
