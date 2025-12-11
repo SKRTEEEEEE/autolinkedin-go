@@ -8,7 +8,7 @@ Basándote en la siguiente idea:
 {content}
 
 Contexto adicional del usuario:
-{%s}-¿¿¿¿????
+{user_context}
 
 Instrucciones clave:
 - Escribe SIEMPRE en español neutro profesional.

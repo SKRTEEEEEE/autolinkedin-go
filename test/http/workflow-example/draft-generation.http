@@ -47,12 +47,18 @@ Content-Type: application/json
 #     {
 #       "id": "6935bbc043319a458b38abc8",
 #       "type": "ideas",
-#       "prompt_template": "Eres un experto en {related_topics}..."
+#       "prompt_template": "Eres un experto en {related_topics}...",
+#       "name": "base1",
+#       "user_id": "{{devUserId}}",
+#       "active": true
 #     },
 #     {
 #       "id": "6935bbc043319a458b38abc9",
 #       "type": "drafts",
-#       "style_name": "profesional"
+#       "prompt_template": "Genera contenido profesional sobre {topic_name}...",
+#       "name": "profesional-draft",
+#       "user_id": "{{devUserId}}",
+#       "active": true
 #     }
 #   ]
 # }
@@ -74,10 +80,34 @@ Content-Type: application/json
 # {
 #   "count": 4,
 #   "topics": [
-#     { "id": "6935bbc043319a458b38abcb", "name": "Desarrollo Backend" },
-#     { "id": "6935bbc043319a458b38abca", "name": "Inteligencia Artificial" },
-#     { "id": "6935bbc043319a458b38abcc", "name": "TypeScript" },
-#     { "id": "6935d512c95d0eae4a13975e", "name": "DevOps y Cloud" }
+#     { 
+#       "id": "6935bbc043319a458b38abcb", 
+#       "name": "Desarrollo Backend",
+#       "prompt": "base1",
+#       "ideas": 5,
+#       "related_topics": ["Microservicios", "APIs", "MongoDB"]
+#     },
+#     { 
+#       "id": "6935bbc043319a458b38abca", 
+#       "name": "Inteligencia Artificial",
+#       "prompt": "creative",
+#       "ideas": 7,
+#       "related_topics": ["Machine Learning", "Deep Learning", "Neural Networks"]
+#     },
+#     { 
+#       "id": "6935bbc043319a458b38abcc", 
+#       "name": "TypeScript",
+#       "prompt": "base1",
+#       "ideas": 3,
+#       "related_topics": ["JavaScript", "Node.js", "TypeScript"]
+#     },
+#     { 
+#       "id": "6935d512c95d0eae4a13975e", 
+#       "name": "DevOps y Cloud",
+#       "prompt": "base1",
+#       "ideas": 4,
+#       "related_topics": ["Docker", "Kubernetes", "AWS"]
+#     }
 #   ]
 # }
 
@@ -100,16 +130,22 @@ Content-Type: application/json
 #     {
 #       "id": "6935d53ac95d0eae4a13975f",
 #       "content": "Patrones avanzados con tipos condicionales...",
+#       "topic_id": "6935bbc043319a458b38abcc",
+#       "topic_name": "TypeScript",
 #       "used": false
 #     },
 #     {
 #       "id": "6935d53ac95d0eae4a139760",
 #       "content": "Migración de JavaScript a TypeScript en monorepos sin frenar releases",
+#       "topic_id": "6935bbc043319a458b38abcc",
+#       "topic_name": "TypeScript",
 #       "used": false
 #     },
 #     {
 #       "id": "6935d53ac95d0eae4a139761",
 #       "content": "Domina el operador 'satisfies'...",
+#       "topic_id": "6935bbc043319a458b38abcc",
+#       "topic_name": "TypeScript",
 #       "used": false
 #     }
 #   ]
