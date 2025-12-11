@@ -34,9 +34,12 @@ Todo el código de agents debe mantenerse dentro de `./src`, respetando estricta
 1. Eslint
 2. [Test](#test)
 3. [Docker](#docker)
+4. [Http]
 ## Test
 
-Mantener todos los tests dentro de `./test`, replicando la misma estructura jerárquica que `./src`.
+### Estructura
+Mantener todos los tests dentro de `./test`, replicando la misma estructura jerárquica que `./src`. 
+- A excepción de la carpeta `./test/http/`: Esta carpeta contiene ejemplos de llamadas http
 
 ### Tipos de test
 Cada función debe disponer de tests y mantener un **coverage mínimo del 80%**:
@@ -45,6 +48,11 @@ Cada función debe disponer de tests y mantener un **coverage mínimo del 80%**:
 - Test de performance *(solo para funciones con riesgo de carga o concurrencia)*  
 
 *(Los agents no deben crear tests duplicados ni testear casos de uso ya cubiertos por el core.)*
+
+### [Http](./test/http)
+- Ejemplos de flujo de la aplicación, comprobar los siguientes antes de dar por terminada una tarea/verificación:
+  - [draft-generation.http](test\http\workflow-example\draft-generation.http): Ha de generar un pack de 'draft' a partir de una 'idea'.
+
 
 ---
 

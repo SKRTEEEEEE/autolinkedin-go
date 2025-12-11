@@ -171,5 +171,5 @@ This project follows strict contribution guidelines defined in [AGENTS.md](./AGE
 [Add license information]
 
 ## 👥 Authors
-
-CO-CREATED by Agent666 — ⟦ Product of SKRTEEEEEE ⟧
+### [SKRTEEEEEE](dev.desarollador.tech): 👿 This project is auto-generated as a part of the training and testing program for Agent666 
+#### CO-CREATED by Agent666 — ⟦ Product of SKRTEEEEEE ⟧
