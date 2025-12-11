@@ -97,32 +97,32 @@ func TestConsumerSubscribe(t *testing.T) {
 // This test will FAIL until message processing logic is implemented
 func TestConsumerMessageProcessing(t *testing.T) {
 	tests := []struct {
-		name            string
-		messageCount    int
-		handlerDelay    time.Duration
-		expectAllDone   bool
-		expectErrors    bool
+		name          string
+		messageCount  int
+		handlerDelay  time.Duration
+		expectAllDone bool
+		expectErrors  bool
 	}{
 		{
-			name:            "process single message",
-			messageCount:    1,
-			handlerDelay:    10 * time.Millisecond,
-			expectAllDone:   true,
-			expectErrors:    false,
+			name:          "process single message",
+			messageCount:  1,
+			handlerDelay:  10 * time.Millisecond,
+			expectAllDone: true,
+			expectErrors:  false,
 		},
 		{
-			name:            "process multiple messages",
-			messageCount:    10,
-			handlerDelay:    5 * time.Millisecond,
-			expectAllDone:   true,
-			expectErrors:    false,
+			name:          "process multiple messages",
+			messageCount:  10,
+			handlerDelay:  5 * time.Millisecond,
+			expectAllDone: true,
+			expectErrors:  false,
 		},
 		{
-			name:            "process messages with slow handler",
-			messageCount:    5,
-			handlerDelay:    100 * time.Millisecond,
-			expectAllDone:   true,
-			expectErrors:    false,
+			name:          "process messages with slow handler",
+			messageCount:  5,
+			handlerDelay:  100 * time.Millisecond,
+			expectAllDone: true,
+			expectErrors:  false,
 		},
 	}
 
@@ -290,32 +290,32 @@ func TestConsumerContextCancellation(t *testing.T) {
 // This test will FAIL until concurrent processing is implemented
 func TestConsumerConcurrency(t *testing.T) {
 	tests := []struct {
-		name             string
-		maxConcurrent    int
-		messageCount     int
-		processingTime   time.Duration
-		expectAllDone    bool
+		name           string
+		maxConcurrent  int
+		messageCount   int
+		processingTime time.Duration
+		expectAllDone  bool
 	}{
 		{
-			name:             "process messages with concurrency 1",
-			maxConcurrent:    1,
-			messageCount:     10,
-			processingTime:   10 * time.Millisecond,
-			expectAllDone:    true,
+			name:           "process messages with concurrency 1",
+			maxConcurrent:  1,
+			messageCount:   10,
+			processingTime: 10 * time.Millisecond,
+			expectAllDone:  true,
 		},
 		{
-			name:             "process messages with concurrency 5",
-			maxConcurrent:    5,
-			messageCount:     20,
-			processingTime:   50 * time.Millisecond,
-			expectAllDone:    true,
+			name:           "process messages with concurrency 5",
+			maxConcurrent:  5,
+			messageCount:   20,
+			processingTime: 50 * time.Millisecond,
+			expectAllDone:  true,
 		},
 		{
-			name:             "process messages with concurrency 10",
-			maxConcurrent:    10,
-			messageCount:     50,
-			processingTime:   20 * time.Millisecond,
-			expectAllDone:    true,
+			name:           "process messages with concurrency 10",
+			maxConcurrent:  10,
+			messageCount:   50,
+			processingTime: 20 * time.Millisecond,
+			expectAllDone:  true,
 		},
 	}
 

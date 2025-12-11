@@ -10,34 +10,34 @@ import (
 // This test will FAIL until ClearIdeasUseCase is implemented
 func TestClearIdeasUseCase_Success(t *testing.T) {
 	tests := []struct {
-		name         string
-		userID       string
+		name          string
+		userID        string
 		existingIdeas int
-		wantErr      bool
+		wantErr       bool
 	}{
 		{
-			name:         "clear ideas for user with many ideas",
-			userID:       "user123",
+			name:          "clear ideas for user with many ideas",
+			userID:        "user123",
 			existingIdeas: 50,
-			wantErr:      false,
+			wantErr:       false,
 		},
 		{
-			name:         "clear ideas for user with few ideas",
-			userID:       "user456",
+			name:          "clear ideas for user with few ideas",
+			userID:        "user456",
 			existingIdeas: 5,
-			wantErr:      false,
+			wantErr:       false,
 		},
 		{
-			name:         "clear ideas for user with single idea",
-			userID:       "user789",
+			name:          "clear ideas for user with single idea",
+			userID:        "user789",
 			existingIdeas: 1,
-			wantErr:      false,
+			wantErr:       false,
 		},
 		{
-			name:         "clear ideas for user with no ideas",
-			userID:       "user101",
+			name:          "clear ideas for user with no ideas",
+			userID:        "user101",
 			existingIdeas: 0,
-			wantErr:      false,
+			wantErr:       false,
 		},
 	}
 
@@ -161,11 +161,11 @@ func TestClearIdeasUseCase_DeletedCount(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name          string
-		userID        string
-		existingIdeas int
+		name            string
+		userID          string
+		existingIdeas   int
 		expectedDeleted int64
-		wantErr       bool
+		wantErr         bool
 	}{
 		{
 			name:            "report correct count when clearing many ideas",
@@ -205,14 +205,14 @@ func TestClearIdeasUseCase_SelectiveClear(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name          string
-		userID        string
-		clearUsed     bool
-		clearUnused   bool
-		clearExpired  bool
-		totalIdeas    int
+		name            string
+		userID          string
+		clearUsed       bool
+		clearUnused     bool
+		clearExpired    bool
+		totalIdeas      int
 		expectedDeleted int64
-		wantErr       bool
+		wantErr         bool
 	}{
 		{
 			name:            "clear only used ideas",
@@ -311,13 +311,13 @@ func TestClearIdeasUseCase_PreserveDrafts(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name              string
-		userID            string
-		totalIdeas        int
-		ideasWithDrafts   int
-		preserveDrafts    bool
-		expectedDeleted   int64
-		wantErr           bool
+		name            string
+		userID          string
+		totalIdeas      int
+		ideasWithDrafts int
+		preserveDrafts  bool
+		expectedDeleted int64
+		wantErr         bool
 	}{
 		{
 			name:            "preserve ideas that have associated drafts",
@@ -354,34 +354,34 @@ func TestClearIdeasUseCase_ConfirmationRequired(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name          string
-		userID        string
+		name           string
+		userID         string
 		requireConfirm bool
-		confirmed     bool
-		wantErr       bool
-		errMsg        string
+		confirmed      bool
+		wantErr        bool
+		errMsg         string
 	}{
 		{
-			name:          "proceed when confirmation provided",
-			userID:        "user123",
+			name:           "proceed when confirmation provided",
+			userID:         "user123",
 			requireConfirm: true,
-			confirmed:     true,
-			wantErr:       false,
+			confirmed:      true,
+			wantErr:        false,
 		},
 		{
-			name:          "error when confirmation required but not provided",
-			userID:        "user456",
+			name:           "error when confirmation required but not provided",
+			userID:         "user456",
 			requireConfirm: true,
-			confirmed:     false,
-			wantErr:       true,
-			errMsg:        "confirmation required",
+			confirmed:      false,
+			wantErr:        true,
+			errMsg:         "confirmation required",
 		},
 		{
-			name:          "proceed when confirmation not required",
-			userID:        "user789",
+			name:           "proceed when confirmation not required",
+			userID:         "user789",
 			requireConfirm: false,
-			confirmed:     false,
-			wantErr:       false,
+			confirmed:      false,
+			wantErr:        false,
 		},
 	}
 
@@ -400,22 +400,22 @@ func TestClearIdeasUseCase_Logging(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name        string
-		userID      string
+		name         string
+		userID       string
 		deletedCount int64
-		expectLog   bool
+		expectLog    bool
 	}{
 		{
-			name:        "log clearing operation",
-			userID:      "user123",
+			name:         "log clearing operation",
+			userID:       "user123",
 			deletedCount: 50,
-			expectLog:   true,
+			expectLog:    true,
 		},
 		{
-			name:        "log when no ideas cleared",
-			userID:      "user456",
+			name:         "log when no ideas cleared",
+			userID:       "user456",
 			deletedCount: 0,
-			expectLog:   true,
+			expectLog:    true,
 		},
 	}
 

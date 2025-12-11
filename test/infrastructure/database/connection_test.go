@@ -176,31 +176,31 @@ func TestGracefulShutdown(t *testing.T) {
 // This test will FAIL until health check is implemented
 func TestConnectionHealthCheck(t *testing.T) {
 	tests := []struct {
-		name           string
-		dbAvailable    bool
-		timeout        time.Duration
-		expectHealthy  bool
+		name            string
+		dbAvailable     bool
+		timeout         time.Duration
+		expectHealthy   bool
 		expectedLatency time.Duration
 	}{
 		{
-			name:           "healthy connection",
-			dbAvailable:    true,
-			timeout:        1 * time.Second,
-			expectHealthy:  true,
+			name:            "healthy connection",
+			dbAvailable:     true,
+			timeout:         1 * time.Second,
+			expectHealthy:   true,
 			expectedLatency: 50 * time.Millisecond,
 		},
 		{
-			name:           "unhealthy connection - database down",
-			dbAvailable:    false,
-			timeout:        1 * time.Second,
-			expectHealthy:  false,
+			name:            "unhealthy connection - database down",
+			dbAvailable:     false,
+			timeout:         1 * time.Second,
+			expectHealthy:   false,
 			expectedLatency: 0,
 		},
 		{
-			name:           "timeout during health check",
-			dbAvailable:    true,
-			timeout:        10 * time.Millisecond,
-			expectHealthy:  false,
+			name:            "timeout during health check",
+			dbAvailable:     true,
+			timeout:         10 * time.Millisecond,
+			expectHealthy:   false,
 			expectedLatency: 0,
 		},
 	}

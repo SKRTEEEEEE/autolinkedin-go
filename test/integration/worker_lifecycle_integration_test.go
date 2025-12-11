@@ -14,16 +14,16 @@ func TestWorkerDockerDevMode(t *testing.T) {
 	}
 
 	tests := []struct {
-		name               string
-		expectWorkerStart  bool
-		expectHTTPReady    bool
-		expectHotReload    bool
+		name              string
+		expectWorkerStart bool
+		expectHTTPReady   bool
+		expectHotReload   bool
 	}{
 		{
-			name:               "worker starts in docker-dev mode",
-			expectWorkerStart:  true,
-			expectHTTPReady:    true,
-			expectHotReload:    true,
+			name:              "worker starts in docker-dev mode",
+			expectWorkerStart: true,
+			expectHTTPReady:   true,
+			expectHotReload:   true,
 		},
 	}
 
@@ -43,16 +43,16 @@ func TestWorkerDockerTestMode(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                  string
-		expectWorkerStart     bool
-		expectCleanShutdown   bool
-		expectVolumeCleanup   bool
+		name                string
+		expectWorkerStart   bool
+		expectCleanShutdown bool
+		expectVolumeCleanup bool
 	}{
 		{
-			name:                  "worker lifecycle in docker-test mode",
-			expectWorkerStart:     true,
-			expectCleanShutdown:   true,
-			expectVolumeCleanup:   true,
+			name:                "worker lifecycle in docker-test mode",
+			expectWorkerStart:   true,
+			expectCleanShutdown: true,
+			expectVolumeCleanup: true,
 		},
 	}
 
@@ -72,22 +72,22 @@ func TestWorkerStartupInDockerContainer(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                   string
-		natsAvailableOnStart   bool
-		expectWorkerRetry      bool
-		expectEventualSuccess  bool
+		name                  string
+		natsAvailableOnStart  bool
+		expectWorkerRetry     bool
+		expectEventualSuccess bool
 	}{
 		{
-			name:                   "worker starts when NATS ready",
-			natsAvailableOnStart:   true,
-			expectWorkerRetry:      false,
-			expectEventualSuccess:  true,
+			name:                  "worker starts when NATS ready",
+			natsAvailableOnStart:  true,
+			expectWorkerRetry:     false,
+			expectEventualSuccess: true,
 		},
 		{
-			name:                   "worker retries when NATS not ready",
-			natsAvailableOnStart:   false,
-			expectWorkerRetry:      true,
-			expectEventualSuccess:  true,
+			name:                  "worker retries when NATS not ready",
+			natsAvailableOnStart:  false,
+			expectWorkerRetry:     true,
+			expectEventualSuccess: true,
 		},
 	}
 
@@ -107,25 +107,25 @@ func TestWorkerShutdownInDockerContainer(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                  string
-		shutdownSignal        string
-		processingInFlight    bool
-		expectCleanExit       bool
-		maxShutdownTime       time.Duration
+		name               string
+		shutdownSignal     string
+		processingInFlight bool
+		expectCleanExit    bool
+		maxShutdownTime    time.Duration
 	}{
 		{
-			name:                  "clean shutdown with SIGTERM",
-			shutdownSignal:        "SIGTERM",
-			processingInFlight:    false,
-			expectCleanExit:       true,
-			maxShutdownTime:       5 * time.Second,
+			name:               "clean shutdown with SIGTERM",
+			shutdownSignal:     "SIGTERM",
+			processingInFlight: false,
+			expectCleanExit:    true,
+			maxShutdownTime:    5 * time.Second,
 		},
 		{
-			name:                  "graceful shutdown during processing",
-			shutdownSignal:        "SIGTERM",
-			processingInFlight:    true,
-			expectCleanExit:       true,
-			maxShutdownTime:       10 * time.Second,
+			name:               "graceful shutdown during processing",
+			shutdownSignal:     "SIGTERM",
+			processingInFlight: true,
+			expectCleanExit:    true,
+			maxShutdownTime:    10 * time.Second,
 		},
 	}
 
@@ -145,16 +145,16 @@ func TestWorkerNATSReconnection(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                  string
-		natsRestartDuring     bool
-		expectReconnect       bool
-		expectDataLoss        bool
+		name              string
+		natsRestartDuring bool
+		expectReconnect   bool
+		expectDataLoss    bool
 	}{
 		{
-			name:                  "worker reconnects after NATS restart",
-			natsRestartDuring:     true,
-			expectReconnect:       true,
-			expectDataLoss:        false,
+			name:              "worker reconnects after NATS restart",
+			natsRestartDuring: true,
+			expectReconnect:   true,
+			expectDataLoss:    false,
 		},
 	}
 
@@ -174,22 +174,22 @@ func TestWorkerHealthCheckEndToEnd(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                  string
-		workerRunning         bool
-		expectedHealthStatus  string
-		expectedHTTPStatus    int
+		name                 string
+		workerRunning        bool
+		expectedHealthStatus string
+		expectedHTTPStatus   int
 	}{
 		{
-			name:                  "health check reports running worker",
-			workerRunning:         true,
-			expectedHealthStatus:  "healthy",
-			expectedHTTPStatus:    http.StatusOK,
+			name:                 "health check reports running worker",
+			workerRunning:        true,
+			expectedHealthStatus: "healthy",
+			expectedHTTPStatus:   http.StatusOK,
 		},
 		{
-			name:                  "health check reports stopped worker",
-			workerRunning:         false,
-			expectedHealthStatus:  "unhealthy",
-			expectedHTTPStatus:    http.StatusServiceUnavailable,
+			name:                 "health check reports stopped worker",
+			workerRunning:        false,
+			expectedHealthStatus: "unhealthy",
+			expectedHTTPStatus:   http.StatusServiceUnavailable,
 		},
 	}
 
@@ -209,22 +209,22 @@ func TestWorkerMessageProcessingEndToEnd(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                 string
-		publishMessageCount  int
-		expectAllProcessed   bool
-		maxProcessingTime    time.Duration
+		name                string
+		publishMessageCount int
+		expectAllProcessed  bool
+		maxProcessingTime   time.Duration
 	}{
 		{
-			name:                 "process single message end-to-end",
-			publishMessageCount:  1,
-			expectAllProcessed:   true,
-			maxProcessingTime:    30 * time.Second,
+			name:                "process single message end-to-end",
+			publishMessageCount: 1,
+			expectAllProcessed:  true,
+			maxProcessingTime:   30 * time.Second,
 		},
 		{
-			name:                 "process multiple messages end-to-end",
-			publishMessageCount:  10,
-			expectAllProcessed:   true,
-			maxProcessingTime:    2 * time.Minute,
+			name:                "process multiple messages end-to-end",
+			publishMessageCount: 10,
+			expectAllProcessed:  true,
+			maxProcessingTime:   2 * time.Minute,
 		},
 	}
 
@@ -244,22 +244,22 @@ func TestWorkerDatabaseConnectivity(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                  string
-		dbAvailableOnStart    bool
-		expectWorkerContinue  bool
-		expectRetry           bool
+		name                 string
+		dbAvailableOnStart   bool
+		expectWorkerContinue bool
+		expectRetry          bool
 	}{
 		{
-			name:                  "worker accesses database successfully",
-			dbAvailableOnStart:    true,
-			expectWorkerContinue:  true,
-			expectRetry:           false,
+			name:                 "worker accesses database successfully",
+			dbAvailableOnStart:   true,
+			expectWorkerContinue: true,
+			expectRetry:          false,
 		},
 		{
-			name:                  "worker retries when database unavailable",
-			dbAvailableOnStart:    false,
-			expectWorkerContinue:  false,
-			expectRetry:           true,
+			name:                 "worker retries when database unavailable",
+			dbAvailableOnStart:   false,
+			expectWorkerContinue: false,
+			expectRetry:          true,
 		},
 	}
 
@@ -279,14 +279,14 @@ func TestWorkerLoggingInDocker(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                string
-		expectJSONLogs      bool
-		expectLogFields     []string
+		name            string
+		expectJSONLogs  bool
+		expectLogFields []string
 	}{
 		{
-			name:                "worker produces structured JSON logs",
-			expectJSONLogs:      true,
-			expectLogFields:     []string{"timestamp", "level", "message", "user_id", "idea_id"},
+			name:            "worker produces structured JSON logs",
+			expectJSONLogs:  true,
+			expectLogFields: []string{"timestamp", "level", "message", "user_id", "idea_id"},
 		},
 	}
 
@@ -306,14 +306,14 @@ func TestWorkerEnvironmentVariables(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                  string
-		envVars               map[string]string
-		expectWorkerConfig    bool
+		name               string
+		envVars            map[string]string
+		expectWorkerConfig bool
 	}{
 		{
 			name: "worker reads configuration from environment",
 			envVars: map[string]string{
-				"NATS_URL":          "nats://nats:4222",
+				"NATS_URL":           "nats://nats:4222",
 				"WORKER_MAX_RETRIES": "2",
 			},
 			expectWorkerConfig: true,
@@ -336,16 +336,16 @@ func TestWorkerContainerRestart(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                   string
-		messagesInQueue        int
-		expectReprocessing     bool
-		expectNoDuplicates     bool
+		name               string
+		messagesInQueue    int
+		expectReprocessing bool
+		expectNoDuplicates bool
 	}{
 		{
-			name:                   "worker resumes after container restart",
-			messagesInQueue:        5,
-			expectReprocessing:     true,
-			expectNoDuplicates:     true,
+			name:               "worker resumes after container restart",
+			messagesInQueue:    5,
+			expectReprocessing: true,
+			expectNoDuplicates: true,
 		},
 	}
 
@@ -365,15 +365,15 @@ func TestWorkerNetworkIsolation(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                    string
-		expectNATSReachable     bool
-		expectDBReachable       bool
+		name                      string
+		expectNATSReachable       bool
+		expectDBReachable         bool
 		expectExternalUnreachable bool
 	}{
 		{
-			name:                    "worker can reach internal services only",
-			expectNATSReachable:     true,
-			expectDBReachable:       true,
+			name:                      "worker can reach internal services only",
+			expectNATSReachable:       true,
+			expectDBReachable:         true,
 			expectExternalUnreachable: false, // LLM is external
 		},
 	}

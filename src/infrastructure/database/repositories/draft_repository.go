@@ -38,19 +38,19 @@ type refinementEntryDocument struct {
 
 // draftDocument represents the MongoDB document structure for Draft
 type draftDocument struct {
-	ID                primitive.ObjectID         `bson:"_id,omitempty"`
-	UserID            primitive.ObjectID         `bson:"user_id"`
-	IdeaID            *primitive.ObjectID        `bson:"idea_id,omitempty"`
-	Type              string                     `bson:"type"`
-	Title             string                     `bson:"title"`
-	Content           string                     `bson:"content"`
-	Status            string                     `bson:"status"`
-	RefinementHistory []refinementEntryDocument  `bson:"refinement_history"`
-	PublishedAt       *primitive.DateTime        `bson:"published_at,omitempty"`
-	LinkedInPostID    string                     `bson:"linkedin_post_id"`
-	Metadata          map[string]interface{}     `bson:"metadata"`
-	CreatedAt         primitive.DateTime         `bson:"created_at"`
-	UpdatedAt         primitive.DateTime         `bson:"updated_at"`
+	ID                primitive.ObjectID        `bson:"_id,omitempty"`
+	UserID            primitive.ObjectID        `bson:"user_id"`
+	IdeaID            *primitive.ObjectID       `bson:"idea_id,omitempty"`
+	Type              string                    `bson:"type"`
+	Title             string                    `bson:"title"`
+	Content           string                    `bson:"content"`
+	Status            string                    `bson:"status"`
+	RefinementHistory []refinementEntryDocument `bson:"refinement_history"`
+	PublishedAt       *primitive.DateTime       `bson:"published_at,omitempty"`
+	LinkedInPostID    string                    `bson:"linkedin_post_id"`
+	Metadata          map[string]interface{}    `bson:"metadata"`
+	CreatedAt         primitive.DateTime        `bson:"created_at"`
+	UpdatedAt         primitive.DateTime        `bson:"updated_at"`
 }
 
 // toDocument converts a Draft entity to a MongoDB document

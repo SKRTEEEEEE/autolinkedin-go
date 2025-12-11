@@ -202,39 +202,39 @@ func TestTopicEntity_GeneratePromptContext(t *testing.T) {
 // This test will FAIL until keyword handling is implemented
 func TestTopicEntity_Keywords(t *testing.T) {
 	tests := []struct {
-		name         string
-		keywords     []string
-		wantErr      bool
+		name          string
+		keywords      []string
+		wantErr       bool
 		expectedCount int
 	}{
 		{
-			name:         "valid keywords list",
-			keywords:     []string{"golang", "backend", "api"},
-			wantErr:      false,
+			name:          "valid keywords list",
+			keywords:      []string{"golang", "backend", "api"},
+			wantErr:       false,
 			expectedCount: 3,
 		},
 		{
-			name:         "empty keywords list",
-			keywords:     []string{},
-			wantErr:      false,
+			name:          "empty keywords list",
+			keywords:      []string{},
+			wantErr:       false,
 			expectedCount: 0,
 		},
 		{
-			name:         "keywords with duplicates",
-			keywords:     []string{"golang", "backend", "golang"},
-			wantErr:      false,
+			name:          "keywords with duplicates",
+			keywords:      []string{"golang", "backend", "golang"},
+			wantErr:       false,
 			expectedCount: 2,
 		},
 		{
-			name:         "keywords with empty strings",
-			keywords:     []string{"golang", "", "backend"},
-			wantErr:      true,
+			name:          "keywords with empty strings",
+			keywords:      []string{"golang", "", "backend"},
+			wantErr:       true,
 			expectedCount: 0,
 		},
 		{
-			name:         "too many keywords",
-			keywords:     []string{"k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k10", "k11"},
-			wantErr:      true,
+			name:          "too many keywords",
+			keywords:      []string{"k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k10", "k11"},
+			wantErr:       true,
 			expectedCount: 0,
 		},
 	}

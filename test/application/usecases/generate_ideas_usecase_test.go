@@ -212,13 +212,13 @@ func TestGenerateIdeasUseCase_LLMIntegration(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name         string
-		userID       string
-		topic        string
-		count        int
-		llmResponse  []string
-		expectIdeas  int
-		wantErr      bool
+		name        string
+		userID      string
+		topic       string
+		count       int
+		llmResponse []string
+		expectIdeas int
+		wantErr     bool
 	}{
 		{
 			name:   "successful LLM call generates ideas",
@@ -233,13 +233,13 @@ func TestGenerateIdeasUseCase_LLMIntegration(t *testing.T) {
 			wantErr:     false,
 		},
 		{
-			name:         "LLM returns fewer ideas than requested",
-			userID:       "user456",
-			topic:        "Cloud Computing",
-			count:        10,
-			llmResponse:  []string{"Idea 1", "Idea 2", "Idea 3"},
-			expectIdeas:  3,
-			wantErr:      false,
+			name:        "LLM returns fewer ideas than requested",
+			userID:      "user456",
+			topic:       "Cloud Computing",
+			count:       10,
+			llmResponse: []string{"Idea 1", "Idea 2", "Idea 3"},
+			expectIdeas: 3,
+			wantErr:     false,
 		},
 	}
 
@@ -359,11 +359,11 @@ func TestGenerateIdeasUseCase_RepositoryBatchCreate(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name        string
-		userID      string
-		ideasCount  int
-		repoErr     error
-		wantErr     bool
+		name       string
+		userID     string
+		ideasCount int
+		repoErr    error
+		wantErr    bool
 	}{
 		{
 			name:       "successfully save batch of 10 ideas",

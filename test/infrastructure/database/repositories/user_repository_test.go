@@ -335,11 +335,11 @@ func TestUserRepositoryPerformance(t *testing.T) {
 	}
 
 	tests := []struct {
-		name          string
-		operation     string
-		iterations    int
-		maxDuration   time.Duration
-		concurrency   int
+		name        string
+		operation   string
+		iterations  int
+		maxDuration time.Duration
+		concurrency int
 	}{
 		{
 			name:        "create 100 users sequentially",

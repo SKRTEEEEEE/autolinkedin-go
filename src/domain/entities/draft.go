@@ -34,19 +34,19 @@ type RefinementEntry struct {
 
 // Draft represents a content draft ready for publication
 type Draft struct {
-	ID                 string
-	UserID             string
-	IdeaID             *string
-	Type               DraftType
-	Title              string
-	Content            string
-	Status             DraftStatus
-	RefinementHistory  []RefinementEntry
-	PublishedAt        *time.Time
-	LinkedInPostID     string
-	Metadata           map[string]interface{}
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
+	ID                string
+	UserID            string
+	IdeaID            *string
+	Type              DraftType
+	Title             string
+	Content           string
+	Status            DraftStatus
+	RefinementHistory []RefinementEntry
+	PublishedAt       *time.Time
+	LinkedInPostID    string
+	Metadata          map[string]interface{}
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 }
 
 const (
@@ -100,7 +100,7 @@ func (d *Draft) isValidStatus() bool {
 // ValidateForType performs type-specific validation
 func (d *Draft) ValidateForType() error {
 	trimmedContent := strings.TrimSpace(d.Content)
-	
+
 	if trimmedContent == "" {
 		return fmt.Errorf("draft content cannot be empty")
 	}
@@ -131,7 +131,7 @@ func (d *Draft) validatePost(content string) error {
 // validateArticle validates article-specific rules
 func (d *Draft) validateArticle(content string) error {
 	trimmedTitle := strings.TrimSpace(d.Title)
-	
+
 	if trimmedTitle == "" {
 		return fmt.Errorf("article title cannot be empty")
 	}

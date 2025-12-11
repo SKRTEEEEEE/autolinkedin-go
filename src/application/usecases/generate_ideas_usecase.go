@@ -92,19 +92,19 @@ func (uc *GenerateIdeasUseCase) Execute(ctx context.Context, input GenerateIdeas
 	if len(prompts) == 0 {
 		return nil, fmt.Errorf("no active ideas prompt configured for user: %s", input.UserID)
 	}
-	
+
 	// Use first active prompt
 	prompt := prompts[0]
-	
+
 	// Build prompt with variable substitution
 	finalPrompt := uc.buildPromptWithVariables(prompt.PromptTemplate, topic, user, input.Count)
-	
+
 	// Call LLM with custom prompt
 	response, err := uc.llmService.SendRequest(ctx, finalPrompt)
 	if err != nil {
 		return nil, fmt.Errorf("LLM service error: %w", err)
 	}
-	
+
 	// Parse JSON response
 	ideaContents, err := uc.parseIdeasResponse(response)
 	if err != nil {
@@ -126,7 +126,7 @@ func (uc *GenerateIdeasUseCase) Execute(ctx context.Context, input GenerateIdeas
 
 		// Generate MongoDB ObjectID
 		ideaID := primitive.NewObjectID().Hex()
-		
+
 		idea, err := factories.NewIdea(
 			ideaID,
 			input.UserID,
@@ -173,23 +173,23 @@ func (uc *GenerateIdeasUseCase) validateInput(input GenerateIdeasInput) error {
 // buildPromptWithVariables replaces template variables with actual values
 func (uc *GenerateIdeasUseCase) buildPromptWithVariables(template string, topic *entities.Topic, user *entities.User, count int) string {
 	prompt := template
-	
+
 	// Replace {name} with topic name
 	prompt = strings.ReplaceAll(prompt, "{name}", topic.Name)
-	
+
 	// Replace {related_topics} with topic name (or keywords if available)
 	relatedTopics := topic.Name
 	if len(topic.Keywords) > 0 {
 		relatedTopics = strings.Join(topic.Keywords, ", ")
 	}
 	prompt = strings.ReplaceAll(prompt, "{related_topics}", relatedTopics)
-	
+
 	// Replace {language} with user language
 	prompt = strings.ReplaceAll(prompt, "{language}", user.GetLanguage())
-	
+
 	// Replace {count} with idea count
 	prompt = strings.ReplaceAll(prompt, "{count}", fmt.Sprintf("%d", count))
-	
+
 	return prompt
 }
 
@@ -198,14 +198,14 @@ func (uc *GenerateIdeasUseCase) parseIdeasResponse(response string) ([]string, e
 	var result struct {
 		Ideas []string `json:"ideas"`
 	}
-	
+
 	if err := json.Unmarshal([]byte(response), &result); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal JSON response: %w", err)
 	}
-	
+
 	if len(result.Ideas) == 0 {
 		return nil, fmt.Errorf("LLM returned empty ideas list")
 	}
-	
+
 	return result.Ideas, nil
 }

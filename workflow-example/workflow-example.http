@@ -13,10 +13,13 @@
 
 @baseUrl = http://localhost:8080
 @devUserId = 000000000000000000000001
-@ideaId = REPLACE_WITH_ACTUAL_IDEA_ID
+
+# ⚠️ IMPORTANTE: Reemplaza estos IDs con los valores reales de las respuestas
+@ideaId = 6935d53ac95d0eae4a139760
 @draftId = REPLACE_WITH_ACTUAL_DRAFT_ID
 @topicId = REPLACE_WITH_ACTUAL_TOPIC_ID
 @promptId = REPLACE_WITH_ACTUAL_PROMPT_ID
+@jobId = b147c30c-e70e-4746-8335-2903da42eed4
 
 ###
 # Health Check Endpoints
@@ -172,9 +175,13 @@ Content-Type: application/json
 
 ###
 # Gestión de Drafts (Borradores)
+# IMPORTANTE: Antes de generar drafts, asegúrate de tener un idea_id válido.
+# Obtén ideas usando: GET /v1/ideas/{devUserId}
 ###
 
 ### Generar Draft desde una Idea (Asíncrono - retorna job ID)
+# NOTA: Esto genera automáticamente 5 posts + 1 artículo
+# El proceso es asíncrono y usa un worker con NATS
 POST {{baseUrl}}/v1/drafts/generate HTTP/1.1
 Content-Type: application/json
 
@@ -185,17 +192,35 @@ Content-Type: application/json
 
 ###
 ### Obtener Todos los Drafts del Usuario
+# Devuelve todos los drafts ordenados por fecha de creación (más recientes primero)
 GET {{baseUrl}}/v1/drafts/{{devUserId}} HTTP/1.1
 Content-Type: application/json
 
 ###
-### Filtrar Drafts por Estado
-GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=draft&limit=10 HTTP/1.1
+### Filtrar Drafts por Estado (solo DRAFT)
+# Estados válidos: DRAFT, REFINED, PUBLISHED, FAILED
+GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=DRAFT&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+### Filtrar Drafts por Tipo (solo POSTS)
+# Tipos válidos: POST, ARTICLE
+GET {{baseUrl}}/v1/drafts/{{devUserId}}?type=POST HTTP/1.1
+Content-Type: application/json
+
+###
+### Filtrar Drafts por Tipo (solo ARTICLES)
+GET {{baseUrl}}/v1/drafts/{{devUserId}}?type=ARTICLE HTTP/1.1
+Content-Type: application/json
+
+###
+### Combinar filtros: Solo Posts en estado DRAFT
+GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=DRAFT&type=POST&limit=5 HTTP/1.1
 Content-Type: application/json
 
 ###
 ### Obtener Solo Drafts Publicados
-GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=published HTTP/1.1
+GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=PUBLISHED HTTP/1.1
 Content-Type: application/json
 
 ###
@@ -220,6 +245,7 @@ Content-Type: application/json
 
 ###
 # Flujo de Trabajo Completo - Ejemplo Paso a Paso
+# Este flujo sigue las especificaciones del documento flujo-app.md (Fase 2)
 ###
 
 ### Paso 1: Verificar Estado de la API
@@ -228,12 +254,14 @@ GET {{baseUrl}}/health HTTP/1.1
 ###
 ### Paso 2: Obtener Topics del Usuario
 # @name getTopics
+# El usuario devUser debe tener 3 topics por defecto: Inteligencia Artificial, Backend Development, TypeScript
 GET {{baseUrl}}/v1/topics/{{devUserId}} HTTP/1.1
 Content-Type: application/json
 
 ###
 ### Paso 3: Crear un Nuevo Topic (Opcional)
-# ⚠️ Al crear un topic, se generan automáticamente 10 ideas en español
+# ⚠️ IMPORTANTE: Al crear un topic, se generan automáticamente 10 ideas en español
+# Este es un proceso asíncrono que puede tardar unos segundos
 POST {{baseUrl}}/v1/topics HTTP/1.1
 Content-Type: application/json
 
@@ -246,18 +274,35 @@ Content-Type: application/json
 ###
 ### Paso 4: Obtener Ideas Disponibles (generadas automáticamente)
 # @name getIdeas
+# Las ideas se generan automáticamente al crear topics
+# ⚠️ COPIA un idea_id de la respuesta y reemplázalo arriba en @ideaId
+# IMPORTANTE: Solo puedes usar ideas donde "used": false
 GET {{baseUrl}}/v1/ideas/{{devUserId}}?limit=10 HTTP/1.1
 Content-Type: application/json
 
 ###
 ### Paso 5: Ver Prompts Configurados (en español)
+# El sistema tiene prompts por defecto para generar ideas y drafts
 GET {{baseUrl}}/v1/prompts/{{devUserId}} HTTP/1.1
 Content-Type: application/json
 
 ###
-### Paso 6: Generar Draft desde una Idea
+### Paso 6: Generar Drafts desde una Idea
 # @name generateDraft
-# Copia un idea_id real de la respuesta del Paso 4 y reemplázalo arriba en @ideaId
+# ⚠️ REQUERIDO: Copia un idea_id real de la respuesta del Paso 4 y reemplázalo arriba en @ideaId
+# IMPORTANTE: La idea debe tener "used": false, o recibirás error 400
+#
+# Este endpoint devuelve 202 Accepted con un job_id
+# El worker procesa la solicitud de forma asíncrona y genera:
+# - 5 posts (type: POST)
+# - 1 artículo (type: ARTICLE)
+#
+# ⚠️ COPIA el job_id de la respuesta y reemplázalo arriba en @jobId
+# Ejemplo de respuesta:
+# {
+#   "message": "Draft generation started",
+#   "job_id": "550e8400-e29b-41d4-a716-446655440000"
+# }
 POST {{baseUrl}}/v1/drafts/generate HTTP/1.1
 Content-Type: application/json
 
@@ -267,32 +312,89 @@ Content-Type: application/json
 }
 
 ###
-### Paso 7: Esperar unos segundos y Ver Drafts Generados
-# @name getDrafts
-GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=draft HTTP/1.1
+### Paso 6b: OPCIONAL - Verificar Logs del Worker
+# Si quieres ver el progreso de la generación, revisa los logs:
+# docker-compose logs -f app | grep "draft generation"
+
+###
+### Paso 6c: NUEVO - Consultar Estado del Job
+# @name getJobStatus
+# ⚠️ REQUERIDO: Copia el job_id de la respuesta del Paso 6 y reemplázalo arriba en @jobId
+# Este endpoint muestra el estado actual del job: pending, processing, completed, failed
+# También devuelve los draft_ids generados cuando el job está completado
+#
+# Ejemplo de respuesta cuando está en proceso:
+# {
+#   "job_id": "550e8400-e29b-41d4-a716-446655440000",
+#   "status": "processing",
+#   "idea_id": "507f1f77bcf86cd799439011",
+#   "created_at": "2025-12-07T10:30:00Z",
+#   "started_at": "2025-12-07T10:30:01Z"
+# }
+#
+# Ejemplo de respuesta cuando está completado:
+# {
+#   "job_id": "550e8400-e29b-41d4-a716-446655440000",
+#   "status": "completed",
+#   "idea_id": "507f1f77bcf86cd799439011",
+#   "draft_ids": ["507f...", "507f...", "507f...", "507f...", "507f...", "507f..."],
+#   "created_at": "2025-12-07T10:30:00Z",
+#   "started_at": "2025-12-07T10:30:01Z",
+#   "completed_at": "2025-12-07T10:30:15Z"
+# }
+GET {{baseUrl}}/v1/drafts/jobs/{{jobId}} HTTP/1.1
 Content-Type: application/json
 
 ###
-### Paso 8: Refinar el Draft Generado
-# Copia un draft_id real de la respuesta del Paso 7 y reemplázalo arriba en @draftId
+### Paso 7: Esperar unos segundos y Ver Drafts Generados
+# @name getDrafts
+# El worker puede tardar 5-10 segundos en procesar la solicitud
+# Primero verifica el estado del job en el Paso 6c
+# Cuando el job esté en "completed", ejecuta este endpoint
+# Deberías ver 6 drafts (5 posts + 1 artículo)
+GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=DRAFT HTTP/1.1
+Content-Type: application/json
+
+###
+### Paso 7b: Ver solo los Posts generados
+GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=DRAFT&type=POST HTTP/1.1
+Content-Type: application/json
+
+###
+### Paso 7c: Ver solo el Artículo generado
+GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=DRAFT&type=ARTICLE HTTP/1.1
+Content-Type: application/json
+
+###
+### Paso 8: Refinar un Draft Generado
+# ⚠️ REQUERIDO: Copia un draft_id real de la respuesta del Paso 7 y reemplázalo arriba en @draftId
+# El refinamiento es SÍNCRONO y actualiza el draft inmediatamente
+# El draft cambiará de status "DRAFT" a "REFINED"
 POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
 Content-Type: application/json
 
 {
-  "prompt": "Hazlo más conciso, añade hashtags relevantes y mejora el gancho inicial",
-  "user_id": "{{devUserId}}"
+  "prompt": "Hazlo más conciso, añade hashtags relevantes y mejora el gancho inicial"
 }
 
 ###
-### Paso 9: Ver Draft Actualizado
+### Paso 9: Ver Draft Actualizado con Historial de Refinamientos
+# El draft refinado tendrá status: REFINED y un refinement_history con todas las versiones
 GET {{baseUrl}}/v1/drafts/{{devUserId}} HTTP/1.1
+Content-Type: application/json
+
+###
+### Paso 10: Verificar que la Idea fue Marcada como Usada
+# Una vez que se generan drafts desde una idea, esa idea se marca como "used: true"
+# y no puede volver a usarse para generar más drafts
+GET {{baseUrl}}/v1/ideas/{{devUserId}} HTTP/1.1
 Content-Type: application/json
 
 ###
 # Notas Importantes:
 # 
 # CONFIGURACIÓN POR DEFECTO:
-# - User ID de desarrollo: 000000000000000000000001
+# - User ID de desarrollo: 675337baf901e2d790aabbcc (formato MongoDB ObjectID válido)
 # - Idioma: Español (es)
 # - Topics por defecto: Inteligencia Artificial, Desarrollo Backend, TypeScript
 # - Prompts en español configurados automáticamente
@@ -301,23 +403,57 @@ Content-Type: application/json
 # - Al crear un nuevo topic, se generan automáticamente 10 ideas en español
 # - Las ideas usan el prompt configurado con variables: {name}, {related_topics}, {language}, {count}
 # - Los prompts se pueden personalizar mediante /v1/prompts
+# - El proceso es asíncrono y puede tardar unos segundos
 # 
 # SISTEMA DE PROMPTS:
 # - Tipo "ideas": Para generar ideas de contenido
 # - Tipo "drafts": Para generar borradores (vinculado a un style_name)
 # - Variables disponibles: {name}, {related_topics}, {language}, {count}, {idea_content}
 # 
-# PROCESO ASÍNCRONO:
-# - /v1/drafts/generate retorna un job_id inmediatamente
-# - La generación ocurre en segundo plano vía NATS
-# - Consulta /v1/drafts/{userId} después de unos segundos para ver el resultado
+# PROCESO ASÍNCRONO DE DRAFTS (FASE 2):
+# - POST /v1/drafts/generate retorna 202 Accepted con job_id inmediatamente
+# - La generación ocurre en segundo plano vía worker NATS
+# - El worker genera automáticamente 5 posts + 1 artículo
+# - GET /v1/drafts/jobs/{jobId} para consultar el estado del job (pending|processing|completed|failed)
+# - GET /v1/drafts/{userId} para ver los drafts generados (esperar 5-10 segundos)
+# - Una vez generados, la idea se marca como "used: true" y no puede reutilizarse
+# 
+# ENDPOINT GET /v1/drafts/{userId}:
+# - Devuelve todos los drafts del usuario ordenados por fecha de creación (más recientes primero)
+# - Parámetros de filtro opcionales:
+#   * status: DRAFT, REFINED, PUBLISHED, FAILED (case-sensitive)
+#   * type: POST, ARTICLE (case-sensitive)
+#   * limit: número máximo de resultados (máx: 1000)
+# - Ejemplos de uso:
+#   * GET /v1/drafts/{userId} -> Todos los drafts
+#   * GET /v1/drafts/{userId}?status=DRAFT -> Solo drafts no publicados
+#   * GET /v1/drafts/{userId}?type=POST -> Solo posts
+#   * GET /v1/drafts/{userId}?status=DRAFT&type=POST&limit=5 -> 5 posts no publicados
 # 
 # FORMATOS:
 # - Fechas en formato ISO 8601: "2024-12-06T15:30:00Z"
-# - Estados de draft válidos: "draft", "published", "scheduled"
+# - Estados de draft válidos: DRAFT, REFINED, PUBLISHED, FAILED (case-sensitive en queries)
+# - Tipos de draft: POST, ARTICLE (case-sensitive en queries)
 # - Tipos de prompt: "ideas", "drafts"
+# - IDs deben ser MongoDB ObjectIDs válidos (24 caracteres hexadecimales)
 # 
 # REEMPLAZAR IDs:
 # - Después de cada operación, copia los IDs reales de las respuestas
+# - Los IDs deben ser MongoDB ObjectIDs válidos (24 caracteres hex)
 # - Actualiza las variables @ideaId, @draftId, @topicId, @promptId al inicio del archivo
+# 
+# TROUBLESHOOTING:
+# - Si GET /v1/drafts/{userId} retorna array vacío, verifica:
+#   1. Que el worker NATS esté funcionando correctamente:
+#      - Ejecuta: docker-compose logs -f app | grep "draft"
+#      - Deberías ver logs como: "draft generation worker started" y "processing draft generation request"
+#   2. Que hayas esperado 5-10 segundos después de POST /v1/drafts/generate
+#   3. Que el job_id retornado sea válido
+#   4. Que la idea_id usada sea válida y no esté ya marcada como "used: true"
+#   5. Si ves errores como "timestamp is required" en los logs:
+#      - Esto indica que el código necesita la corrección del timestamp en el mensaje NATS
+#      - Asegúrate de tener la última versión del código
+#   6. Verifica que NATS esté conectado:
+#      - Ejecuta: docker-compose ps
+#      - Ambos servicios 'app' y 'nats' deben estar 'running'
 ###

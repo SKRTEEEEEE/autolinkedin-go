@@ -16,13 +16,13 @@ func TestLoadFromEnvironment(t *testing.T) {
 		{
 			name: "load complete config from environment",
 			envVars: map[string]string{
-				"LINKGEN_SERVER_PORT":     "8000",
-				"LINKGEN_SERVER_HOST":     "localhost",
-				"LINKGEN_MONGODB_URI":     "mongodb://localhost:27017",
+				"LINKGEN_SERVER_PORT":      "8000",
+				"LINKGEN_SERVER_HOST":      "localhost",
+				"LINKGEN_MONGODB_URI":      "mongodb://localhost:27017",
 				"LINKGEN_MONGODB_DATABASE": "linkgenai",
-				"LINKGEN_NATS_URL":        "nats://localhost:4222",
-				"LINKGEN_LLM_ENDPOINT":    "http://localhost:8080",
-				"LINKGEN_LLM_API_KEY":     "test-key",
+				"LINKGEN_NATS_URL":         "nats://localhost:4222",
+				"LINKGEN_LLM_ENDPOINT":     "http://localhost:8080",
+				"LINKGEN_LLM_API_KEY":      "test-key",
 			},
 			wantErr: false,
 		},
@@ -45,8 +45,8 @@ func TestLoadFromEnvironment(t *testing.T) {
 		{
 			name: "environment variables override defaults",
 			envVars: map[string]string{
-				"LINKGEN_SERVER_PORT":       "9000",
-				"LINKGEN_MONGODB_URI":       "mongodb://localhost:27017",
+				"LINKGEN_SERVER_PORT":        "9000",
+				"LINKGEN_MONGODB_URI":        "mongodb://localhost:27017",
 				"LINKGEN_SCHEDULER_INTERVAL": "12h",
 			},
 			wantErr: false,
@@ -168,13 +168,13 @@ func TestLoadFromFlags(t *testing.T) {
 // This test will FAIL until loader precedence logic is implemented
 func TestLoadWithPrecedence(t *testing.T) {
 	tests := []struct {
-		name            string
-		fileConfig      map[string]interface{}
-		envVars         map[string]string
-		flags           []string
-		expectedPort    int
-		expectedHost    string
-		wantErr         bool
+		name         string
+		fileConfig   map[string]interface{}
+		envVars      map[string]string
+		flags        []string
+		expectedPort int
+		expectedHost string
+		wantErr      bool
 	}{
 		{
 			name: "flags override environment and file",
@@ -231,11 +231,11 @@ func TestLoadWithPrecedence(t *testing.T) {
 // This test will FAIL until auto-detection logic is implemented
 func TestAutoConfigFileDetection(t *testing.T) {
 	tests := []struct {
-		name           string
-		environment    string
-		searchPaths    []string
-		expectedFile   string
-		wantErr        bool
+		name         string
+		environment  string
+		searchPaths  []string
+		expectedFile string
+		wantErr      bool
 	}{
 		{
 			name:        "detect development.yaml in configs/",
@@ -300,16 +300,16 @@ func TestLoadDefaultValues(t *testing.T) {
 			name:           "apply all defaults when no config provided",
 			providedConfig: map[string]interface{}{},
 			expectedDefaults: map[string]interface{}{
-				"server_port":            8000,
-				"server_host":            "0.0.0.0",
-				"server_read_timeout":    30,
-				"server_write_timeout":   30,
-				"scheduler_interval":     "6h",
-				"scheduler_batch_size":   100,
-				"log_level":              "info",
-				"log_format":             "json",
-				"mongodb_max_pool_size":  100,
-				"mongodb_min_pool_size":  10,
+				"server_port":           8000,
+				"server_host":           "0.0.0.0",
+				"server_read_timeout":   30,
+				"server_write_timeout":  30,
+				"scheduler_interval":    "6h",
+				"scheduler_batch_size":  100,
+				"log_level":             "info",
+				"log_format":            "json",
+				"mongodb_max_pool_size": 100,
+				"mongodb_min_pool_size": 10,
 			},
 			wantErr: false,
 		},
@@ -320,11 +320,11 @@ func TestLoadDefaultValues(t *testing.T) {
 				"log_level":   "debug",
 			},
 			expectedDefaults: map[string]interface{}{
-				"server_port":           9000,
-				"server_host":           "0.0.0.0",
-				"log_level":             "debug",
-				"scheduler_interval":    "6h",
-				"scheduler_batch_size":  100,
+				"server_port":          9000,
+				"server_host":          "0.0.0.0",
+				"log_level":            "debug",
+				"scheduler_interval":   "6h",
+				"scheduler_batch_size": 100,
 			},
 			wantErr: false,
 		},
@@ -349,10 +349,10 @@ func TestLoadConfigWithValidation(t *testing.T) {
 		{
 			name: "valid config passes validation",
 			config: map[string]interface{}{
-				"server_port":     8000,
-				"mongodb_uri":     "mongodb://localhost:27017",
-				"nats_url":        "nats://localhost:4222",
-				"llm_api_key":     "test-key",
+				"server_port": 8000,
+				"mongodb_uri": "mongodb://localhost:27017",
+				"nats_url":    "nats://localhost:4222",
+				"llm_api_key": "test-key",
 			},
 			wantErr: false,
 		},
@@ -422,11 +422,11 @@ func TestLoadConfigConcurrency(t *testing.T) {
 // This test will FAIL until ReloadConfig function is implemented
 func TestReloadConfig(t *testing.T) {
 	tests := []struct {
-		name           string
-		initialConfig  map[string]interface{}
-		updatedConfig  map[string]interface{}
-		expectChange   bool
-		wantErr        bool
+		name          string
+		initialConfig map[string]interface{}
+		updatedConfig map[string]interface{}
+		expectChange  bool
+		wantErr       bool
 	}{
 		{
 			name: "reload with changed values",

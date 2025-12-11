@@ -182,7 +182,7 @@ func (s *DevSeeder) SeedInitialIdeas(ctx context.Context) error {
 	if err != nil {
 		s.logger.Warn("Failed to check existing ideas count", zap.Error(err))
 	} else if existingCount > 0 {
-		s.logger.Info("Ideas already exist, skipping initial generation", 
+		s.logger.Info("Ideas already exist, skipping initial generation",
 			zap.Int64("existing_count", existingCount))
 		return nil
 	}
@@ -209,7 +209,7 @@ func (s *DevSeeder) SeedInitialIdeas(ctx context.Context) error {
 			continue
 		}
 
-		s.logger.Info("Generating ideas for topic", 
+		s.logger.Info("Generating ideas for topic",
 			zap.String("topic", topic.Name),
 			zap.Int("count", ideasPerTopic))
 
@@ -290,7 +290,7 @@ func (s *DevSeeder) SeedDefaultPrompts(ctx context.Context) error {
 	if err != nil {
 		s.logger.Warn("Failed to check existing prompts count", zap.Error(err))
 	} else if existingCount > 0 {
-		s.logger.Info("Prompts already exist, skipping default generation", 
+		s.logger.Info("Prompts already exist, skipping default generation",
 			zap.Int64("existing_count", existingCount))
 		return nil
 	}
@@ -325,10 +325,10 @@ Devuelve SOLO un objeto JSON con este formato exacto:
 
 	// Default prompt for generating drafts (professional style, Spanish)
 	draftsPrompt := &entities.Prompt{
-		ID:             primitive.NewObjectID().Hex(),
-		UserID:         DevUserID,
-		Type:           entities.PromptTypeDrafts,
-		StyleName:      "profesional",
+		ID:        primitive.NewObjectID().Hex(),
+		UserID:    DevUserID,
+		Type:      entities.PromptTypeDrafts,
+		StyleName: "profesional",
 		PromptTemplate: `Eres un experto creador de contenido para LinkedIn.
 
 Basándote en la siguiente idea:

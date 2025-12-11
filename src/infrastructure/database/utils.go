@@ -34,12 +34,12 @@ func ObjectIDFromString(id string) (primitive.ObjectID, error) {
 	if id == "" {
 		return primitive.NilObjectID, fmt.Errorf("empty ObjectID string")
 	}
-	
+
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return primitive.NilObjectID, fmt.Errorf("invalid ObjectID format: %w", err)
 	}
-	
+
 	return objID, nil
 }
 
@@ -93,18 +93,18 @@ func BuildEqualityQuery(field string, value interface{}) bson.M {
 func BuildRangeQuery(field string, min, max interface{}) bson.M {
 	query := bson.M{}
 	conditions := bson.M{}
-	
+
 	if min != nil {
 		conditions["$gte"] = min
 	}
 	if max != nil {
 		conditions["$lte"] = max
 	}
-	
+
 	if len(conditions) > 0 {
 		query[field] = conditions
 	}
-	
+
 	return query
 }
 
@@ -234,7 +234,7 @@ func CalculatePagination(page, pageSize int) (skip, limit int64) {
 	if pageSize <= 0 {
 		pageSize = 10
 	}
-	
+
 	skip = int64((page - 1) * pageSize)
 	limit = int64(pageSize)
 	return
@@ -265,7 +265,7 @@ type PaginationInfo struct {
 // NewPaginationInfo creates pagination metadata
 func NewPaginationInfo(page, pageSize int, totalItems int64) *PaginationInfo {
 	totalPages := CalculateTotalPages(totalItems, pageSize)
-	
+
 	return &PaginationInfo{
 		Page:       page,
 		PageSize:   pageSize,

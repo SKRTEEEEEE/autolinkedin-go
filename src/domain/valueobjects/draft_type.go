@@ -8,7 +8,7 @@ type DraftType string
 const (
 	// DraftTypePost represents a LinkedIn post
 	DraftTypePost DraftType = "POST"
-	
+
 	// DraftTypeArticle represents a LinkedIn article
 	DraftTypeArticle DraftType = "ARTICLE"
 )

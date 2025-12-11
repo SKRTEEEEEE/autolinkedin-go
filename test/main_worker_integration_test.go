@@ -41,28 +41,28 @@ func TestMainWorkerStartup(t *testing.T) {
 // This test will FAIL until graceful shutdown with context cancellation is implemented
 func TestMainWorkerGracefulShutdown(t *testing.T) {
 	tests := []struct {
-		name               string
-		shutdownTimeout    time.Duration
-		workerProcessing   bool
-		expectCleanExit    bool
+		name             string
+		shutdownTimeout  time.Duration
+		workerProcessing bool
+		expectCleanExit  bool
 	}{
 		{
-			name:               "shutdown worker with no active processing",
-			shutdownTimeout:    5 * time.Second,
-			workerProcessing:   false,
-			expectCleanExit:    true,
+			name:             "shutdown worker with no active processing",
+			shutdownTimeout:  5 * time.Second,
+			workerProcessing: false,
+			expectCleanExit:  true,
 		},
 		{
-			name:               "shutdown worker during message processing",
-			shutdownTimeout:    10 * time.Second,
-			workerProcessing:   true,
-			expectCleanExit:    true,
+			name:             "shutdown worker during message processing",
+			shutdownTimeout:  10 * time.Second,
+			workerProcessing: true,
+			expectCleanExit:  true,
 		},
 		{
-			name:               "shutdown worker with timeout",
-			shutdownTimeout:    100 * time.Millisecond,
-			workerProcessing:   true,
-			expectCleanExit:    false,
+			name:             "shutdown worker with timeout",
+			shutdownTimeout:  100 * time.Millisecond,
+			workerProcessing: true,
+			expectCleanExit:  false,
 		},
 	}
 
@@ -78,22 +78,22 @@ func TestMainWorkerGracefulShutdown(t *testing.T) {
 // This test will FAIL until signal handling is implemented in main.go
 func TestMainSignalHandling(t *testing.T) {
 	tests := []struct {
-		name            string
-		signal          os.Signal
-		expectShutdown  bool
-		expectTimeout   time.Duration
+		name           string
+		signal         os.Signal
+		expectShutdown bool
+		expectTimeout  time.Duration
 	}{
 		{
-			name:            "handle SIGINT gracefully",
-			signal:          syscall.SIGINT,
-			expectShutdown:  true,
-			expectTimeout:   5 * time.Second,
+			name:           "handle SIGINT gracefully",
+			signal:         syscall.SIGINT,
+			expectShutdown: true,
+			expectTimeout:  5 * time.Second,
 		},
 		{
-			name:            "handle SIGTERM gracefully",
-			signal:          syscall.SIGTERM,
-			expectShutdown:  true,
-			expectTimeout:   5 * time.Second,
+			name:           "handle SIGTERM gracefully",
+			signal:         syscall.SIGTERM,
+			expectShutdown: true,
+			expectTimeout:  5 * time.Second,
 		},
 	}
 
@@ -107,7 +107,7 @@ func TestMainSignalHandling(t *testing.T) {
 			signal.Notify(sigChan, tt.signal)
 
 			// Will fail: Signal handling doesn't exist yet
-			_ = ctx // used in actual implementation
+			_ = ctx     // used in actual implementation
 			_ = sigChan // used in actual implementation
 			t.Fatal("Signal handling for graceful shutdown not implemented yet - TDD Red phase")
 		})
@@ -118,19 +118,19 @@ func TestMainSignalHandling(t *testing.T) {
 // This test will FAIL until context is properly propagated to workers
 func TestMainWorkerContextPropagation(t *testing.T) {
 	tests := []struct {
-		name               string
-		cancelContext      bool
-		expectWorkerStop   bool
+		name             string
+		cancelContext    bool
+		expectWorkerStop bool
 	}{
 		{
-			name:               "worker stops when context cancelled",
-			cancelContext:      true,
-			expectWorkerStop:   true,
+			name:             "worker stops when context cancelled",
+			cancelContext:    true,
+			expectWorkerStop: true,
 		},
 		{
-			name:               "worker continues when context not cancelled",
-			cancelContext:      false,
-			expectWorkerStop:   false,
+			name:             "worker continues when context not cancelled",
+			cancelContext:    false,
+			expectWorkerStop: false,
 		},
 	}
 
@@ -146,28 +146,28 @@ func TestMainWorkerContextPropagation(t *testing.T) {
 // This test will FAIL until worker initialization function is extracted
 func TestMainWorkerInitializationFunction(t *testing.T) {
 	tests := []struct {
-		name              string
-		natsAvailable     bool
-		useCaseValid      bool
-		expectError       bool
+		name          string
+		natsAvailable bool
+		useCaseValid  bool
+		expectError   bool
 	}{
 		{
-			name:              "initialize worker with valid dependencies",
-			natsAvailable:     true,
-			useCaseValid:      true,
-			expectError:       false,
+			name:          "initialize worker with valid dependencies",
+			natsAvailable: true,
+			useCaseValid:  true,
+			expectError:   false,
 		},
 		{
-			name:              "fail to initialize worker without NATS",
-			natsAvailable:     false,
-			useCaseValid:      true,
-			expectError:       true,
+			name:          "fail to initialize worker without NATS",
+			natsAvailable: false,
+			useCaseValid:  true,
+			expectError:   true,
 		},
 		{
-			name:              "fail to initialize worker without use case",
-			natsAvailable:     true,
-			useCaseValid:      false,
-			expectError:       true,
+			name:          "fail to initialize worker without use case",
+			natsAvailable: true,
+			useCaseValid:  false,
+			expectError:   true,
 		},
 	}
 
@@ -183,22 +183,22 @@ func TestMainWorkerInitializationFunction(t *testing.T) {
 // This test will FAIL until workers start as goroutines
 func TestMainWorkerConcurrentStartup(t *testing.T) {
 	tests := []struct {
-		name                string
-		workerCount         int
-		expectConcurrent    bool
-		expectHTTPBlocking  bool
+		name               string
+		workerCount        int
+		expectConcurrent   bool
+		expectHTTPBlocking bool
 	}{
 		{
-			name:                "start single worker as goroutine",
-			workerCount:         1,
-			expectConcurrent:    true,
-			expectHTTPBlocking:  false,
+			name:               "start single worker as goroutine",
+			workerCount:        1,
+			expectConcurrent:   true,
+			expectHTTPBlocking: false,
 		},
 		{
-			name:                "start multiple workers concurrently",
-			workerCount:         3,
-			expectConcurrent:    true,
-			expectHTTPBlocking:  false,
+			name:               "start multiple workers concurrently",
+			workerCount:        3,
+			expectConcurrent:   true,
+			expectHTTPBlocking: false,
 		},
 	}
 
@@ -242,32 +242,32 @@ func TestMainHTTPServerNonBlocking(t *testing.T) {
 // This test will FAIL until DI container properly wires worker dependencies
 func TestMainWorkerDependencyInjection(t *testing.T) {
 	tests := []struct {
-		name                     string
-		natsClientAvailable      bool
+		name                      string
+		natsClientAvailable       bool
 		generateDraftsUCAvailable bool
-		draftRepositoryAvailable bool
-		expectWorkerCreation     bool
+		draftRepositoryAvailable  bool
+		expectWorkerCreation      bool
 	}{
 		{
-			name:                     "create worker with all dependencies",
-			natsClientAvailable:      true,
+			name:                      "create worker with all dependencies",
+			natsClientAvailable:       true,
 			generateDraftsUCAvailable: true,
-			draftRepositoryAvailable: true,
-			expectWorkerCreation:     true,
+			draftRepositoryAvailable:  true,
+			expectWorkerCreation:      true,
 		},
 		{
-			name:                     "fail without nats client",
-			natsClientAvailable:      false,
+			name:                      "fail without nats client",
+			natsClientAvailable:       false,
 			generateDraftsUCAvailable: true,
-			draftRepositoryAvailable: true,
-			expectWorkerCreation:     false,
+			draftRepositoryAvailable:  true,
+			expectWorkerCreation:      false,
 		},
 		{
-			name:                     "fail without use case",
-			natsClientAvailable:      true,
+			name:                      "fail without use case",
+			natsClientAvailable:       true,
 			generateDraftsUCAvailable: false,
-			draftRepositoryAvailable: true,
-			expectWorkerCreation:     false,
+			draftRepositoryAvailable:  true,
+			expectWorkerCreation:      false,
 		},
 	}
 
@@ -283,22 +283,22 @@ func TestMainWorkerDependencyInjection(t *testing.T) {
 // This test will FAIL until timeout handling is implemented
 func TestMainWorkerShutdownTimeout(t *testing.T) {
 	tests := []struct {
-		name              string
-		shutdownTimeout   time.Duration
-		workerStopTime    time.Duration
-		expectForceKill   bool
+		name            string
+		shutdownTimeout time.Duration
+		workerStopTime  time.Duration
+		expectForceKill bool
 	}{
 		{
-			name:              "worker stops within timeout",
-			shutdownTimeout:   5 * time.Second,
-			workerStopTime:    1 * time.Second,
-			expectForceKill:   false,
+			name:            "worker stops within timeout",
+			shutdownTimeout: 5 * time.Second,
+			workerStopTime:  1 * time.Second,
+			expectForceKill: false,
 		},
 		{
-			name:              "worker exceeds timeout - force kill",
-			shutdownTimeout:   1 * time.Second,
-			workerStopTime:    5 * time.Second,
-			expectForceKill:   true,
+			name:            "worker exceeds timeout - force kill",
+			shutdownTimeout: 1 * time.Second,
+			workerStopTime:  5 * time.Second,
+			expectForceKill: true,
 		},
 	}
 

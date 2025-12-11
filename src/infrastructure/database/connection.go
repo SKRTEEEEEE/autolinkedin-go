@@ -13,29 +13,29 @@ import (
 
 // ConnectionConfig holds MongoDB connection configuration
 type ConnectionConfig struct {
-	URI                string
-	Database           string
-	MinPoolSize        uint64
-	MaxPoolSize        uint64
-	MaxConnIdleTime    time.Duration
-	ConnectTimeout     time.Duration
+	URI                 string
+	Database            string
+	MinPoolSize         uint64
+	MaxPoolSize         uint64
+	MaxConnIdleTime     time.Duration
+	ConnectTimeout      time.Duration
 	ServerSelectTimeout time.Duration
-	MaxRetries         int
-	InitialBackoff     time.Duration
-	MaxBackoff         time.Duration
+	MaxRetries          int
+	InitialBackoff      time.Duration
+	MaxBackoff          time.Duration
 }
 
 // DefaultConnectionConfig returns default connection configuration
 func DefaultConnectionConfig() *ConnectionConfig {
 	return &ConnectionConfig{
-		MinPoolSize:        5,
-		MaxPoolSize:        100,
-		MaxConnIdleTime:    30 * time.Second,
-		ConnectTimeout:     10 * time.Second,
+		MinPoolSize:         5,
+		MaxPoolSize:         100,
+		MaxConnIdleTime:     30 * time.Second,
+		ConnectTimeout:      10 * time.Second,
 		ServerSelectTimeout: 5 * time.Second,
-		MaxRetries:         3,
-		InitialBackoff:     100 * time.Millisecond,
-		MaxBackoff:         5 * time.Second,
+		MaxRetries:          3,
+		InitialBackoff:      100 * time.Millisecond,
+		MaxBackoff:          5 * time.Second,
 	}
 }
 

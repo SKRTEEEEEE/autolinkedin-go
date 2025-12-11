@@ -142,28 +142,28 @@ func TestBulkInsertPerformance(t *testing.T) {
 	}
 
 	tests := []struct {
-		name             string
-		documentCount    int
-		batchSize        int
-		maxTimePerBatch  time.Duration
+		name            string
+		documentCount   int
+		batchSize       int
+		maxTimePerBatch time.Duration
 	}{
 		{
-			name:             "insert 1000 documents in batches of 100",
-			documentCount:    1000,
-			batchSize:        100,
-			maxTimePerBatch:  200 * time.Millisecond,
+			name:            "insert 1000 documents in batches of 100",
+			documentCount:   1000,
+			batchSize:       100,
+			maxTimePerBatch: 200 * time.Millisecond,
 		},
 		{
-			name:             "insert 10000 documents in batches of 500",
-			documentCount:    10000,
-			batchSize:        500,
-			maxTimePerBatch:  1 * time.Second,
+			name:            "insert 10000 documents in batches of 500",
+			documentCount:   10000,
+			batchSize:       500,
+			maxTimePerBatch: 1 * time.Second,
 		},
 		{
-			name:             "insert 50000 documents in batches of 1000",
-			documentCount:    50000,
-			batchSize:        1000,
-			maxTimePerBatch:  2 * time.Second,
+			name:            "insert 50000 documents in batches of 1000",
+			documentCount:   50000,
+			batchSize:       1000,
+			maxTimePerBatch: 2 * time.Second,
 		},
 	}
 
@@ -269,32 +269,32 @@ func TestConnectionPoolExhaustion(t *testing.T) {
 	}
 
 	tests := []struct {
-		name            string
-		maxPoolSize     uint64
-		requestedConns  int
-		expectQueueing  bool
-		maxWaitTime     time.Duration
+		name           string
+		maxPoolSize    uint64
+		requestedConns int
+		expectQueueing bool
+		maxWaitTime    time.Duration
 	}{
 		{
-			name:            "requests within pool size - no queueing",
-			maxPoolSize:     50,
-			requestedConns:  40,
-			expectQueueing:  false,
-			maxWaitTime:     100 * time.Millisecond,
+			name:           "requests within pool size - no queueing",
+			maxPoolSize:    50,
+			requestedConns: 40,
+			expectQueueing: false,
+			maxWaitTime:    100 * time.Millisecond,
 		},
 		{
-			name:            "requests exceed pool size - queueing occurs",
-			maxPoolSize:     50,
-			requestedConns:  100,
-			expectQueueing:  true,
-			maxWaitTime:     2 * time.Second,
+			name:           "requests exceed pool size - queueing occurs",
+			maxPoolSize:    50,
+			requestedConns: 100,
+			expectQueueing: true,
+			maxWaitTime:    2 * time.Second,
 		},
 		{
-			name:            "massive overload - proper backpressure",
-			maxPoolSize:     50,
-			requestedConns:  500,
-			expectQueueing:  true,
-			maxWaitTime:     10 * time.Second,
+			name:           "massive overload - proper backpressure",
+			maxPoolSize:    50,
+			requestedConns: 500,
+			expectQueueing: true,
+			maxWaitTime:    10 * time.Second,
 		},
 	}
 
@@ -314,22 +314,22 @@ func TestMemoryUsageUnderLoad(t *testing.T) {
 	}
 
 	tests := []struct {
-		name             string
-		operations       int
-		concurrency      int
-		maxMemoryMB      int
+		name        string
+		operations  int
+		concurrency int
+		maxMemoryMB int
 	}{
 		{
-			name:             "1000 operations with 50 concurrent goroutines",
-			operations:       1000,
-			concurrency:      50,
-			maxMemoryMB:      100,
+			name:        "1000 operations with 50 concurrent goroutines",
+			operations:  1000,
+			concurrency: 50,
+			maxMemoryMB: 100,
 		},
 		{
-			name:             "10000 operations with 100 concurrent goroutines",
-			operations:       10000,
-			concurrency:      100,
-			maxMemoryMB:      200,
+			name:        "10000 operations with 100 concurrent goroutines",
+			operations:  10000,
+			concurrency: 100,
+			maxMemoryMB: 200,
 		},
 	}
 
@@ -349,25 +349,25 @@ func TestLatencyPercentiles(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
-		operations  int
-		p50Latency  time.Duration
-		p95Latency  time.Duration
-		p99Latency  time.Duration
+		name       string
+		operations int
+		p50Latency time.Duration
+		p95Latency time.Duration
+		p99Latency time.Duration
 	}{
 		{
-			name:        "read operation latencies",
-			operations:  1000,
-			p50Latency:  5 * time.Millisecond,
-			p95Latency:  20 * time.Millisecond,
-			p99Latency:  50 * time.Millisecond,
+			name:       "read operation latencies",
+			operations: 1000,
+			p50Latency: 5 * time.Millisecond,
+			p95Latency: 20 * time.Millisecond,
+			p99Latency: 50 * time.Millisecond,
 		},
 		{
-			name:        "write operation latencies",
-			operations:  1000,
-			p50Latency:  10 * time.Millisecond,
-			p95Latency:  40 * time.Millisecond,
-			p99Latency:  100 * time.Millisecond,
+			name:       "write operation latencies",
+			operations: 1000,
+			p50Latency: 10 * time.Millisecond,
+			p95Latency: 40 * time.Millisecond,
+			p99Latency: 100 * time.Millisecond,
 		},
 	}
 
@@ -387,22 +387,22 @@ func TestThroughputUnderLoad(t *testing.T) {
 	}
 
 	tests := []struct {
-		name             string
-		duration         time.Duration
-		concurrency      int
-		minOpsPerSecond  int
+		name            string
+		duration        time.Duration
+		concurrency     int
+		minOpsPerSecond int
 	}{
 		{
-			name:             "sustained throughput for 10 seconds",
-			duration:         10 * time.Second,
-			concurrency:      50,
-			minOpsPerSecond:  1000,
+			name:            "sustained throughput for 10 seconds",
+			duration:        10 * time.Second,
+			concurrency:     50,
+			minOpsPerSecond: 1000,
 		},
 		{
-			name:             "peak throughput for 5 seconds",
-			duration:         5 * time.Second,
-			concurrency:      100,
-			minOpsPerSecond:  2000,
+			name:            "peak throughput for 5 seconds",
+			duration:        5 * time.Second,
+			concurrency:     100,
+			minOpsPerSecond: 2000,
 		},
 	}
 
@@ -465,32 +465,32 @@ func TestConcurrentMixedOperations(t *testing.T) {
 	}
 
 	tests := []struct {
-		name          string
-		readOps       int
-		writeOps      int
-		concurrency   int
-		maxTime       time.Duration
+		name        string
+		readOps     int
+		writeOps    int
+		concurrency int
+		maxTime     time.Duration
 	}{
 		{
-			name:          "balanced read/write mix",
-			readOps:       500,
-			writeOps:      500,
-			concurrency:   50,
-			maxTime:       5 * time.Second,
+			name:        "balanced read/write mix",
+			readOps:     500,
+			writeOps:    500,
+			concurrency: 50,
+			maxTime:     5 * time.Second,
 		},
 		{
-			name:          "read-heavy workload",
-			readOps:       900,
-			writeOps:      100,
-			concurrency:   100,
-			maxTime:       3 * time.Second,
+			name:        "read-heavy workload",
+			readOps:     900,
+			writeOps:    100,
+			concurrency: 100,
+			maxTime:     3 * time.Second,
 		},
 		{
-			name:          "write-heavy workload",
-			readOps:       100,
-			writeOps:      900,
-			concurrency:   50,
-			maxTime:       10 * time.Second,
+			name:        "write-heavy workload",
+			readOps:     100,
+			writeOps:    900,
+			concurrency: 50,
+			maxTime:     10 * time.Second,
 		},
 	}
 

@@ -55,10 +55,10 @@ func TestUseCaseIntegration_DraftRefinementFlow(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name           string
-		userID         string
-		refinements    int
-		wantErr        bool
+		name        string
+		userID      string
+		refinements int
+		wantErr     bool
 	}{
 		{
 			name:        "create draft and refine it multiple times",
@@ -272,9 +272,9 @@ func TestUseCaseIntegration_RepositoryConsistency(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name        string
-		operations  int
-		wantErr     bool
+		name       string
+		operations int
+		wantErr    bool
 	}{
 		{
 			name:       "maintain consistency across 50 operations",
@@ -351,10 +351,10 @@ func TestUseCaseIntegration_TopicBasedWorkflow(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name        string
-		topicCount  int
+		name          string
+		topicCount    int
 		ideasPerTopic int
-		wantErr     bool
+		wantErr       bool
 	}{
 		{
 			name:          "generate ideas across multiple topics",
@@ -473,10 +473,10 @@ func TestUseCaseIntegration_PerformanceUnderLoad(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name           string
-		operations     int
-		maxDuration    time.Duration
-		wantErr        bool
+		name        string
+		operations  int
+		maxDuration time.Duration
+		wantErr     bool
 	}{
 		{
 			name:        "generate 100 ideas in under 10 seconds",

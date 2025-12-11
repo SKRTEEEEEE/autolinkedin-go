@@ -12,6 +12,7 @@ import (
 	"github.com/linkgen-ai/backend/src/application/services"
 	"github.com/linkgen-ai/backend/src/application/usecases"
 	"github.com/linkgen-ai/backend/src/application/workers"
+	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
 	"github.com/linkgen-ai/backend/src/infrastructure/config"
 	"github.com/linkgen-ai/backend/src/infrastructure/database"
@@ -40,6 +41,8 @@ type Application struct {
 	ideaRepo    interfaces.IdeasRepository
 	draftRepo   interfaces.DraftRepository
 	promptsRepo interfaces.PromptsRepository
+	jobRepo     interfaces.JobRepository
+	jobErrorRepo interfaces.JobErrorRepository
 
 	// Use cases
 	generateDraftsUC *usecases.GenerateDraftsUseCase
@@ -49,10 +52,10 @@ type Application struct {
 	refineDraftUC    *usecases.RefineDraftUseCase
 
 	// Workers
-	draftWorker *workers.DraftGenerationWorker
-	workerCtx   context.Context
+	draftWorker  *workers.DraftGenerationWorker
+	workerCtx    context.Context
 	workerCancel context.CancelFunc
-	workerWg    sync.WaitGroup
+	workerWg     sync.WaitGroup
 
 	// HTTP Server
 	httpServer *httpServer.Server
@@ -118,7 +121,7 @@ func (wr *WorkerRegistry) MarkStopped(name string, err error) {
 func (wr *WorkerRegistry) GetStatus() map[string]*WorkerStatus {
 	wr.mu.RLock()
 	defer wr.mu.RUnlock()
-	
+
 	// Create a copy to avoid race conditions
 	status := make(map[string]*WorkerStatus)
 	for name, ws := range wr.workers {
@@ -136,7 +139,7 @@ func (wr *WorkerRegistry) GetStatus() map[string]*WorkerStatus {
 func (wr *WorkerRegistry) IsHealthy() bool {
 	wr.mu.RLock()
 	defer wr.mu.RUnlock()
-	
+
 	for _, ws := range wr.workers {
 		if !ws.Running {
 			return false
@@ -206,12 +209,12 @@ func (a *Application) initialize(ctx context.Context) error {
 
 	// Initialize database client
 	dbConfig := &database.ConnectionConfig{
-		URI:                cfg.Database.URI,
-		Database:           cfg.Database.Database,
-		MinPoolSize:        uint64(cfg.Database.MinPoolSize),
-		MaxPoolSize:        uint64(cfg.Database.MaxPoolSize),
-		ConnectTimeout:     cfg.Database.ConnectTimeout,
-		MaxRetries:         3,
+		URI:            cfg.Database.URI,
+		Database:       cfg.Database.Database,
+		MinPoolSize:    uint64(cfg.Database.MinPoolSize),
+		MaxPoolSize:    uint64(cfg.Database.MaxPoolSize),
+		ConnectTimeout: cfg.Database.ConnectTimeout,
+		MaxRetries:     3,
 	}
 	dbClient := database.GetClient(dbConfig, a.logger)
 	a.dbClient = dbClient
@@ -243,6 +246,14 @@ func (a *Application) initialize(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to get prompts collection: %w", err)
 	}
+	jobsCol, err := dbClient.GetCollection(database.CollectionJobs)
+	if err != nil {
+		return fmt.Errorf("failed to get jobs collection: %w", err)
+	}
+	jobErrorsCol, err := dbClient.GetCollection(database.CollectionJobErrors)
+	if err != nil {
+		return fmt.Errorf("failed to get job errors collection: %w", err)
+	}
 
 	// Initialize repositories
 	a.userRepo = dbRepos.NewUserRepository(usersCol)
@@ -250,6 +261,8 @@ func (a *Application) initialize(ctx context.Context) error {
 	a.ideaRepo = dbRepos.NewIdeasRepository(ideasCol)
 	a.draftRepo = dbRepos.NewDraftRepository(draftsCol)
 	a.promptsRepo = dbRepos.NewPromptsRepository(promptsCol)
+	a.jobRepo = dbRepos.NewJobRepository(jobsCol)
+	a.jobErrorRepo = dbRepos.NewJobErrorRepository(jobErrorsCol)
 
 	// Initialize LLM client
 	llmConfig := llm.Config{
@@ -280,7 +293,7 @@ func (a *Application) initialize(ctx context.Context) error {
 	// Connect to NATS (non-blocking - workers will retry)
 	connectCtx, connectCancel := context.WithTimeout(ctx, 10*time.Second)
 	defer connectCancel()
-	
+
 	if err := natsClient.Connect(connectCtx, 10*time.Second); err != nil {
 		a.logger.Warn("Failed to connect to NATS initially, workers will retry", zap.Error(err))
 		// Don't fail app startup if NATS is not available
@@ -338,7 +351,7 @@ func (a *Application) seedDevelopmentData(ctx context.Context) error {
 		a.llmClient,
 		a.logger,
 	)
-	
+
 	if err := seeder.SeedAll(ctx); err != nil {
 		return fmt.Errorf("failed to seed development data: %w", err)
 	}
@@ -376,10 +389,10 @@ func (a *Application) initializeHTTPServer() error {
 
 	// Create adapter for database health checker
 	dbHealthChecker := &dbHealthAdapter{client: a.dbClient}
-	
+
 	// Create adapter for worker registry
 	workerRegistryAdapter := &workerRegistryAdapter{registry: a.workerRegistry}
-	
+
 	// Register health handler
 	healthHandler := handlers.NewHealthHandler(
 		dbHealthChecker,
@@ -420,6 +433,8 @@ func (a *Application) initializeHTTPServer() error {
 	draftsHandler := handlers.NewDraftsHandler(
 		a.refineDraftUC,
 		a.draftRepo,
+		a.jobRepo,
+		a.ideaRepo,
 		draftPublisher,
 		a.logger,
 	)
@@ -451,10 +466,22 @@ func (a *Application) initializeWorkers() error {
 		useCase: a.generateDraftsUC,
 	}
 
+	// Create job repository adapter
+	jobRepoAdapter := &jobRepositoryAdapter{
+		repo: a.jobRepo,
+	}
+
+	var jobErrorRepoAdapter *jobErrorRepositoryAdapter
+	if a.jobErrorRepo != nil {
+		jobErrorRepoAdapter = &jobErrorRepositoryAdapter{repo: a.jobErrorRepo}
+	}
+
 	// Create draft generation worker
 	draftWorker, err := workers.NewDraftGenerationWorker(workers.WorkerConfig{
 		Consumer:   consumer,
 		UseCase:    ucAdapter,
+		JobRepo:    jobRepoAdapter,
+		JobErrorRepo: jobErrorRepoAdapter,
 		MaxRetries: 2,
 		Logger:     a.logger,
 	})
@@ -488,10 +515,10 @@ func (a *Application) start(ctx context.Context) error {
 	}
 
 	// TODO: Start scheduler
-	
+
 	a.logger.Info("Application services started successfully")
 	fmt.Printf("LinkGen AI is running on http://%s:%d\n", a.config.Server.Host, a.config.Server.Port)
-	
+
 	return nil
 }
 
@@ -503,18 +530,18 @@ func (a *Application) startWorkers(ctx context.Context) error {
 	a.workerWg.Add(1)
 	go func() {
 		defer a.workerWg.Done()
-		
+
 		a.logger.Info("Starting draft generation worker...")
-		
+
 		if err := a.draftWorker.Start(ctx); err != nil {
 			a.logger.Error("Draft generation worker failed to start", zap.Error(err))
 			a.workerRegistry.MarkStopped("draft_generation", err)
 			return
 		}
-		
+
 		a.workerRegistry.MarkRunning("draft_generation")
 		a.logger.Info("Draft generation worker started successfully")
-		
+
 		// Wait for context cancellation
 		<-ctx.Done()
 		a.logger.Info("Draft generation worker context cancelled")
@@ -673,4 +700,85 @@ func (a *workerRegistryAdapter) GetStatus() map[string]*handlers.WorkerStatus {
 // IsHealthy adapts the health check interface
 func (a *workerRegistryAdapter) IsHealthy() bool {
 	return a.registry.IsHealthy()
+}
+
+// jobRepositoryAdapter adapts interfaces.JobRepository to workers.JobRepository
+type jobRepositoryAdapter struct {
+	repo interfaces.JobRepository
+}
+
+// FindByID adapts the job repository interface
+func (a *jobRepositoryAdapter) FindByID(ctx context.Context, jobID string) (*workers.Job, error) {
+	job, err := a.repo.FindByID(ctx, jobID)
+	if err != nil {
+		return nil, err
+	}
+	if job == nil {
+		return nil, nil
+	}
+
+	return &workers.Job{
+		ID:          job.ID,
+		UserID:      job.UserID,
+		Type:        string(job.Type),
+		Status:      string(job.Status),
+		IdeaID:      job.IdeaID,
+		DraftIDs:    job.DraftIDs,
+		Error:       job.Error,
+		CreatedAt:   job.CreatedAt,
+		UpdatedAt:   job.UpdatedAt,
+		StartedAt:   job.StartedAt,
+		CompletedAt: job.CompletedAt,
+	}, nil
+}
+
+// Update adapts the job repository interface
+func (a *jobRepositoryAdapter) Update(ctx context.Context, job *workers.Job) error {
+	domainJob := &entities.Job{
+		ID:          job.ID,
+		UserID:      job.UserID,
+		Type:        entities.JobType(job.Type),
+		Status:      entities.JobStatus(job.Status),
+		IdeaID:      job.IdeaID,
+		DraftIDs:    job.DraftIDs,
+		Error:       job.Error,
+		CreatedAt:   job.CreatedAt,
+		UpdatedAt:   job.UpdatedAt,
+		StartedAt:   job.StartedAt,
+		CompletedAt: job.CompletedAt,
+	}
+
+	return a.repo.Update(ctx, domainJob)
+}
+
+// jobErrorRepositoryAdapter adapts interfaces.JobErrorRepository to workers.JobErrorRepository
+type jobErrorRepositoryAdapter struct {
+	repo interfaces.JobErrorRepository
+}
+
+// Create adapts the job error repository interface
+func (a *jobErrorRepositoryAdapter) Create(ctx context.Context, jobError *workers.JobError) (string, error) {
+	if a.repo == nil || jobError == nil {
+		return "", fmt.Errorf("job error repository not configured")
+	}
+
+	var ideaID *string
+	if jobError.IdeaID != "" {
+		idea := jobError.IdeaID
+		ideaID = &idea
+	}
+
+	domainJobError := &entities.JobError{
+		JobID:       jobError.JobID,
+		UserID:      jobError.UserID,
+		IdeaID:      ideaID,
+		Stage:       entities.JobErrorStage(jobError.Stage),
+		Error:       jobError.Error,
+		RawResponse: jobError.RawResponse,
+		Prompt:      jobError.Prompt,
+		Attempt:     jobError.Attempt,
+		CreatedAt:   time.Now(),
+	}
+
+	return a.repo.Create(ctx, domainJobError)
 }

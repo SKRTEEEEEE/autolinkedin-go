@@ -134,38 +134,38 @@ func TestIdeasRepositoryListByUserID(t *testing.T) {
 // This test will FAIL until ClearByUserID method is implemented
 func TestIdeasRepositoryClearByUserID(t *testing.T) {
 	tests := []struct {
-		name         string
-		userID       string
-		setupIdeas   int
-		expectError  bool
+		name          string
+		userID        string
+		setupIdeas    int
+		expectError   bool
 		expectDeleted int64
 	}{
 		{
-			name:         "clear ideas for user with multiple ideas",
-			userID:       primitive.NewObjectID().Hex(),
-			setupIdeas:   50,
-			expectError:  false,
+			name:          "clear ideas for user with multiple ideas",
+			userID:        primitive.NewObjectID().Hex(),
+			setupIdeas:    50,
+			expectError:   false,
 			expectDeleted: 50,
 		},
 		{
-			name:         "clear ideas for user with no ideas",
-			userID:       primitive.NewObjectID().Hex(),
-			setupIdeas:   0,
-			expectError:  false,
+			name:          "clear ideas for user with no ideas",
+			userID:        primitive.NewObjectID().Hex(),
+			setupIdeas:    0,
+			expectError:   false,
 			expectDeleted: 0,
 		},
 		{
-			name:         "clear with invalid user ID",
-			userID:       "invalid-id",
-			setupIdeas:   0,
-			expectError:  true,
+			name:          "clear with invalid user ID",
+			userID:        "invalid-id",
+			setupIdeas:    0,
+			expectError:   true,
 			expectDeleted: 0,
 		},
 		{
-			name:         "clear with empty user ID",
-			userID:       "",
-			setupIdeas:   0,
-			expectError:  true,
+			name:          "clear with empty user ID",
+			userID:        "",
+			setupIdeas:    0,
+			expectError:   true,
 			expectDeleted: 0,
 		},
 	}

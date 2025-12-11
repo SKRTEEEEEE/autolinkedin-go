@@ -5,694 +5,546 @@ import (
 	"errors"
 	"testing"
 	"time"
+
+	"github.com/linkgen-ai/backend/src/application/usecases"
+	"github.com/linkgen-ai/backend/src/domain/entities"
+	"github.com/linkgen-ai/backend/src/domain/interfaces"
 )
 
 // TestGenerateDraftsUseCase_Success validates successful draft generation flow
-// This test will FAIL until GenerateDraftsUseCase is implemented
 func TestGenerateDraftsUseCase_Success(t *testing.T) {
-	tests := []struct {
-		name               string
-		userID             string
-		ideaID             string
-		expectedPosts      int
-		expectedArticles   int
-		wantErr            bool
-	}{
-		{
-			name:             "generate 5 posts and 1 article",
-			userID:           "user123",
-			ideaID:           "idea456",
-			expectedPosts:    5,
-			expectedArticles: 1,
-			wantErr:          false,
-		},
-		{
-			name:             "generate drafts for different user",
-			userID:           "user789",
-			ideaID:           "idea101",
-			expectedPosts:    5,
-			expectedArticles: 1,
-			wantErr:          false,
+	ctx := context.Background()
+
+	// Setup mocks
+	userRepo := &MockUserRepository{
+		FindByIDFunc: func(ctx context.Context, userID string) (*entities.User, error) {
+			user, _ := entities.NewUser(userID, "testuser", "es")
+			user.Configuration = map[string]interface{}{
+				"name":            "Test User",
+				"expertise":       "Software Engineering",
+				"tone_preference": "professional",
+			}
+			return user, nil
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Will fail: GenerateDraftsUseCase doesn't exist yet
-			t.Fatal("GenerateDraftsUseCase not implemented yet - TDD Red phase")
-		})
+	ideasRepo := &MockIdeasRepository{
+		ListByUserIDFunc: func(ctx context.Context, userID string, topicID string, limit int) ([]*entities.Idea, error) {
+			idea := entities.NewIdea("675337baf901e2d790aabbdd", userID, "topic123", "Test idea content for Clean Architecture", nil)
+			return []*entities.Idea{idea}, nil
+		},
+	}
+
+	draftRepo := &MockDraftRepository{
+		CreateFunc: func(ctx context.Context, draft *entities.Draft) (string, error) {
+			return draft.ID, nil
+		},
+	}
+
+	llmService := &MockLLMService{
+		GenerateDraftsFunc: func(ctx context.Context, idea string, userContext string) (interfaces.DraftSet, error) {
+			return interfaces.DraftSet{
+				Posts: []string{
+					"Post 1: Clean Architecture principles explained in detail",
+					"Post 2: Dependency injection benefits for maintainability",
+					"Post 3: Repository pattern explained with examples",
+					"Post 4: Use cases in action for clean code",
+					"Post 5: Testing strategies for better quality",
+				},
+				Articles: []string{
+					"# Clean Architecture Guide\n\nThis is a comprehensive article about Clean Architecture patterns and how to apply them in real-world projects.",
+				},
+			}, nil
+		},
+	}
+
+	// Create use case
+	uc := usecases.NewGenerateDraftsUseCase(userRepo, ideasRepo, draftRepo, llmService)
+
+	// Execute
+	input := usecases.GenerateDraftsInput{
+		UserID: "675337baf901e2d790aabbcc",
+		IdeaID: "675337baf901e2d790aabbdd",
+	}
+	drafts, err := uc.Execute(ctx, input)
+
+	// Validate
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if len(drafts) != 6 {
+		t.Errorf("Expected 6 drafts (5 posts + 1 article), got %d", len(drafts))
+	}
+
+	// Count posts and articles
+	postCount := 0
+	articleCount := 0
+	for _, draft := range drafts {
+		if draft.Type == "POST" {
+			postCount++
+		} else if draft.Type == "ARTICLE" {
+			articleCount++
+		}
+	}
+
+	if postCount != 5 {
+		t.Errorf("Expected 5 posts, got %d", postCount)
+	}
+
+	if articleCount != 1 {
+		t.Errorf("Expected 1 article, got %d", articleCount)
 	}
 }
 
 // TestGenerateDraftsUseCase_ValidationErrors validates input validation
-// This test will FAIL until input validation is implemented
 func TestGenerateDraftsUseCase_ValidationErrors(t *testing.T) {
+	ctx := context.Background()
+
+	// Create minimal valid mocks (won't be called)
+	userRepo := &MockUserRepository{}
+	ideasRepo := &MockIdeasRepository{}
+	draftRepo := &MockDraftRepository{}
+	llmService := &MockLLMService{}
+
+	uc := usecases.NewGenerateDraftsUseCase(userRepo, ideasRepo, draftRepo, llmService)
+
 	tests := []struct {
 		name    string
 		userID  string
 		ideaID  string
 		wantErr bool
-		errMsg  string
 	}{
 		{
 			name:    "error on empty user ID",
 			userID:  "",
-			ideaID:  "idea123",
+			ideaID:  "675337baf901e2d790aabbdd",
 			wantErr: true,
-			errMsg:  "user ID cannot be empty",
 		},
 		{
 			name:    "error on empty idea ID",
-			userID:  "user123",
+			userID:  "675337baf901e2d790aabbcc",
 			ideaID:  "",
 			wantErr: true,
-			errMsg:  "idea ID cannot be empty",
 		},
 		{
 			name:    "error on both empty",
 			userID:  "",
 			ideaID:  "",
 			wantErr: true,
-			errMsg:  "user ID and idea ID cannot be empty",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Will fail: Validation logic doesn't exist yet
-			t.Fatal("GenerateDraftsUseCase validation not implemented yet - TDD Red phase")
+			input := usecases.GenerateDraftsInput{
+				UserID: tt.userID,
+				IdeaID: tt.ideaID,
+			}
+			_, err := uc.Execute(ctx, input)
+
+			if tt.wantErr && err == nil {
+				t.Error("Expected error but got none")
+			}
+			if !tt.wantErr && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
 		})
 	}
 }
 
 // TestGenerateDraftsUseCase_UserNotFound validates user existence check
-// This test will FAIL until user repository integration is implemented
 func TestGenerateDraftsUseCase_UserNotFound(t *testing.T) {
 	ctx := context.Background()
-	_ = ctx
 
-	tests := []struct {
-		name    string
-		userID  string
-		ideaID  string
-		wantErr bool
-		errMsg  string
-	}{
-		{
-			name:    "error when user does not exist",
-			userID:  "nonexistent-user",
-			ideaID:  "idea123",
-			wantErr: true,
-			errMsg:  "user not found",
-		},
-		{
-			name:    "error when user ID is invalid",
-			userID:  "invalid-id-format",
-			ideaID:  "idea123",
-			wantErr: true,
-			errMsg:  "invalid user ID",
+	userRepo := &MockUserRepository{
+		FindByIDFunc: func(ctx context.Context, userID string) (*entities.User, error) {
+			return nil, errors.New("user not found")
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Will fail: User repository integration doesn't exist yet
-			t.Fatal("GenerateDraftsUseCase user validation not implemented yet - TDD Red phase")
-		})
+	ideasRepo := &MockIdeasRepository{}
+	draftRepo := &MockDraftRepository{}
+	llmService := &MockLLMService{}
+
+	uc := usecases.NewGenerateDraftsUseCase(userRepo, ideasRepo, draftRepo, llmService)
+
+	input := usecases.GenerateDraftsInput{
+		UserID: "675337baf901e2d790aabbcc",
+		IdeaID: "675337baf901e2d790aabbdd",
+	}
+	_, err := uc.Execute(ctx, input)
+
+	if err == nil {
+		t.Error("Expected error when user not found")
 	}
 }
 
 // TestGenerateDraftsUseCase_IdeaNotFound validates idea existence check
-// This test will FAIL until ideas repository integration is implemented
 func TestGenerateDraftsUseCase_IdeaNotFound(t *testing.T) {
 	ctx := context.Background()
-	_ = ctx
 
-	tests := []struct {
-		name    string
-		userID  string
-		ideaID  string
-		wantErr bool
-		errMsg  string
-	}{
-		{
-			name:    "error when idea does not exist",
-			userID:  "user123",
-			ideaID:  "nonexistent-idea",
-			wantErr: true,
-			errMsg:  "idea not found",
-		},
-		{
-			name:    "error when idea ID is invalid",
-			userID:  "user123",
-			ideaID:  "invalid-id-format",
-			wantErr: true,
-			errMsg:  "invalid idea ID",
+	userRepo := &MockUserRepository{
+		FindByIDFunc: func(ctx context.Context, userID string) (*entities.User, error) {
+			user, _ := entities.NewUser(userID, "testuser", "es")
+			return user, nil
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Will fail: Ideas repository integration doesn't exist yet
-			t.Fatal("GenerateDraftsUseCase idea validation not implemented yet - TDD Red phase")
-		})
+	ideasRepo := &MockIdeasRepository{
+		ListByUserIDFunc: func(ctx context.Context, userID string, topicID string, limit int) ([]*entities.Idea, error) {
+			// Return empty list - idea not found
+			return []*entities.Idea{}, nil
+		},
+	}
+
+	draftRepo := &MockDraftRepository{}
+	llmService := &MockLLMService{}
+
+	uc := usecases.NewGenerateDraftsUseCase(userRepo, ideasRepo, draftRepo, llmService)
+
+	input := usecases.GenerateDraftsInput{
+		UserID: "675337baf901e2d790aabbcc",
+		IdeaID: "675337baf901e2d790aabbdd",
+	}
+	_, err := uc.Execute(ctx, input)
+
+	if err == nil {
+		t.Error("Expected error when idea not found")
 	}
 }
 
 // TestGenerateDraftsUseCase_IdeaOwnership validates idea belongs to user
-// This test will FAIL until ownership validation is implemented
 func TestGenerateDraftsUseCase_IdeaOwnership(t *testing.T) {
 	ctx := context.Background()
-	_ = ctx
 
-	tests := []struct {
-		name        string
-		userID      string
-		ideaID      string
-		ideaOwnerID string
-		wantErr     bool
-		errMsg      string
-	}{
-		{
-			name:        "error when idea belongs to different user",
-			userID:      "user123",
-			ideaID:      "idea456",
-			ideaOwnerID: "user789",
-			wantErr:     true,
-			errMsg:      "idea does not belong to user",
-		},
-		{
-			name:        "success when idea belongs to user",
-			userID:      "user123",
-			ideaID:      "idea456",
-			ideaOwnerID: "user123",
-			wantErr:     false,
+	userRepo := &MockUserRepository{
+		FindByIDFunc: func(ctx context.Context, userID string) (*entities.User, error) {
+			user, _ := entities.NewUser(userID, "testuser", "es")
+			return user, nil
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Will fail: Ownership validation doesn't exist yet
-			t.Fatal("GenerateDraftsUseCase ownership validation not implemented yet - TDD Red phase")
-		})
+	ideasRepo := &MockIdeasRepository{
+		ListByUserIDFunc: func(ctx context.Context, userID string, topicID string, limit int) ([]*entities.Idea, error) {
+			// Return idea belonging to different user
+			idea := entities.NewIdea("675337baf901e2d790aabbdd", "different-user-id", "topic123", "Test idea", nil)
+			return []*entities.Idea{idea}, nil
+		},
+	}
+
+	draftRepo := &MockDraftRepository{}
+	llmService := &MockLLMService{}
+
+	uc := usecases.NewGenerateDraftsUseCase(userRepo, ideasRepo, draftRepo, llmService)
+
+	input := usecases.GenerateDraftsInput{
+		UserID: "675337baf901e2d790aabbcc",
+		IdeaID: "675337baf901e2d790aabbdd",
+	}
+	_, err := uc.Execute(ctx, input)
+
+	if err == nil {
+		t.Error("Expected error when idea doesn't belong to user")
 	}
 }
 
 // TestGenerateDraftsUseCase_IdeaAlreadyUsed validates idea can only be used once
-// This test will FAIL until used idea validation is implemented
 func TestGenerateDraftsUseCase_IdeaAlreadyUsed(t *testing.T) {
 	ctx := context.Background()
-	_ = ctx
 
-	tests := []struct {
-		name      string
-		userID    string
-		ideaID    string
-		ideaUsed  bool
-		wantErr   bool
-		errMsg    string
-	}{
-		{
-			name:     "error when idea already used",
-			userID:   "user123",
-			ideaID:   "idea456",
-			ideaUsed: true,
-			wantErr:  true,
-			errMsg:   "idea has already been used",
-		},
-		{
-			name:     "success when idea is unused",
-			userID:   "user123",
-			ideaID:   "idea456",
-			ideaUsed: false,
-			wantErr:  false,
+	userRepo := &MockUserRepository{
+		FindByIDFunc: func(ctx context.Context, userID string) (*entities.User, error) {
+			user, _ := entities.NewUser(userID, "testuser", "es")
+			return user, nil
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Will fail: Used idea validation doesn't exist yet
-			t.Fatal("GenerateDraftsUseCase used idea validation not implemented yet - TDD Red phase")
-		})
+	ideasRepo := &MockIdeasRepository{
+		ListByUserIDFunc: func(ctx context.Context, userID string, topicID string, limit int) ([]*entities.Idea, error) {
+			idea := entities.NewIdea("675337baf901e2d790aabbdd", userID, "topic123", "Test idea", nil)
+			// Mark idea as already used
+			_ = idea.MarkAsUsed()
+			return []*entities.Idea{idea}, nil
+		},
+	}
+
+	draftRepo := &MockDraftRepository{}
+	llmService := &MockLLMService{}
+
+	uc := usecases.NewGenerateDraftsUseCase(userRepo, ideasRepo, draftRepo, llmService)
+
+	input := usecases.GenerateDraftsInput{
+		UserID: "675337baf901e2d790aabbcc",
+		IdeaID: "675337baf901e2d790aabbdd",
+	}
+	_, err := uc.Execute(ctx, input)
+
+	if err == nil {
+		t.Error("Expected error when idea already used")
 	}
 }
 
 // TestGenerateDraftsUseCase_IdeaExpired validates expired idea handling
-// This test will FAIL until expiration validation is implemented
 func TestGenerateDraftsUseCase_IdeaExpired(t *testing.T) {
 	ctx := context.Background()
-	_ = ctx
 
-	now := time.Now()
-
-	tests := []struct {
-		name        string
-		userID      string
-		ideaID      string
-		expiresAt   *time.Time
-		wantErr     bool
-		errMsg      string
-	}{
-		{
-			name:   "error when idea expired",
-			userID: "user123",
-			ideaID: "idea456",
-			expiresAt: func() *time.Time {
-				t := now.Add(-24 * time.Hour)
-				return &t
-			}(),
-			wantErr: true,
-			errMsg:  "idea has expired",
-		},
-		{
-			name:   "success when idea not expired",
-			userID: "user123",
-			ideaID: "idea456",
-			expiresAt: func() *time.Time {
-				t := now.Add(24 * time.Hour)
-				return &t
-			}(),
-			wantErr: false,
-		},
-		{
-			name:      "success when idea has no expiration",
-			userID:    "user123",
-			ideaID:    "idea456",
-			expiresAt: nil,
-			wantErr:   false,
+	userRepo := &MockUserRepository{
+		FindByIDFunc: func(ctx context.Context, userID string) (*entities.User, error) {
+			user, _ := entities.NewUser(userID, "testuser", "es")
+			return user, nil
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Will fail: Expiration validation doesn't exist yet
-			t.Fatal("GenerateDraftsUseCase expiration validation not implemented yet - TDD Red phase")
-		})
-	}
-}
-
-// TestGenerateDraftsUseCase_UserContextRetrieval validates user context gathering
-// This test will FAIL until user context retrieval is implemented
-func TestGenerateDraftsUseCase_UserContextRetrieval(t *testing.T) {
-	ctx := context.Background()
-	_ = ctx
-
-	tests := []struct {
-		name        string
-		userID      string
-		hasContext  bool
-		contextData map[string]interface{}
-		wantErr     bool
-	}{
-		{
-			name:   "retrieve user context successfully",
-			userID: "user123",
-			hasContext: true,
-			contextData: map[string]interface{}{
-				"expertise": "Go programming",
-				"tone":      "professional",
-			},
-			wantErr: false,
-		},
-		{
-			name:        "handle user with no context",
-			userID:      "user456",
-			hasContext:  false,
-			contextData: nil,
-			wantErr:     false,
+	ideasRepo := &MockIdeasRepository{
+		ListByUserIDFunc: func(ctx context.Context, userID string, topicID string, limit int) ([]*entities.Idea, error) {
+			// Create expired idea
+			expiresAt := time.Now().Add(-24 * time.Hour)
+			idea := entities.NewIdea("675337baf901e2d790aabbdd", userID, "topic123", "Test idea", &expiresAt)
+			return []*entities.Idea{idea}, nil
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Will fail: User context retrieval doesn't exist yet
-			t.Fatal("GenerateDraftsUseCase user context retrieval not implemented yet - TDD Red phase")
-		})
+	draftRepo := &MockDraftRepository{}
+	llmService := &MockLLMService{}
+
+	uc := usecases.NewGenerateDraftsUseCase(userRepo, ideasRepo, draftRepo, llmService)
+
+	input := usecases.GenerateDraftsInput{
+		UserID: "675337baf901e2d790aabbcc",
+		IdeaID: "675337baf901e2d790aabbdd",
 	}
-}
+	_, err := uc.Execute(ctx, input)
 
-// TestGenerateDraftsUseCase_LLMIntegration validates LLM service integration
-// This test will FAIL until LLM service integration is implemented
-func TestGenerateDraftsUseCase_LLMIntegration(t *testing.T) {
-	ctx := context.Background()
-	_ = ctx
-
-	tests := []struct {
-		name         string
-		userID       string
-		ideaContent  string
-		userContext  string
-		llmPosts     []string
-		llmArticles  []string
-		wantErr      bool
-	}{
-		{
-			name:        "successful LLM call generates drafts",
-			userID:      "user123",
-			ideaContent: "Write about Clean Architecture",
-			userContext: "expertise: Go programming",
-			llmPosts: []string{
-				"Post 1 content",
-				"Post 2 content",
-				"Post 3 content",
-				"Post 4 content",
-				"Post 5 content",
-			},
-			llmArticles: []string{
-				"Article 1 content with detailed explanation",
-			},
-			wantErr: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Will fail: LLM integration doesn't exist yet
-			t.Fatal("GenerateDraftsUseCase LLM integration not implemented yet - TDD Red phase")
-		})
+	if err == nil {
+		t.Error("Expected error when idea is expired")
 	}
 }
 
 // TestGenerateDraftsUseCase_LLMErrors validates LLM error handling
-// This test will FAIL until LLM error handling is implemented
 func TestGenerateDraftsUseCase_LLMErrors(t *testing.T) {
 	ctx := context.Background()
-	_ = ctx
+
+	userRepo := &MockUserRepository{
+		FindByIDFunc: func(ctx context.Context, userID string) (*entities.User, error) {
+			user, _ := entities.NewUser(userID, "testuser", "es")
+			return user, nil
+		},
+	}
+
+	ideasRepo := &MockIdeasRepository{
+		ListByUserIDFunc: func(ctx context.Context, userID string, topicID string, limit int) ([]*entities.Idea, error) {
+			idea := entities.NewIdea("675337baf901e2d790aabbdd", userID, "topic123", "Test idea", nil)
+			return []*entities.Idea{idea}, nil
+		},
+	}
+
+	draftRepo := &MockDraftRepository{}
 
 	tests := []struct {
-		name    string
-		userID  string
-		ideaID  string
-		llmErr  error
-		wantErr bool
-		errMsg  string
+		name   string
+		llmErr error
 	}{
 		{
-			name:    "LLM service unavailable",
-			userID:  "user123",
-			ideaID:  "idea456",
-			llmErr:  errors.New("connection refused"),
-			wantErr: true,
-			errMsg:  "LLM service unavailable",
+			name:   "LLM service unavailable",
+			llmErr: errors.New("connection refused"),
 		},
 		{
-			name:    "LLM timeout",
-			userID:  "user456",
-			ideaID:  "idea789",
-			llmErr:  errors.New("request timeout"),
-			wantErr: true,
-			errMsg:  "LLM request timeout",
+			name:   "LLM timeout",
+			llmErr: errors.New("request timeout"),
 		},
 		{
-			name:    "LLM invalid response format",
-			userID:  "user789",
-			ideaID:  "idea101",
-			llmErr:  errors.New("invalid JSON"),
-			wantErr: true,
-			errMsg:  "LLM response error",
+			name:   "LLM invalid response",
+			llmErr: errors.New("invalid JSON"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Will fail: LLM error handling doesn't exist yet
-			t.Fatal("GenerateDraftsUseCase LLM error handling not implemented yet - TDD Red phase")
+			llmService := &MockLLMService{
+				GenerateDraftsFunc: func(ctx context.Context, idea string, userContext string) (interfaces.DraftSet, error) {
+					return interfaces.DraftSet{}, tt.llmErr
+				},
+			}
+
+			uc := usecases.NewGenerateDraftsUseCase(userRepo, ideasRepo, draftRepo, llmService)
+
+			input := usecases.GenerateDraftsInput{
+				UserID: "675337baf901e2d790aabbcc",
+				IdeaID: "675337baf901e2d790aabbdd",
+			}
+			_, err := uc.Execute(ctx, input)
+
+			if err == nil {
+				t.Error("Expected error when LLM fails")
+			}
 		})
 	}
 }
 
 // TestGenerateDraftsUseCase_LLMInsufficientDrafts validates partial LLM responses
-// This test will FAIL until partial response handling is implemented
 func TestGenerateDraftsUseCase_LLMInsufficientDrafts(t *testing.T) {
 	ctx := context.Background()
-	_ = ctx
+
+	userRepo := &MockUserRepository{
+		FindByIDFunc: func(ctx context.Context, userID string) (*entities.User, error) {
+			user, _ := entities.NewUser(userID, "testuser", "es")
+			return user, nil
+		},
+	}
+
+	ideasRepo := &MockIdeasRepository{
+		ListByUserIDFunc: func(ctx context.Context, userID string, topicID string, limit int) ([]*entities.Idea, error) {
+			idea := entities.NewIdea("675337baf901e2d790aabbdd", userID, "topic123", "Test idea", nil)
+			return []*entities.Idea{idea}, nil
+		},
+	}
+
+	draftRepo := &MockDraftRepository{}
 
 	tests := []struct {
-		name        string
-		postsCount  int
+		name          string
+		postsCount    int
 		articlesCount int
-		wantErr     bool
-		errMsg      string
+		wantErr       bool
 	}{
 		{
 			name:          "error when LLM returns less than 5 posts",
 			postsCount:    3,
 			articlesCount: 1,
 			wantErr:       true,
-			errMsg:        "insufficient posts generated",
 		},
 		{
 			name:          "error when LLM returns no articles",
 			postsCount:    5,
 			articlesCount: 0,
 			wantErr:       true,
-			errMsg:        "no articles generated",
 		},
 		{
 			name:          "error when LLM returns no drafts",
 			postsCount:    0,
 			articlesCount: 0,
 			wantErr:       true,
-			errMsg:        "no drafts generated",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Will fail: Partial response handling doesn't exist yet
-			t.Fatal("GenerateDraftsUseCase partial response handling not implemented yet - TDD Red phase")
+			llmService := &MockLLMService{
+				GenerateDraftsFunc: func(ctx context.Context, idea string, userContext string) (interfaces.DraftSet, error) {
+					posts := make([]string, tt.postsCount)
+					for i := 0; i < tt.postsCount; i++ {
+						posts[i] = "Post content " + string(rune(i))
+					}
+					articles := make([]string, tt.articlesCount)
+					for i := 0; i < tt.articlesCount; i++ {
+						articles[i] = "Article content"
+					}
+					return interfaces.DraftSet{
+						Posts:    posts,
+						Articles: articles,
+					}, nil
+				},
+			}
+
+			uc := usecases.NewGenerateDraftsUseCase(userRepo, ideasRepo, draftRepo, llmService)
+
+			input := usecases.GenerateDraftsInput{
+				UserID: "675337baf901e2d790aabbcc",
+				IdeaID: "675337baf901e2d790aabbdd",
+			}
+			_, err := uc.Execute(ctx, input)
+
+			if tt.wantErr && err == nil {
+				t.Error("Expected error but got none")
+			}
+			if !tt.wantErr && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
 		})
 	}
 }
 
-// TestGenerateDraftsUseCase_DraftFactoryIntegration validates draft creation
-// This test will FAIL until draft factory integration is implemented
-func TestGenerateDraftsUseCase_DraftFactoryIntegration(t *testing.T) {
+// TestGenerateDraftsUseCase_RepositorySaveError validates error handling during save
+func TestGenerateDraftsUseCase_RepositorySaveError(t *testing.T) {
 	ctx := context.Background()
-	_ = ctx
 
-	tests := []struct {
-		name         string
-		userID       string
-		ideaID       string
-		postContents []string
-		articleTitle string
-		articleContent string
-		wantErr      bool
-	}{
-		{
-			name:   "create post drafts from LLM response",
-			userID: "user123",
-			ideaID: "idea456",
-			postContents: []string{
-				"Post 1: Clean Architecture in Go is essential for maintainable code",
-				"Post 2: Dependency injection makes testing easier",
-				"Post 3: Repository pattern abstracts data access",
-				"Post 4: Use cases orchestrate business logic",
-				"Post 5: Clean code leads to clean products",
-			},
-			wantErr: false,
-		},
-		{
-			name:           "create article draft from LLM response",
-			userID:         "user123",
-			ideaID:         "idea456",
-			postContents:   []string{},
-			articleTitle:   "Clean Architecture: A Comprehensive Guide",
-			articleContent: "This is a detailed article about Clean Architecture patterns in Go programming language. It covers separation of concerns, dependency inversion, and testability principles.",
-			wantErr:        false,
+	userRepo := &MockUserRepository{
+		FindByIDFunc: func(ctx context.Context, userID string) (*entities.User, error) {
+			user, _ := entities.NewUser(userID, "testuser", "es")
+			return user, nil
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Will fail: Draft factory integration doesn't exist yet
-			t.Fatal("GenerateDraftsUseCase draft factory integration not implemented yet - TDD Red phase")
-		})
-	}
-}
-
-// TestGenerateDraftsUseCase_DraftValidation validates draft content validation
-// This test will FAIL until draft validation is implemented
-func TestGenerateDraftsUseCase_DraftValidation(t *testing.T) {
-	ctx := context.Background()
-	_ = ctx
-
-	tests := []struct {
-		name        string
-		content     string
-		draftType   string
-		wantErr     bool
-		errMsg      string
-	}{
-		{
-			name:      "error on post content too short",
-			content:   "Short",
-			draftType: "POST",
-			wantErr:   true,
-			errMsg:    "post content too short",
-		},
-		{
-			name:      "error on post content too long",
-			content:   string(make([]byte, 4000)),
-			draftType: "POST",
-			wantErr:   true,
-			errMsg:    "post content too long",
-		},
-		{
-			name:      "error on article content too short",
-			content:   "Very short article",
-			draftType: "ARTICLE",
-			wantErr:   true,
-			errMsg:    "article content too short",
-		},
-		{
-			name:      "valid post content",
-			content:   "This is a valid LinkedIn post with sufficient length",
-			draftType: "POST",
-			wantErr:   false,
+	ideasRepo := &MockIdeasRepository{
+		ListByUserIDFunc: func(ctx context.Context, userID string, topicID string, limit int) ([]*entities.Idea, error) {
+			idea := entities.NewIdea("675337baf901e2d790aabbdd", userID, "topic123", "Test idea", nil)
+			return []*entities.Idea{idea}, nil
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Will fail: Draft validation doesn't exist yet
-			t.Fatal("GenerateDraftsUseCase draft validation not implemented yet - TDD Red phase")
-		})
-	}
-}
-
-// TestGenerateDraftsUseCase_RepositorySave validates draft persistence
-// This test will FAIL until repository save is implemented
-func TestGenerateDraftsUseCase_RepositorySave(t *testing.T) {
-	ctx := context.Background()
-	_ = ctx
-
-	tests := []struct {
-		name        string
-		draftsCount int
-		repoErr     error
-		wantErr     bool
-	}{
-		{
-			name:        "successfully save all 6 drafts",
-			draftsCount: 6,
-			repoErr:     nil,
-			wantErr:     false,
-		},
-		{
-			name:        "repository error during save",
-			draftsCount: 6,
-			repoErr:     errors.New("database connection lost"),
-			wantErr:     true,
+	draftRepo := &MockDraftRepository{
+		CreateFunc: func(ctx context.Context, draft *entities.Draft) (string, error) {
+			return "", errors.New("database connection lost")
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Will fail: Repository save integration doesn't exist yet
-			t.Fatal("GenerateDraftsUseCase repository save not implemented yet - TDD Red phase")
-		})
-	}
-}
-
-// TestGenerateDraftsUseCase_MarkIdeaAsUsed validates idea usage tracking
-// This test will FAIL until idea marking is implemented
-func TestGenerateDraftsUseCase_MarkIdeaAsUsed(t *testing.T) {
-	ctx := context.Background()
-	_ = ctx
-
-	tests := []struct {
-		name    string
-		ideaID  string
-		wantErr bool
-	}{
-		{
-			name:    "successfully mark idea as used",
-			ideaID:  "idea123",
-			wantErr: false,
-		},
-		{
-			name:    "repository error when marking idea",
-			ideaID:  "idea456",
-			wantErr: true,
+	llmService := &MockLLMService{
+		GenerateDraftsFunc: func(ctx context.Context, idea string, userContext string) (interfaces.DraftSet, error) {
+			return interfaces.DraftSet{
+				Posts: []string{
+					"Post 1", "Post 2", "Post 3", "Post 4", "Post 5",
+				},
+				Articles: []string{
+					"Article 1",
+				},
+			}, nil
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Will fail: Idea marking doesn't exist yet
-			t.Fatal("GenerateDraftsUseCase mark idea as used not implemented yet - TDD Red phase")
-		})
+	uc := usecases.NewGenerateDraftsUseCase(userRepo, ideasRepo, draftRepo, llmService)
+
+	input := usecases.GenerateDraftsInput{
+		UserID: "675337baf901e2d790aabbcc",
+		IdeaID: "675337baf901e2d790aabbdd",
+	}
+	_, err := uc.Execute(ctx, input)
+
+	if err == nil {
+		t.Error("Expected error when repository fails")
 	}
 }
 
 // TestGenerateDraftsUseCase_ContextCancellation validates context handling
-// This test will FAIL until context cancellation is implemented
 func TestGenerateDraftsUseCase_ContextCancellation(t *testing.T) {
-	tests := []struct {
-		name       string
-		cancelTime time.Duration
-		wantErr    bool
-		errMsg     string
-	}{
-		{
-			name:       "context cancelled before LLM call",
-			cancelTime: 1 * time.Millisecond,
-			wantErr:    true,
-			errMsg:     "context cancelled",
-		},
-		{
-			name:       "context timeout during LLM call",
-			cancelTime: 100 * time.Millisecond,
-			wantErr:    true,
-			errMsg:     "context deadline exceeded",
+	// Create cancelled context
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	userRepo := &MockUserRepository{
+		FindByIDFunc: func(ctx context.Context, userID string) (*entities.User, error) {
+			// Check if context is cancelled
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
+			user, _ := entities.NewUser(userID, "testuser", "es")
+			return user, nil
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Will fail: Context handling doesn't exist yet
-			t.Fatal("GenerateDraftsUseCase context handling not implemented yet - TDD Red phase")
-		})
+	ideasRepo := &MockIdeasRepository{}
+	draftRepo := &MockDraftRepository{}
+	llmService := &MockLLMService{}
+
+	uc := usecases.NewGenerateDraftsUseCase(userRepo, ideasRepo, draftRepo, llmService)
+
+	input := usecases.GenerateDraftsInput{
+		UserID: "675337baf901e2d790aabbcc",
+		IdeaID: "675337baf901e2d790aabbdd",
 	}
-}
+	_, err := uc.Execute(ctx, input)
 
-// TestGenerateDraftsUseCase_EndToEnd validates complete workflow
-// This test will FAIL until full end-to-end flow is implemented
-func TestGenerateDraftsUseCase_EndToEnd(t *testing.T) {
-	ctx := context.Background()
-	_ = ctx
-
-	t.Run("complete draft generation workflow", func(t *testing.T) {
-		// Steps:
-		// 1. Validate inputs
-		// 2. Get idea from repository
-		// 3. Verify idea belongs to user
-		// 4. Verify idea is unused and not expired
-		// 5. Get user context from repository
-		// 6. Call LLM with idea and user context
-		// 7. Create 5 post drafts and 1 article draft
-		// 8. Validate all draft entities
-		// 9. Save drafts to repository
-		// 10. Mark idea as used
-		// 11. Return created drafts
-
-		// Will fail: Full workflow doesn't exist yet
-		t.Fatal("GenerateDraftsUseCase end-to-end workflow not implemented yet - TDD Red phase")
-	})
-
-	t.Run("workflow with LLM retry on transient error", func(t *testing.T) {
-		// LLM fails first attempt, succeeds on retry
-
-		// Will fail: Retry logic doesn't exist yet
-		t.Fatal("GenerateDraftsUseCase retry logic not implemented yet - TDD Red phase")
-	})
-
-	t.Run("rollback when draft save fails", func(t *testing.T) {
-		// Drafts created but repository fails - should not mark idea as used
-
-		// Will fail: Rollback logic doesn't exist yet
-		t.Fatal("GenerateDraftsUseCase rollback logic not implemented yet - TDD Red phase")
-	})
+	if err == nil {
+		t.Error("Expected error when context is cancelled")
+	}
 }

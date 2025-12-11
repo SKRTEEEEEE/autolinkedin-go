@@ -14,32 +14,32 @@ func TestNATSPublishPerformance(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                string
-		messageCount        int
+		name                 string
+		messageCount         int
 		concurrentPublishers int
-		maxDuration         time.Duration
-		expectSuccess       bool
+		maxDuration          time.Duration
+		expectSuccess        bool
 	}{
 		{
-			name:                "publish 1000 messages sequentially",
-			messageCount:        1000,
+			name:                 "publish 1000 messages sequentially",
+			messageCount:         1000,
 			concurrentPublishers: 1,
-			maxDuration:         10 * time.Second,
-			expectSuccess:       true,
+			maxDuration:          10 * time.Second,
+			expectSuccess:        true,
 		},
 		{
-			name:                "publish 10000 messages with 10 publishers",
-			messageCount:        10000,
+			name:                 "publish 10000 messages with 10 publishers",
+			messageCount:         10000,
 			concurrentPublishers: 10,
-			maxDuration:         30 * time.Second,
-			expectSuccess:       true,
+			maxDuration:          30 * time.Second,
+			expectSuccess:        true,
 		},
 		{
-			name:                "publish 50000 messages with 50 publishers",
-			messageCount:        50000,
+			name:                 "publish 50000 messages with 50 publishers",
+			messageCount:         50000,
 			concurrentPublishers: 50,
-			maxDuration:         60 * time.Second,
-			expectSuccess:       true,
+			maxDuration:          60 * time.Second,
+			expectSuccess:        true,
 		},
 	}
 
@@ -59,36 +59,36 @@ func TestNATSConsumePerformance(t *testing.T) {
 	}
 
 	tests := []struct {
-		name               string
-		messageCount       int
+		name                string
+		messageCount        int
 		concurrentConsumers int
-		processingDelay    time.Duration
-		maxDuration        time.Duration
-		expectSuccess      bool
+		processingDelay     time.Duration
+		maxDuration         time.Duration
+		expectSuccess       bool
 	}{
 		{
-			name:               "consume 1000 messages with 1 consumer",
-			messageCount:       1000,
+			name:                "consume 1000 messages with 1 consumer",
+			messageCount:        1000,
 			concurrentConsumers: 1,
-			processingDelay:    1 * time.Millisecond,
-			maxDuration:        15 * time.Second,
-			expectSuccess:      true,
+			processingDelay:     1 * time.Millisecond,
+			maxDuration:         15 * time.Second,
+			expectSuccess:       true,
 		},
 		{
-			name:               "consume 10000 messages with 10 consumers",
-			messageCount:       10000,
+			name:                "consume 10000 messages with 10 consumers",
+			messageCount:        10000,
 			concurrentConsumers: 10,
-			processingDelay:    1 * time.Millisecond,
-			maxDuration:        30 * time.Second,
-			expectSuccess:      true,
+			processingDelay:     1 * time.Millisecond,
+			maxDuration:         30 * time.Second,
+			expectSuccess:       true,
 		},
 		{
-			name:               "consume 50000 messages with 50 consumers",
-			messageCount:       50000,
+			name:                "consume 50000 messages with 50 consumers",
+			messageCount:        50000,
 			concurrentConsumers: 50,
-			processingDelay:    1 * time.Millisecond,
-			maxDuration:        60 * time.Second,
-			expectSuccess:      true,
+			processingDelay:     1 * time.Millisecond,
+			maxDuration:         60 * time.Second,
+			expectSuccess:       true,
 		},
 	}
 
@@ -232,28 +232,28 @@ func TestNATSConnectionPoolPerformance(t *testing.T) {
 	}
 
 	tests := []struct {
-		name              string
-		poolSize          int
-		concurrentOps     int
-		operationsPerGo   int
-		maxDuration       time.Duration
-		expectSuccess     bool
+		name            string
+		poolSize        int
+		concurrentOps   int
+		operationsPerGo int
+		maxDuration     time.Duration
+		expectSuccess   bool
 	}{
 		{
-			name:              "small pool - 5 connections",
-			poolSize:          5,
-			concurrentOps:     20,
-			operationsPerGo:   100,
-			maxDuration:       10 * time.Second,
-			expectSuccess:     true,
+			name:            "small pool - 5 connections",
+			poolSize:        5,
+			concurrentOps:   20,
+			operationsPerGo: 100,
+			maxDuration:     10 * time.Second,
+			expectSuccess:   true,
 		},
 		{
-			name:              "medium pool - 20 connections",
-			poolSize:          20,
-			concurrentOps:     100,
-			operationsPerGo:   100,
-			maxDuration:       15 * time.Second,
-			expectSuccess:     true,
+			name:            "medium pool - 20 connections",
+			poolSize:        20,
+			concurrentOps:   100,
+			operationsPerGo: 100,
+			maxDuration:     15 * time.Second,
+			expectSuccess:   true,
 		},
 	}
 
@@ -273,36 +273,36 @@ func TestNATSBackpressureHandling(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                string
-		publishRate         int // messages per second
-		consumeRate         int // messages per second
-		duration            time.Duration
-		expectBackpressure  bool
-		expectDataLoss      bool
+		name               string
+		publishRate        int // messages per second
+		consumeRate        int // messages per second
+		duration           time.Duration
+		expectBackpressure bool
+		expectDataLoss     bool
 	}{
 		{
-			name:                "balanced rates - no backpressure",
-			publishRate:         100,
-			consumeRate:         100,
-			duration:            10 * time.Second,
-			expectBackpressure:  false,
-			expectDataLoss:      false,
+			name:               "balanced rates - no backpressure",
+			publishRate:        100,
+			consumeRate:        100,
+			duration:           10 * time.Second,
+			expectBackpressure: false,
+			expectDataLoss:     false,
 		},
 		{
-			name:                "high publish rate - backpressure expected",
-			publishRate:         1000,
-			consumeRate:         100,
-			duration:            10 * time.Second,
-			expectBackpressure:  true,
-			expectDataLoss:      false,
+			name:               "high publish rate - backpressure expected",
+			publishRate:        1000,
+			consumeRate:        100,
+			duration:           10 * time.Second,
+			expectBackpressure: true,
+			expectDataLoss:     false,
 		},
 		{
-			name:                "extreme imbalance",
-			publishRate:         5000,
-			consumeRate:         100,
-			duration:            10 * time.Second,
-			expectBackpressure:  true,
-			expectDataLoss:      false,
+			name:               "extreme imbalance",
+			publishRate:        5000,
+			consumeRate:        100,
+			duration:           10 * time.Second,
+			expectBackpressure: true,
+			expectDataLoss:     false,
 		},
 	}
 

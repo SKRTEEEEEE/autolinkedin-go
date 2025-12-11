@@ -207,11 +207,11 @@ func TestRetryWithNetworkErrors(t *testing.T) {
 // This test will FAIL until context cancellation in retry is implemented
 func TestRetryContextCancellation(t *testing.T) {
 	tests := []struct {
-		name           string
-		maxRetries     int
-		cancelAfter    time.Duration
-		serverDelay    time.Duration
-		expectedError  string
+		name          string
+		maxRetries    int
+		cancelAfter   time.Duration
+		serverDelay   time.Duration
+		expectedError string
 	}{
 		{
 			name:          "cancel during first retry wait",

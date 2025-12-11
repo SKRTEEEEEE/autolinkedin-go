@@ -167,11 +167,11 @@ func TestLLMEndpointDiscovery(t *testing.T) {
 	}
 
 	tests := []struct {
-		name          string
-		baseURL       string
-		endpoint      string
-		expectModels  bool
-		expectError   bool
+		name         string
+		baseURL      string
+		endpoint     string
+		expectModels bool
+		expectError  bool
 	}{
 		{
 			name:         "discover available models",
@@ -205,8 +205,8 @@ func TestLLMClientResilience(t *testing.T) {
 	}
 
 	tests := []struct {
-		name          string
-		scenario      string
+		name           string
+		scenario       string
 		expectRecovery bool
 	}{
 		{

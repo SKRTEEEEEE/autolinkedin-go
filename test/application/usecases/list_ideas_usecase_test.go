@@ -326,10 +326,10 @@ func TestListIdeasUseCase_IdeaSorting(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name       string
-		userID     string
-		sortOrder  string
-		wantErr    bool
+		name      string
+		userID    string
+		sortOrder string
+		wantErr   bool
 	}{
 		{
 			name:      "ideas sorted by creation date descending",
@@ -360,13 +360,13 @@ func TestListIdeasUseCase_FilterUsedIdeas(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name           string
-		userID         string
-		includeUsed    bool
-		totalIdeas     int
-		usedIdeas      int
-		expectedCount  int
-		wantErr        bool
+		name          string
+		userID        string
+		includeUsed   bool
+		totalIdeas    int
+		usedIdeas     int
+		expectedCount int
+		wantErr       bool
 	}{
 		{
 			name:          "include all ideas (used and unused)",

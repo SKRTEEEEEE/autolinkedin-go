@@ -81,9 +81,9 @@ func TestIdeaEntity_Creation(t *testing.T) {
 // This test will FAIL until Idea.MarkAsUsed() is implemented
 func TestIdeaEntity_MarkAsUsed(t *testing.T) {
 	tests := []struct {
-		name       string
-		used       bool
-		wantErr    bool
+		name    string
+		used    bool
+		wantErr bool
 	}{
 		{
 			name:    "mark unused idea as used",
@@ -347,14 +347,14 @@ func TestIdeaEntity_UsageTracking(t *testing.T) {
 	now := time.Now()
 
 	tests := []struct {
-		name          string
-		used          bool
-		expiresAt     *time.Time
-		wantCanUse    bool
+		name       string
+		used       bool
+		expiresAt  *time.Time
+		wantCanUse bool
 	}{
 		{
-			name:       "unused and not expired",
-			used:       false,
+			name: "unused and not expired",
+			used: false,
 			expiresAt: func() *time.Time {
 				t := now.Add(24 * time.Hour)
 				return &t
@@ -362,8 +362,8 @@ func TestIdeaEntity_UsageTracking(t *testing.T) {
 			wantCanUse: true,
 		},
 		{
-			name:       "already used",
-			used:       true,
+			name: "already used",
+			used: true,
 			expiresAt: func() *time.Time {
 				t := now.Add(24 * time.Hour)
 				return &t
@@ -371,8 +371,8 @@ func TestIdeaEntity_UsageTracking(t *testing.T) {
 			wantCanUse: false,
 		},
 		{
-			name:       "unused but expired",
-			used:       false,
+			name: "unused but expired",
+			used: false,
 			expiresAt: func() *time.Time {
 				t := now.Add(-24 * time.Hour)
 				return &t
@@ -380,8 +380,8 @@ func TestIdeaEntity_UsageTracking(t *testing.T) {
 			wantCanUse: false,
 		},
 		{
-			name:       "used and expired",
-			used:       true,
+			name: "used and expired",
+			used: true,
 			expiresAt: func() *time.Time {
 				t := now.Add(-24 * time.Hour)
 				return &t

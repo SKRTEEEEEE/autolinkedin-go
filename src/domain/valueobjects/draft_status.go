@@ -8,13 +8,13 @@ type DraftStatus string
 const (
 	// DraftStatusDraft represents a draft in initial state
 	DraftStatusDraft DraftStatus = "DRAFT"
-	
+
 	// DraftStatusRefined represents a draft that has been refined
 	DraftStatusRefined DraftStatus = "REFINED"
-	
+
 	// DraftStatusPublished represents a successfully published draft
 	DraftStatusPublished DraftStatus = "PUBLISHED"
-	
+
 	// DraftStatusFailed represents a draft that failed to publish
 	DraftStatusFailed DraftStatus = "FAILED"
 )

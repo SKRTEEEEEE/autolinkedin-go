@@ -158,11 +158,11 @@ func TestPublishWithTTL(t *testing.T) {
 // This test will FAIL until synchronous publish is implemented
 func TestPublishSynchronous(t *testing.T) {
 	tests := []struct {
-		name         string
-		message      DraftGenerationMessage
-		timeout      time.Duration
-		expectError  bool
-		expectAck    bool
+		name        string
+		message     DraftGenerationMessage
+		timeout     time.Duration
+		expectError bool
+		expectAck   bool
 	}{
 		{
 			name: "publish and wait for ack",

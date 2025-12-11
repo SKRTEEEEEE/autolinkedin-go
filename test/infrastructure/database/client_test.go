@@ -114,32 +114,32 @@ func TestGetCollection(t *testing.T) {
 // This test will FAIL until transaction support is implemented
 func TestTransactionSupport(t *testing.T) {
 	tests := []struct {
-		name            string
-		operationCount  int
-		simulateError   bool
-		expectRollback  bool
-		expectCommit    bool
+		name           string
+		operationCount int
+		simulateError  bool
+		expectRollback bool
+		expectCommit   bool
 	}{
 		{
-			name:            "successful transaction with single operation",
-			operationCount:  1,
-			simulateError:   false,
-			expectRollback:  false,
-			expectCommit:    true,
+			name:           "successful transaction with single operation",
+			operationCount: 1,
+			simulateError:  false,
+			expectRollback: false,
+			expectCommit:   true,
 		},
 		{
-			name:            "successful transaction with multiple operations",
-			operationCount:  5,
-			simulateError:   false,
-			expectRollback:  false,
-			expectCommit:    true,
+			name:           "successful transaction with multiple operations",
+			operationCount: 5,
+			simulateError:  false,
+			expectRollback: false,
+			expectCommit:   true,
 		},
 		{
-			name:            "transaction rollback on error",
-			operationCount:  3,
-			simulateError:   true,
-			expectRollback:  true,
-			expectCommit:    false,
+			name:           "transaction rollback on error",
+			operationCount: 3,
+			simulateError:  true,
+			expectRollback: true,
+			expectCommit:   false,
 		},
 	}
 
@@ -260,22 +260,22 @@ func TestClientReconnection(t *testing.T) {
 // This test will FAIL until thread-safe implementation is verified
 func TestClientThreadSafety(t *testing.T) {
 	tests := []struct {
-		name              string
-		concurrentOps     int
-		operationsPerGo   int
-		expectAllSuccess  bool
+		name             string
+		concurrentOps    int
+		operationsPerGo  int
+		expectAllSuccess bool
 	}{
 		{
-			name:              "concurrent read operations",
-			concurrentOps:     10,
-			operationsPerGo:   100,
-			expectAllSuccess:  true,
+			name:             "concurrent read operations",
+			concurrentOps:    10,
+			operationsPerGo:  100,
+			expectAllSuccess: true,
 		},
 		{
-			name:              "concurrent mixed operations",
-			concurrentOps:     20,
-			operationsPerGo:   50,
-			expectAllSuccess:  true,
+			name:             "concurrent mixed operations",
+			concurrentOps:    20,
+			operationsPerGo:  50,
+			expectAllSuccess: true,
 		},
 	}
 

@@ -42,16 +42,16 @@ func TestUserFactory_NewUser(t *testing.T) {
 // This test will FAIL until NewUser factory default values are implemented
 func TestUserFactory_DefaultValues(t *testing.T) {
 	tests := []struct {
-		name            string
-		email           string
-		wantActive      bool
+		name             string
+		email            string
+		wantActive       bool
 		wantHasCreatedAt bool
 		wantHasUpdatedAt bool
 	}{
 		{
-			name:            "new user has default values",
-			email:           "test@example.com",
-			wantActive:      true,
+			name:             "new user has default values",
+			email:            "test@example.com",
+			wantActive:       true,
 			wantHasCreatedAt: true,
 			wantHasUpdatedAt: true,
 		},
@@ -122,17 +122,17 @@ func TestTopicFactory_NewTopic(t *testing.T) {
 // This test will FAIL until NewTopic factory default values are implemented
 func TestTopicFactory_DefaultValues(t *testing.T) {
 	tests := []struct {
-		name            string
-		userID          string
-		topicName       string
-		wantPriority    int
+		name             string
+		userID           string
+		topicName        string
+		wantPriority     int
 		wantHasCreatedAt bool
 	}{
 		{
-			name:            "new topic has default priority",
-			userID:          "user123",
-			topicName:       "Topic",
-			wantPriority:    5,
+			name:             "new topic has default priority",
+			userID:           "user123",
+			topicName:        "Topic",
+			wantPriority:     5,
 			wantHasCreatedAt: true,
 		},
 	}
@@ -197,23 +197,23 @@ func TestIdeaFactory_NewIdea(t *testing.T) {
 // This test will FAIL until NewIdea factory expiration logic is implemented
 func TestIdeaFactory_ExpirationCalculation(t *testing.T) {
 	tests := []struct {
-		name        string
-		ttlDays     int
+		name          string
+		ttlDays       int
 		wantHasExpiry bool
 	}{
 		{
-			name:        "idea with 7 days TTL",
-			ttlDays:     7,
+			name:          "idea with 7 days TTL",
+			ttlDays:       7,
 			wantHasExpiry: true,
 		},
 		{
-			name:        "idea with 30 days TTL",
-			ttlDays:     30,
+			name:          "idea with 30 days TTL",
+			ttlDays:       30,
 			wantHasExpiry: true,
 		},
 		{
-			name:        "idea with no expiration",
-			ttlDays:     0,
+			name:          "idea with no expiration",
+			ttlDays:       0,
 			wantHasExpiry: false,
 		},
 	}
@@ -230,13 +230,13 @@ func TestIdeaFactory_ExpirationCalculation(t *testing.T) {
 // This test will FAIL until NewIdea factory default values are implemented
 func TestIdeaFactory_DefaultValues(t *testing.T) {
 	tests := []struct {
-		name            string
-		wantUsed        bool
+		name             string
+		wantUsed         bool
 		wantHasCreatedAt bool
 	}{
 		{
-			name:            "new idea has default values",
-			wantUsed:        false,
+			name:             "new idea has default values",
+			wantUsed:         false,
 			wantHasCreatedAt: true,
 		},
 	}
@@ -409,23 +409,23 @@ func TestFactories_TimestampGeneration(t *testing.T) {
 	now := time.Now()
 
 	tests := []struct {
-		name            string
-		factoryType     string
+		name             string
+		factoryType      string
 		wantHasTimestamp bool
 	}{
 		{
-			name:            "User factory sets CreatedAt",
-			factoryType:     "User",
+			name:             "User factory sets CreatedAt",
+			factoryType:      "User",
 			wantHasTimestamp: true,
 		},
 		{
-			name:            "Topic factory sets CreatedAt",
-			factoryType:     "Topic",
+			name:             "Topic factory sets CreatedAt",
+			factoryType:      "Topic",
 			wantHasTimestamp: true,
 		},
 		{
-			name:            "Idea factory sets CreatedAt",
-			factoryType:     "Idea",
+			name:             "Idea factory sets CreatedAt",
+			factoryType:      "Idea",
 			wantHasTimestamp: true,
 		},
 	}

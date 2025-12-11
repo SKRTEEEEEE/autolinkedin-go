@@ -42,12 +42,12 @@ func TestWatchConfigFile(t *testing.T) {
 // This test will FAIL until hot reload logic is implemented
 func TestHotReloadOnFileChange(t *testing.T) {
 	tests := []struct {
-		name           string
-		initialConfig  map[string]interface{}
-		updatedConfig  map[string]interface{}
-		expectReload   bool
-		reloadTimeout  time.Duration
-		wantErr        bool
+		name          string
+		initialConfig map[string]interface{}
+		updatedConfig map[string]interface{}
+		expectReload  bool
+		reloadTimeout time.Duration
+		wantErr       bool
 	}{
 		{
 			name: "reload on log level change",
@@ -99,9 +99,9 @@ func TestHotReloadOnFileChange(t *testing.T) {
 // This test will FAIL until reloadable fields logic is implemented
 func TestReloadableConfigFields(t *testing.T) {
 	tests := []struct {
-		name        string
-		field       string
-		reloadable  bool
+		name       string
+		field      string
+		reloadable bool
 	}{
 		{
 			name:       "log_level is reloadable",
@@ -152,28 +152,28 @@ func TestReloadableConfigFields(t *testing.T) {
 // This test will FAIL until change notification is implemented
 func TestConfigChangeNotification(t *testing.T) {
 	tests := []struct {
-		name              string
-		changedFields     []string
+		name               string
+		changedFields      []string
 		expectNotification bool
-		wantErr           bool
+		wantErr            bool
 	}{
 		{
-			name:              "notification on single field change",
-			changedFields:     []string{"log_level"},
+			name:               "notification on single field change",
+			changedFields:      []string{"log_level"},
 			expectNotification: true,
-			wantErr:           false,
+			wantErr:            false,
 		},
 		{
-			name:              "notification on multiple field changes",
-			changedFields:     []string{"log_level", "scheduler_interval"},
+			name:               "notification on multiple field changes",
+			changedFields:      []string{"log_level", "scheduler_interval"},
 			expectNotification: true,
-			wantErr:           false,
+			wantErr:            false,
 		},
 		{
-			name:              "no notification when no changes",
-			changedFields:     []string{},
+			name:               "no notification when no changes",
+			changedFields:      []string{},
 			expectNotification: false,
-			wantErr:           false,
+			wantErr:            false,
 		},
 	}
 
@@ -374,11 +374,11 @@ func TestUnregisterReloadCallback(t *testing.T) {
 // This test will FAIL until debouncing logic is implemented
 func TestWatcherDebounce(t *testing.T) {
 	tests := []struct {
-		name              string
-		numChanges        int
-		debounceInterval  time.Duration
-		expectedReloads   int
-		wantErr           bool
+		name             string
+		numChanges       int
+		debounceInterval time.Duration
+		expectedReloads  int
+		wantErr          bool
 	}{
 		{
 			name:             "debounce multiple rapid changes",
@@ -442,11 +442,11 @@ func TestWatchMultipleFiles(t *testing.T) {
 // This test will FAIL until rollback logic is implemented
 func TestReloadRollback(t *testing.T) {
 	tests := []struct {
-		name          string
-		validConfig   map[string]interface{}
-		invalidConfig map[string]interface{}
+		name           string
+		validConfig    map[string]interface{}
+		invalidConfig  map[string]interface{}
 		expectRollback bool
-		wantErr       bool
+		wantErr        bool
 	}{
 		{
 			name: "rollback on invalid config",
@@ -484,11 +484,11 @@ func TestReloadRollback(t *testing.T) {
 // This test will FAIL until metrics collection is implemented
 func TestWatcherMetrics(t *testing.T) {
 	tests := []struct {
-		name               string
-		numReloads         int
-		numErrors          int
-		expectedMetrics    map[string]int
-		wantErr            bool
+		name            string
+		numReloads      int
+		numErrors       int
+		expectedMetrics map[string]int
+		wantErr         bool
 	}{
 		{
 			name:       "collect successful reload metrics",

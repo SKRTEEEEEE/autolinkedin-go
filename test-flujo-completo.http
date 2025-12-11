@@ -1,0 +1,53 @@
+### Prueba completa del flujo de generación de drafts
+### Este archivo verifica que el sistema funciona correctamente después de las correcciones
+@baseUrl = http://localhost:8080
+@llmEndpoint = http://100.105.212.98:8317/
+@devUserId = 000000000000000000000001
+
+# Variables que se actualizarán durante la prueba
+@ideaId = unknown
+@jobId = unknown
+
+### 1. Verificar salud del sistema
+GET {{baseUrl}}/health HTTP/1.1
+Content-Type: application/json
+
+### 2. Obtener ideas del usuario (ya deberían estar en español)
+GET {{baseUrl}}/v1/ideas/{{devUserId}} HTTP/1.1
+Content-Type: application/json
+
+### 3. Extraer el primera idea para usar en la prueba
+# Copia el ID de la primera idea y actualiza la variable @ideaId
+
+### 4. Generar drafts desde una idea (esto crea un job asíncrono)
+POST {{baseUrl}}/v1/drafts/generate HTTP/1.1
+Content-Type: application/json
+
+{
+  "user_id": "{{devUserId}}",
+  "idea_id": "{{ideaId}}"
+}
+
+# Copia el job_id de la respuesta y actualiza la variable @jobId
+
+### 5. Consultar estado del job (debe pasar de pending → processing → completed)
+GET {{baseUrl}}/v1/drafts/jobs/{{jobId}} HTTP/1.1
+Content-Type: application/json
+
+# Repite esta llamada cada 5 segundos hasta que el estado sea "completed"
+
+### 6. Verificar que los drafts se crearon correctamente (deben estar en español)
+GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=DRAFT HTTP/1.1
+Content-Type: application/json
+
+### 7. Verificar que la idea se marcó como usada (used: true)
+GET {{baseUrl}}/v1/ideas/{{devUserId}} HTTP/1.1
+Content-Type: application/json
+
+### 8. (Opcional) Probar refinamiento de un draft
+POST {{baseUrl}}/v1/drafts/{draftId}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Hazlo más técnico y añade métricas específicas"
+}

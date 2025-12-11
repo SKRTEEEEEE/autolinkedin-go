@@ -29,15 +29,15 @@ func NewUserRepository(collection *mongo.Collection) interfaces.UserRepository {
 
 // userDocument represents the MongoDB document structure for User
 type userDocument struct {
-	ID            primitive.ObjectID         `bson:"_id,omitempty"`
-	Email         string                     `bson:"email"`
-	Language      string                     `bson:"language,omitempty"`
-	LinkedInToken string                     `bson:"linkedin_token"`
-	APIKeys       map[string]string          `bson:"api_keys"`
-	Configuration map[string]interface{}     `bson:"configuration"`
-	CreatedAt     primitive.DateTime         `bson:"created_at"`
-	UpdatedAt     primitive.DateTime         `bson:"updated_at"`
-	Active        bool                       `bson:"active"`
+	ID            primitive.ObjectID     `bson:"_id,omitempty"`
+	Email         string                 `bson:"email"`
+	Language      string                 `bson:"language,omitempty"`
+	LinkedInToken string                 `bson:"linkedin_token"`
+	APIKeys       map[string]string      `bson:"api_keys"`
+	Configuration map[string]interface{} `bson:"configuration"`
+	CreatedAt     primitive.DateTime     `bson:"created_at"`
+	UpdatedAt     primitive.DateTime     `bson:"updated_at"`
+	Active        bool                   `bson:"active"`
 }
 
 // toDocument converts a User entity to a MongoDB document

@@ -44,11 +44,11 @@ var secretStoreMutex sync.Mutex
 func GetSecretStore() *SecretStore {
 	secretStoreMutex.Lock()
 	defer secretStoreMutex.Unlock()
-	
+
 	if globalSecretStore == nil {
 		globalSecretStore = NewSecretStore()
 	}
-	
+
 	return globalSecretStore
 }
 
@@ -60,7 +60,7 @@ func NewSecretStore() *SecretStore {
 		// Fallback to a deterministic key for testing
 		copy(key, []byte("default-encryption-key-32-chars!!"))
 	}
-	
+
 	return &SecretStore{
 		secrets: make(map[string]string),
 		key:     key,
@@ -70,28 +70,28 @@ func NewSecretStore() *SecretStore {
 // LoadSecrets loads secrets from environment variables
 func LoadSecrets() error {
 	store := GetSecretStore()
-	
+
 	requiredSecrets := []string{
 		"LINKGEN_MONGODB_PASSWORD",
 		"LINKGEN_LLM_API_KEY",
 		"LINKGEN_LINKEDIN_CLIENT_SECRET",
 	}
-	
+
 	for _, secretKey := range requiredSecrets {
 		value := os.Getenv(secretKey)
 		if value == "" {
 			return fmt.Errorf("%w: %s", ErrSecretNotFound, secretKey)
 		}
-		
+
 		// Store without prefix for easier access
 		key := strings.TrimPrefix(secretKey, "LINKGEN_")
 		key = strings.ToLower(key)
-		
+
 		if err := store.SetSecret(key, value); err != nil {
 			return err
 		}
 	}
-	
+
 	return nil
 }
 
@@ -100,15 +100,15 @@ func (s *SecretStore) GetSecret(key string) (string, error) {
 	if key == "" {
 		return "", ErrEmptySecretKey
 	}
-	
+
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	
+
 	value, exists := s.secrets[key]
 	if !exists {
 		return "", fmt.Errorf("%w: %s", ErrSecretNotFound, key)
 	}
-	
+
 	return value, nil
 }
 
@@ -120,10 +120,10 @@ func (s *SecretStore) SetSecret(key, value string) error {
 	if value == "" {
 		return ErrEmptySecretValue
 	}
-	
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	s.secrets[key] = value
 	return nil
 }
@@ -136,15 +136,15 @@ func (s *SecretStore) RotateSecret(key, oldSecret, newSecret string) error {
 	if newSecret == "" {
 		return ErrEmptySecretValue
 	}
-	
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	currentSecret, exists := s.secrets[key]
 	if !exists || currentSecret != oldSecret {
 		return fmt.Errorf("old secret doesn't match current secret")
 	}
-	
+
 	s.secrets[key] = newSecret
 	return nil
 }
@@ -152,11 +152,11 @@ func (s *SecretStore) RotateSecret(key, oldSecret, newSecret string) error {
 // MaskSecrets masks sensitive information in a string
 func MaskSecrets(input string, secretKeys []string) string {
 	result := input
-	
+
 	store := GetSecretStore()
 	store.mu.RLock()
 	defer store.mu.RUnlock()
-	
+
 	// Mask each secret
 	for _, key := range secretKeys {
 		secret, exists := store.secrets[key]
@@ -164,10 +164,10 @@ func MaskSecrets(input string, secretKeys []string) string {
 			result = strings.ReplaceAll(result, secret, "***")
 		}
 	}
-	
+
 	// Also mask MongoDB passwords in URIs
 	result = maskMongoDBPassword(result)
-	
+
 	return result
 }
 
@@ -176,7 +176,7 @@ func maskMongoDBPassword(uri string) string {
 	if !strings.Contains(uri, "mongodb://") {
 		return uri
 	}
-	
+
 	return maskSecret(uri)
 }
 
@@ -185,22 +185,22 @@ func (s *SecretStore) EncryptSecret(plaintext string) (string, error) {
 	if plaintext == "" {
 		return "", ErrEmptySecretValue
 	}
-	
+
 	block, err := aes.NewCipher(s.key)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", ErrEncryptionFailed, err)
 	}
-	
+
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", ErrEncryptionFailed, err)
 	}
-	
+
 	nonce := make([]byte, gcm.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return "", fmt.Errorf("%w: %v", ErrEncryptionFailed, err)
 	}
-	
+
 	ciphertext := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
@@ -210,33 +210,33 @@ func (s *SecretStore) DecryptSecret(ciphertext string) (string, error) {
 	if ciphertext == "" {
 		return "", ErrEmptySecretValue
 	}
-	
+
 	data, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", ErrDecryptionFailed, err)
 	}
-	
+
 	block, err := aes.NewCipher(s.key)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", ErrDecryptionFailed, err)
 	}
-	
+
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", ErrDecryptionFailed, err)
 	}
-	
+
 	nonceSize := gcm.NonceSize()
 	if len(data) < nonceSize {
 		return "", fmt.Errorf("%w: ciphertext too short", ErrDecryptionFailed)
 	}
-	
+
 	nonce, ciphertextBytes := data[:nonceSize], data[nonceSize:]
 	plaintext, err := gcm.Open(nil, nonce, ciphertextBytes, nil)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", ErrDecryptionFailed, err)
 	}
-	
+
 	return string(plaintext), nil
 }
 
@@ -256,7 +256,7 @@ func LoadFromExternalSecretStore(storeType, secretPath string) error {
 	if secretPath == "" {
 		return errors.New("empty secret path")
 	}
-	
+
 	switch storeType {
 	case "vault", "aws", "azure":
 		// Placeholder - would integrate with actual secret store

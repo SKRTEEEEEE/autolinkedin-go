@@ -18,12 +18,12 @@ func TestGenerateIdeasUseCase_Performance(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name          string
-		userID        string
-		ideaCount     int
-		iterations    int
-		maxDuration   time.Duration
-		concurrency   int
+		name        string
+		userID      string
+		ideaCount   int
+		iterations  int
+		maxDuration time.Duration
+		concurrency int
 	}{
 		{
 			name:        "generate 10 ideas sequentially 100 times",
@@ -86,11 +86,11 @@ func TestGenerateDraftsUseCase_Performance(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name          string
-		userID        string
-		iterations    int
-		maxDuration   time.Duration
-		concurrency   int
+		name        string
+		userID      string
+		iterations  int
+		maxDuration time.Duration
+		concurrency int
 	}{
 		{
 			name:        "generate drafts sequentially 50 times",
@@ -143,11 +143,11 @@ func TestRefineDraftUseCase_Performance(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name          string
-		draftCount    int
-		refinements   int
-		maxDuration   time.Duration
-		concurrency   int
+		name        string
+		draftCount  int
+		refinements int
+		maxDuration time.Duration
+		concurrency int
 	}{
 		{
 			name:        "refine 100 drafts sequentially",
@@ -199,12 +199,12 @@ func TestListIdeasUseCase_Performance(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name          string
-		totalIdeas    int
-		listLimit     int
-		iterations    int
-		maxDuration   time.Duration
-		concurrency   int
+		name        string
+		totalIdeas  int
+		listLimit   int
+		iterations  int
+		maxDuration time.Duration
+		concurrency int
 	}{
 		{
 			name:        "list 1000 ideas 100 times",
@@ -312,10 +312,10 @@ func TestUseCases_MemoryUsage(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name           string
-		useCase        string
-		operations     int
-		maxMemoryMB    int64
+		name        string
+		useCase     string
+		operations  int
+		maxMemoryMB int64
 	}{
 		{
 			name:        "GenerateIdeas memory usage under 100MB",
@@ -468,10 +468,10 @@ func TestUseCases_DatabaseQueryPerformance(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name          string
-		operation     string
-		dataSize      int
-		iterations    int
+		name           string
+		operation      string
+		dataSize       int
+		iterations     int
 		maxAvgDuration time.Duration
 	}{
 		{
@@ -524,8 +524,8 @@ func TestUseCases_ThroughputBenchmark(t *testing.T) {
 	_ = ctx
 
 	tests := []struct {
-		name              string
-		duration          time.Duration
+		name                string
+		duration            time.Duration
 		minOperationsPerSec float64
 	}{
 		{

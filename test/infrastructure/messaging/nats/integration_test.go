@@ -10,27 +10,27 @@ import (
 // This test will FAIL until full NATS integration is implemented
 func TestNATSPubSubIntegration(t *testing.T) {
 	tests := []struct {
-		name             string
-		messageCount     int
-		consumerCount    int
+		name              string
+		messageCount      int
+		consumerCount     int
 		expectAllReceived bool
 	}{
 		{
-			name:             "single publisher, single consumer",
-			messageCount:     10,
-			consumerCount:    1,
+			name:              "single publisher, single consumer",
+			messageCount:      10,
+			consumerCount:     1,
 			expectAllReceived: true,
 		},
 		{
-			name:             "single publisher, multiple consumers",
-			messageCount:     20,
-			consumerCount:    3,
+			name:              "single publisher, multiple consumers",
+			messageCount:      20,
+			consumerCount:     3,
 			expectAllReceived: true,
 		},
 		{
-			name:             "high volume messages",
-			messageCount:     100,
-			consumerCount:    5,
+			name:              "high volume messages",
+			messageCount:      100,
+			consumerCount:     5,
 			expectAllReceived: true,
 		},
 	}
@@ -115,39 +115,39 @@ func TestNATSMessageTTLIntegration(t *testing.T) {
 // This test will FAIL until retry logic is fully integrated
 func TestNATSRetryIntegration(t *testing.T) {
 	tests := []struct {
-		name               string
-		failUntilAttempt   int
-		maxRetries         int
-		expectSuccess      bool
-		expectRetryCount   int
+		name             string
+		failUntilAttempt int
+		maxRetries       int
+		expectSuccess    bool
+		expectRetryCount int
 	}{
 		{
-			name:               "succeed on first attempt",
-			failUntilAttempt:   0,
-			maxRetries:         2,
-			expectSuccess:      true,
-			expectRetryCount:   0,
+			name:             "succeed on first attempt",
+			failUntilAttempt: 0,
+			maxRetries:       2,
+			expectSuccess:    true,
+			expectRetryCount: 0,
 		},
 		{
-			name:               "succeed on second attempt",
-			failUntilAttempt:   1,
-			maxRetries:         2,
-			expectSuccess:      true,
-			expectRetryCount:   1,
+			name:             "succeed on second attempt",
+			failUntilAttempt: 1,
+			maxRetries:       2,
+			expectSuccess:    true,
+			expectRetryCount: 1,
 		},
 		{
-			name:               "fail after max retries",
-			failUntilAttempt:   5,
-			maxRetries:         2,
-			expectSuccess:      false,
-			expectRetryCount:   2,
+			name:             "fail after max retries",
+			failUntilAttempt: 5,
+			maxRetries:       2,
+			expectSuccess:    false,
+			expectRetryCount: 2,
 		},
 		{
-			name:               "succeed on last retry",
-			failUntilAttempt:   2,
-			maxRetries:         2,
-			expectSuccess:      true,
-			expectRetryCount:   2,
+			name:             "succeed on last retry",
+			failUntilAttempt: 2,
+			maxRetries:       2,
+			expectSuccess:    true,
+			expectRetryCount: 2,
 		},
 	}
 
@@ -238,22 +238,22 @@ func TestNATSConcurrentPublishConsume(t *testing.T) {
 // This test will FAIL until full context integration is complete
 func TestNATSContextCancellationIntegration(t *testing.T) {
 	tests := []struct {
-		name              string
-		cancelAfter       time.Duration
-		messageCount      int
-		expectPartial     bool
+		name          string
+		cancelAfter   time.Duration
+		messageCount  int
+		expectPartial bool
 	}{
 		{
-			name:              "cancel during processing",
-			cancelAfter:       500 * time.Millisecond,
-			messageCount:      100,
-			expectPartial:     true,
+			name:          "cancel during processing",
+			cancelAfter:   500 * time.Millisecond,
+			messageCount:  100,
+			expectPartial: true,
 		},
 		{
-			name:              "cancel before start",
-			cancelAfter:       0,
-			messageCount:      10,
-			expectPartial:     false,
+			name:          "cancel before start",
+			cancelAfter:   0,
+			messageCount:  10,
+			expectPartial: false,
 		},
 	}
 
@@ -304,28 +304,28 @@ func TestNATSHealthCheckIntegration(t *testing.T) {
 // This test will FAIL until graceful shutdown is fully integrated
 func TestNATSGracefulShutdownIntegration(t *testing.T) {
 	tests := []struct {
-		name                  string
-		messagesInFlight      int
-		shutdownTimeout       time.Duration
-		expectAllProcessed    bool
+		name               string
+		messagesInFlight   int
+		shutdownTimeout    time.Duration
+		expectAllProcessed bool
 	}{
 		{
-			name:                  "shutdown with no in-flight messages",
-			messagesInFlight:      0,
-			shutdownTimeout:       5 * time.Second,
-			expectAllProcessed:    true,
+			name:               "shutdown with no in-flight messages",
+			messagesInFlight:   0,
+			shutdownTimeout:    5 * time.Second,
+			expectAllProcessed: true,
 		},
 		{
-			name:                  "shutdown with in-flight messages",
-			messagesInFlight:      10,
-			shutdownTimeout:       10 * time.Second,
-			expectAllProcessed:    true,
+			name:               "shutdown with in-flight messages",
+			messagesInFlight:   10,
+			shutdownTimeout:    10 * time.Second,
+			expectAllProcessed: true,
 		},
 		{
-			name:                  "shutdown timeout exceeded",
-			messagesInFlight:      100,
-			shutdownTimeout:       100 * time.Millisecond,
-			expectAllProcessed:    false,
+			name:               "shutdown timeout exceeded",
+			messagesInFlight:   100,
+			shutdownTimeout:    100 * time.Millisecond,
+			expectAllProcessed: false,
 		},
 	}
 

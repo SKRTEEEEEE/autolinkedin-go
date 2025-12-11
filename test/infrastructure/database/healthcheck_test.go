@@ -10,22 +10,22 @@ import (
 // This test will FAIL until healthcheck.go is implemented
 func TestHealthCheckPing(t *testing.T) {
 	tests := []struct {
-		name           string
-		timeout        time.Duration
-		expectHealthy  bool
-		expectLatency  time.Duration
+		name          string
+		timeout       time.Duration
+		expectHealthy bool
+		expectLatency time.Duration
 	}{
 		{
-			name:           "healthy database responds quickly",
-			timeout:        1 * time.Second,
-			expectHealthy:  true,
-			expectLatency:  50 * time.Millisecond,
+			name:          "healthy database responds quickly",
+			timeout:       1 * time.Second,
+			expectHealthy: true,
+			expectLatency: 50 * time.Millisecond,
 		},
 		{
-			name:           "timeout on unresponsive database",
-			timeout:        100 * time.Millisecond,
-			expectHealthy:  false,
-			expectLatency:  0,
+			name:          "timeout on unresponsive database",
+			timeout:       100 * time.Millisecond,
+			expectHealthy: false,
+			expectLatency: 0,
 		},
 	}
 
@@ -41,21 +41,21 @@ func TestHealthCheckPing(t *testing.T) {
 // This test will FAIL until pool stats are implemented
 func TestHealthCheckConnectionPoolStats(t *testing.T) {
 	tests := []struct {
-		name               string
-		expectedMinConns   int
-		expectedMaxConns   int
+		name                string
+		expectedMinConns    int
+		expectedMaxConns    int
 		expectedActiveConns int
 	}{
 		{
-			name:               "pool stats with active connections",
-			expectedMinConns:   5,
-			expectedMaxConns:   100,
+			name:                "pool stats with active connections",
+			expectedMinConns:    5,
+			expectedMaxConns:    100,
 			expectedActiveConns: 10,
 		},
 		{
-			name:               "pool stats with no active connections",
-			expectedMinConns:   5,
-			expectedMaxConns:   100,
+			name:                "pool stats with no active connections",
+			expectedMinConns:    5,
+			expectedMaxConns:    100,
 			expectedActiveConns: 0,
 		},
 	}
@@ -312,16 +312,16 @@ func TestHealthCheckMetrics(t *testing.T) {
 // This test will FAIL until monitoring is implemented
 func TestHealthCheckContinuousMonitoring(t *testing.T) {
 	tests := []struct {
-		name            string
-		checkInterval   time.Duration
-		duration        time.Duration
-		expectedChecks  int
+		name           string
+		checkInterval  time.Duration
+		duration       time.Duration
+		expectedChecks int
 	}{
 		{
-			name:            "monitor health every second for 5 seconds",
-			checkInterval:   1 * time.Second,
-			duration:        5 * time.Second,
-			expectedChecks:  5,
+			name:           "monitor health every second for 5 seconds",
+			checkInterval:  1 * time.Second,
+			duration:       5 * time.Second,
+			expectedChecks: 5,
 		},
 	}
 
@@ -337,36 +337,36 @@ func TestHealthCheckContinuousMonitoring(t *testing.T) {
 // This test will FAIL until alerting is implemented
 func TestHealthCheckAlertingThresholds(t *testing.T) {
 	tests := []struct {
-		name              string
-		latency           time.Duration
-		latencyThreshold  time.Duration
-		poolUsage         float64
-		poolThreshold     float64
-		expectAlert       bool
+		name             string
+		latency          time.Duration
+		latencyThreshold time.Duration
+		poolUsage        float64
+		poolThreshold    float64
+		expectAlert      bool
 	}{
 		{
-			name:              "no alert when within thresholds",
-			latency:           50 * time.Millisecond,
-			latencyThreshold:  100 * time.Millisecond,
-			poolUsage:         0.6,
-			poolThreshold:     0.8,
-			expectAlert:       false,
+			name:             "no alert when within thresholds",
+			latency:          50 * time.Millisecond,
+			latencyThreshold: 100 * time.Millisecond,
+			poolUsage:        0.6,
+			poolThreshold:    0.8,
+			expectAlert:      false,
 		},
 		{
-			name:              "alert when latency exceeds threshold",
-			latency:           150 * time.Millisecond,
-			latencyThreshold:  100 * time.Millisecond,
-			poolUsage:         0.6,
-			poolThreshold:     0.8,
-			expectAlert:       true,
+			name:             "alert when latency exceeds threshold",
+			latency:          150 * time.Millisecond,
+			latencyThreshold: 100 * time.Millisecond,
+			poolUsage:        0.6,
+			poolThreshold:    0.8,
+			expectAlert:      true,
 		},
 		{
-			name:              "alert when pool usage exceeds threshold",
-			latency:           50 * time.Millisecond,
-			latencyThreshold:  100 * time.Millisecond,
-			poolUsage:         0.9,
-			poolThreshold:     0.8,
-			expectAlert:       true,
+			name:             "alert when pool usage exceeds threshold",
+			latency:          50 * time.Millisecond,
+			latencyThreshold: 100 * time.Millisecond,
+			poolUsage:        0.9,
+			poolThreshold:    0.8,
+			expectAlert:      true,
 		},
 	}
 

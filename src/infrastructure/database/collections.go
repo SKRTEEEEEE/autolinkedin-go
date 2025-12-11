@@ -18,6 +18,8 @@ const (
 	CollectionDrafts     = "drafts"
 	CollectionUserTopics = "userTopics"
 	CollectionPrompts    = "prompts"
+	CollectionJobs       = "jobs"
+	CollectionJobErrors  = "jobErrors"
 )
 
 // IndexDefinition represents a MongoDB index
@@ -89,6 +91,17 @@ func GetAllIndexDefinitions() []IndexDefinition {
 			Collection: CollectionPrompts,
 			Keys:       bson.D{{Key: "user_id", Value: 1}, {Key: "style_name", Value: 1}},
 			Options:    options.Index().SetName("user_style_compound_idx"),
+		},
+		// Job errors collection indexes
+		{
+			Collection: CollectionJobErrors,
+			Keys:       bson.D{{Key: "job_id", Value: 1}},
+			Options:    options.Index().SetName("job_id_idx"),
+		},
+		{
+			Collection: CollectionJobErrors,
+			Keys:       bson.D{{Key: "created_at", Value: 1}},
+			Options:    options.Index().SetName("created_at_ttl_idx").SetExpireAfterSeconds(60 * 60 * 24 * 30),
 		},
 	}
 }
@@ -206,6 +219,54 @@ func GetValidationSchemas() []ValidationSchema {
 				},
 			},
 		},
+		{
+			Collection: CollectionJobErrors,
+			Validator: bson.M{
+				"$jsonSchema": bson.M{
+					"bsonType": "object",
+					"required": []string{"job_id", "user_id", "stage", "error", "created_at"},
+					"properties": bson.M{
+						"job_id": bson.M{
+							"bsonType":    "string",
+							"description": "must be a string and is required",
+						},
+						"user_id": bson.M{
+							"bsonType":    "objectId",
+							"description": "must be an objectId and is required",
+						},
+						"idea_id": bson.M{
+							"bsonType":    "objectId",
+							"description": "must be an objectId when present",
+						},
+						"stage": bson.M{
+							"bsonType":    "string",
+							"description": "must be a string and is required",
+						},
+						"error": bson.M{
+							"bsonType":    "string",
+							"description": "must be a string and is required",
+						},
+						"raw_response": bson.M{
+							"bsonType":    "string",
+							"description": "raw payload for debugging",
+						},
+						"prompt": bson.M{
+							"bsonType":    "string",
+							"description": "prompt sent to the LLM",
+						},
+						"attempt": bson.M{
+							"bsonType":    "int",
+							"minimum":     0,
+							"description": "attempt number",
+						},
+						"created_at": bson.M{
+							"bsonType":    "date",
+							"description": "must be a date and is required",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -257,7 +318,7 @@ func (cm *CollectionManager) createIndexes(ctx context.Context, db *mongo.Databa
 	indexDefs := GetAllIndexDefinitions()
 	for _, indexDef := range indexDefs {
 		collection := db.Collection(indexDef.Collection)
-		
+
 		indexModel := mongo.IndexModel{
 			Keys:    indexDef.Keys,
 			Options: indexDef.Options,
