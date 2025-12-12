@@ -32,6 +32,7 @@ type ideaDocument struct {
 	ID           primitive.ObjectID  `bson:"_id,omitempty"`
 	UserID       primitive.ObjectID  `bson:"user_id"`
 	TopicID      primitive.ObjectID  `bson:"topic_id"`
+	TopicName    string              `bson:"topic_name"`
 	Content      string              `bson:"content"`
 	QualityScore *float64            `bson:"quality_score,omitempty"`
 	Used         bool                `bson:"used"`
@@ -58,6 +59,7 @@ func (r *ideasRepository) toDocument(idea *entities.Idea) (*ideaDocument, error)
 	doc := &ideaDocument{
 		UserID:       userObjectID,
 		TopicID:      topicObjectID,
+		TopicName:    idea.TopicName,
 		Content:      idea.Content,
 		QualityScore: idea.QualityScore,
 		Used:         idea.Used,
@@ -92,6 +94,7 @@ func (r *ideasRepository) toEntity(doc *ideaDocument) *entities.Idea {
 		ID:           doc.ID.Hex(),
 		UserID:       doc.UserID.Hex(),
 		TopicID:      doc.TopicID.Hex(),
+		TopicName:    doc.TopicName,
 		Content:      doc.Content,
 		QualityScore: doc.QualityScore,
 		Used:         doc.Used,

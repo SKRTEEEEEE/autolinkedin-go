@@ -29,6 +29,7 @@ type promptDocument struct {
 	ID             primitive.ObjectID `bson:"_id,omitempty"`
 	UserID         string             `bson:"user_id"`
 	Type           string             `bson:"type"`
+	Name           string             `bson:"name"`
 	StyleName      string             `bson:"style_name,omitempty"`
 	PromptTemplate string             `bson:"prompt_template"`
 	Active         bool               `bson:"active"`
@@ -54,6 +55,7 @@ func (r *PromptsRepository) toDocument(prompt *entities.Prompt) (*promptDocument
 		ID:             oid,
 		UserID:         prompt.UserID,
 		Type:           string(prompt.Type),
+		Name:           prompt.Name,
 		StyleName:      prompt.StyleName,
 		PromptTemplate: prompt.PromptTemplate,
 		Active:         prompt.Active,
@@ -68,6 +70,7 @@ func (r *PromptsRepository) toEntity(doc *promptDocument) *entities.Prompt {
 		ID:             doc.ID.Hex(),
 		UserID:         doc.UserID,
 		Type:           entities.PromptType(doc.Type),
+		Name:           doc.Name,
 		StyleName:      doc.StyleName,
 		PromptTemplate: doc.PromptTemplate,
 		Active:         doc.Active,
@@ -110,6 +113,25 @@ func (r *PromptsRepository) FindByID(ctx context.Context, id string) (*entities.
 			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to find prompt: %w", err)
+	}
+
+	return r.toEntity(&doc), nil
+}
+
+// FindByName implements PromptsRepository.FindByName
+func (r *PromptsRepository) FindByName(ctx context.Context, userID string, name string) (*entities.Prompt, error) {
+	filter := bson.M{
+		"user_id": userID,
+		"name":    name,
+	}
+
+	var doc promptDocument
+	err := r.collection.FindOne(ctx, filter).Decode(&doc)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to find prompt by name: %w", err)
 	}
 
 	return r.toEntity(&doc), nil

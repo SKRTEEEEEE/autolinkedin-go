@@ -11,6 +11,7 @@ type Idea struct {
 	ID           string
 	UserID       string
 	TopicID      string
+	TopicName    string // Name of the related topic
 	Content      string
 	QualityScore *float64
 	Used         bool
@@ -20,7 +21,7 @@ type Idea struct {
 
 const (
 	MinIdeaContentLength = 10
-	MaxIdeaContentLength = 5000
+	MaxIdeaContentLength = 200  // Updated from 5000 to 200 as specified in entity.md
 	DefaultIdeaTTLDays   = 30
 )
 
@@ -36,6 +37,10 @@ func (i *Idea) Validate() error {
 
 	if i.TopicID == "" {
 		return fmt.Errorf("topic ID cannot be empty")
+	}
+
+	if i.TopicName == "" {
+		return fmt.Errorf("topic name cannot be empty")
 	}
 
 	if err := i.ValidateContent(); err != nil {
@@ -127,4 +132,9 @@ func (i *Idea) CalculateExpiration(ttlDays int) {
 
 	expiresAt := i.CreatedAt.Add(time.Duration(ttlDays) * 24 * time.Hour)
 	i.ExpiresAt = &expiresAt
+}
+
+// SetTopicName sets the topic name for the idea
+func (i *Idea) SetTopicName(topicName string) {
+	i.TopicName = topicName
 }

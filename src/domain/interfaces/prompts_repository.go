@@ -14,6 +14,9 @@ type PromptsRepository interface {
 	// FindByID retrieves a prompt by its ID
 	FindByID(ctx context.Context, id string) (*entities.Prompt, error)
 
+	// FindByName retrieves a prompt by its name for a specific user
+	FindByName(ctx context.Context, userID string, name string) (*entities.Prompt, error)
+
 	// ListByUserID retrieves all prompts for a user
 	ListByUserID(ctx context.Context, userID string) ([]*entities.Prompt, error)
 

@@ -3,10 +3,12 @@ package services
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
+	"github.com/linkgen-ai/backend/src/infrastructure/services"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
@@ -25,6 +27,7 @@ type DevSeeder struct {
 	promptsRepo interfaces.PromptsRepository
 	llmService  interfaces.LLMService
 	logger      *zap.Logger
+	promptDir   string
 }
 
 // NewDevSeeder creates a new development data seeder
@@ -43,6 +46,7 @@ func NewDevSeeder(
 		promptsRepo: promptsRepo,
 		llmService:  llmService,
 		logger:      logger,
+		promptDir:   filepath.Join(".", "seed", "prompt"),
 	}
 }
 
@@ -133,18 +137,21 @@ func (s *DevSeeder) SeedDefaultTopics(ctx context.Context) error {
 
 		// Create new topic
 		topic := &entities.Topic{
-			ID:          primitive.NewObjectID().Hex(),
-			UserID:      DevUserID,
-			Name:        topicData.name,
-			Description: topicData.description,
-			Keywords:    []string{},
-			Category:    "General",
-			Priority:    5,
-			Active:      true,
-			CreatedAt:   time.Now(),
+			ID:            primitive.NewObjectID().Hex(),
+			UserID:        DevUserID,
+			Name:          topicData.name,
+			Description:   topicData.description,
+			Category:      entities.DefaultCategory,
+			Priority:      entities.DefaultPriority,
+			Ideas:         entities.DefaultIdeasCount,
+			Prompt:        entities.DefaultPrompt,
+			RelatedTopics: []string{},
+			Active:        true,
+			CreatedAt:     time.Now(),
 		}
 
-		// Validate topic
+		// Set defaults and validate
+		topic.SetDefaults()
 		if err := topic.Validate(); err != nil {
 			s.logger.Warn("Failed to validate topic",
 				zap.String("topic", topicData.name),
@@ -295,74 +302,50 @@ func (s *DevSeeder) SeedDefaultPrompts(ctx context.Context) error {
 		return nil
 	}
 
-	now := time.Now()
+	// Create prompt loader
+	promptLoader := services.NewPromptLoader(s.logger)
 
-	// Default prompt for generating ideas (Spanish, from flujo-app.v2.md)
-	ideasPrompt := &entities.Prompt{
-		ID:     primitive.NewObjectID().Hex(),
-		UserID: DevUserID,
-		Type:   entities.PromptTypeIdeas,
-		PromptTemplate: `Eres un experto en {related_topics}.
-Genera {count} ideas únicas sobre {name} para posibles posts o artículos.
-Idioma: {language}
-
-Devuelve SOLO un objeto JSON con este formato exacto:
-{"ideas": ["idea1", "idea2", "idea3", ...]}`,
-		Active:    true,
-		CreatedAt: now,
-		UpdatedAt: now,
+	// Load prompts from files
+	promptFiles, err := promptLoader.LoadPromptsFromDir(s.promptDir)
+	if err != nil {
+		return fmt.Errorf("failed to load prompts from directory %s: %w", s.promptDir, err)
 	}
 
-	if err := ideasPrompt.Validate(); err != nil {
-		return fmt.Errorf("failed to validate ideas prompt: %w", err)
+	if len(promptFiles) == 0 {
+		s.logger.Warn("No prompt files found in directory", zap.String("dir", s.promptDir))
+		return nil
 	}
 
-	if _, err := s.promptsRepo.Create(ctx, ideasPrompt); err != nil {
-		return fmt.Errorf("failed to create ideas prompt: %w", err)
+	// Create prompt entities from files
+	prompts, err := promptLoader.CreatePromptsFromFile(DevUserID, promptFiles)
+	if err != nil {
+		return fmt.Errorf("failed to create prompt entities: %w", err)
 	}
 
-	s.logger.Info("Created default ideas prompt")
-
-	// Default prompt for generating drafts (professional style, Spanish)
-	draftsPrompt := &entities.Prompt{
-		ID:        primitive.NewObjectID().Hex(),
-		UserID:    DevUserID,
-		Type:      entities.PromptTypeDrafts,
-		StyleName: "profesional",
-		PromptTemplate: `Eres un experto creador de contenido para LinkedIn.
-
-Basándote en la siguiente idea:
-{idea_content}
-
-Crea contenido atractivo para LinkedIn que:
-- Mantenga un tono profesional pero cercano
-- Use lenguaje claro y conciso
-- Incluya un gancho convincente en la primera frase
-- Proporcione información valiosa o insights accionables
-- Termine con una pregunta reflexiva o llamada a la acción
-- Esté optimizado para el algoritmo de LinkedIn (longitud apropiada, formato, hashtags)
-
-Devuelve SOLO un objeto JSON con este formato exacto:
-{
-  "posts": ["post1", "post2", "post3", "post4", "post5"],
-  "articles": ["article1"]
-}`,
-		Active:    true,
-		CreatedAt: now,
-		UpdatedAt: now,
+	if len(prompts) == 0 {
+		s.logger.Warn("No valid prompts were created from files")
+		return nil
 	}
 
-	if err := draftsPrompt.Validate(); err != nil {
-		return fmt.Errorf("failed to validate drafts prompt: %w", err)
+	// Save prompts to database
+	for _, prompt := range prompts {
+		promptID, err := s.promptsRepo.Create(ctx, prompt)
+		if err != nil {
+			s.logger.Warn("Failed to save prompt",
+				zap.String("name", prompt.Name),
+				zap.Error(err),
+			)
+			continue
+		}
+
+		s.logger.Info("Prompt created successfully",
+			zap.String("name", prompt.Name),
+			zap.String("type", string(prompt.Type)),
+			zap.String("prompt_id", promptID),
+		)
 	}
 
-	if _, err := s.promptsRepo.Create(ctx, draftsPrompt); err != nil {
-		return fmt.Errorf("failed to create drafts prompt: %w", err)
-	}
-
-	s.logger.Info("Created default drafts prompt (professional style)")
-
-	s.logger.Info("Default prompts seeding completed")
+	s.logger.Info("Default prompts seeding completed", zap.Int("total_created", len(prompts)))
 	return nil
 }
 
