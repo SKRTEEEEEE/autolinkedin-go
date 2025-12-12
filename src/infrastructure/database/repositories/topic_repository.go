@@ -252,12 +252,14 @@ func (r *topicRepository) Update(ctx context.Context, topic *entities.Topic) err
 	// Prepare update document (excluding ID, UserID, and CreatedAt)
 	update := bson.M{
 		"$set": bson.M{
-			"name":        topic.Name,
-			"description": topic.Description,
-			"keywords":    topic.Keywords,
-			"category":    topic.Category,
-			"priority":    topic.Priority,
-			"active":      topic.Active,
+			"name":           topic.Name,
+			"description":    topic.Description,
+			"category":       topic.Category,
+			"priority":       topic.Priority,
+			"ideas":          topic.Ideas,
+			"prompt":         topic.Prompt,
+			"related_topics": topic.RelatedTopics,
+			"active":         topic.Active,
 		},
 	}
 

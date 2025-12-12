@@ -54,7 +54,7 @@ const (
 func (uc *GenerateIdeasUseCase) GenerateIdeasForUser(ctx context.Context, userID string, count int) ([]*entities.Idea, error) {
 	input := GenerateIdeasInput{
 		UserID: userID,
-		Count:  count,
+		Count:  uc.determineIdeaCount(count),
 	}
 	return uc.Execute(ctx, input)
 }
@@ -84,73 +84,7 @@ func (uc *GenerateIdeasUseCase) Execute(ctx context.Context, input GenerateIdeas
 		return nil, fmt.Errorf("no topics configured for user: %s", input.UserID)
 	}
 
-	// Get active ideas prompt for user
-	prompts, err := uc.promptsRepo.FindActiveByUserIDAndType(ctx, input.UserID, entities.PromptTypeIdeas)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find ideas prompt: %w", err)
-	}
-	if len(prompts) == 0 {
-		return nil, fmt.Errorf("no active ideas prompt configured for user: %s", input.UserID)
-	}
-
-	// Use first active prompt
-	prompt := prompts[0]
-
-	// Build prompt with variable substitution
-	finalPrompt := uc.buildPromptWithVariables(prompt.PromptTemplate, topic, user, input.Count)
-
-	// Call LLM with custom prompt
-	response, err := uc.llmService.SendRequest(ctx, finalPrompt)
-	if err != nil {
-		return nil, fmt.Errorf("LLM service error: %w", err)
-	}
-
-	// Parse JSON response
-	ideaContents, err := uc.parseIdeasResponse(response)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse LLM response: %w", err)
-	}
-
-	if len(ideaContents) == 0 {
-		return nil, fmt.Errorf("LLM generated no ideas")
-	}
-
-	// Create idea entities using factory
-	ideas := make([]*entities.Idea, 0, len(ideaContents))
-	for _, content := range ideaContents {
-		// Skip empty or whitespace-only ideas
-		trimmed := strings.TrimSpace(content)
-		if trimmed == "" {
-			continue
-		}
-
-		// Generate MongoDB ObjectID
-		ideaID := primitive.NewObjectID().Hex()
-
-		idea, err := factories.NewIdea(
-			ideaID,
-			input.UserID,
-			topic.ID,
-			trimmed,
-		)
-		if err != nil {
-			// Log validation error but continue with other ideas
-			continue
-		}
-
-		ideas = append(ideas, idea)
-	}
-
-	if len(ideas) == 0 {
-		return nil, fmt.Errorf("no valid ideas could be created from LLM response")
-	}
-
-	// Save ideas batch to repository
-	if err := uc.ideasRepo.CreateBatch(ctx, ideas); err != nil {
-		return nil, fmt.Errorf("failed to save ideas: %w", err)
-	}
-
-	return ideas, nil
+	return uc.generateIdeasForTopicContext(ctx, topic, user)
 }
 
 // GenerateIdeasForTopic generates ideas for a specific topic by ID
@@ -178,30 +112,104 @@ func (uc *GenerateIdeasUseCase) GenerateIdeasForTopic(ctx context.Context, topic
 		return nil, fmt.Errorf("user not found: %s", topic.UserID)
 	}
 
-	// Find prompt by name referenced in topic
-	prompt, err := uc.promptsRepo.FindByName(ctx, topic.UserID, topic.Prompt)
+	return uc.generateIdeasForTopicContext(ctx, topic, user)
+}
+
+func (uc *GenerateIdeasUseCase) generateIdeasForTopicContext(ctx context.Context, topic *entities.Topic, user *entities.User) ([]*entities.Idea, error) {
+	if topic == nil {
+		return nil, fmt.Errorf("topic cannot be nil")
+	}
+
+	if user == nil {
+		return nil, fmt.Errorf("user cannot be nil")
+	}
+
+	prompt, err := uc.resolvePrompt(ctx, topic)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find prompt: %w", err)
+		return nil, err
 	}
+
+	ideaCount := uc.determineIdeaCount(topic.Ideas)
+	finalPrompt := uc.buildPromptWithVariablesFromTopic(prompt.PromptTemplate, topic, user, ideaCount)
+
+	ideaContents, err := uc.requestIdeasFromLLM(ctx, finalPrompt)
+	if err != nil {
+		return nil, err
+	}
+
+	limitedIdeas := ideaContents
+	if ideaCount > 0 && len(ideaContents) > ideaCount {
+		limitedIdeas = ideaContents[:ideaCount]
+	}
+
+	ideas := make([]*entities.Idea, 0, len(limitedIdeas))
+	for _, content := range limitedIdeas {
+		trimmed := uc.sanitizeIdeaContent(content)
+		if trimmed == "" {
+			continue
+		}
+
+		ideaID := primitive.NewObjectID().Hex()
+		idea, err := factories.NewIdea(
+			ideaID,
+			topic.UserID,
+			topic.ID,
+			topic.Name,
+			trimmed,
+		)
+		if err != nil {
+			continue
+		}
+
+		ideas = append(ideas, idea)
+	}
+
+	if len(ideas) == 0 {
+		return nil, fmt.Errorf("no valid ideas could be created from LLM response")
+	}
+
+	if err := uc.ideasRepo.CreateBatch(ctx, ideas); err != nil {
+		return nil, fmt.Errorf("failed to save ideas: %w", err)
+	}
+
+	return ideas, nil
+}
+
+func (uc *GenerateIdeasUseCase) resolvePrompt(ctx context.Context, topic *entities.Topic) (*entities.Prompt, error) {
+	var prompt *entities.Prompt
+
+	if topic.Prompt != "" {
+		foundPrompt, err := uc.promptsRepo.FindByName(ctx, topic.UserID, topic.Prompt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to find prompt: %w", err)
+		}
+		prompt = foundPrompt
+	}
+
 	if prompt == nil {
-		return nil, fmt.Errorf("prompt not found: %s", topic.Prompt)
+		fallbackPrompts, err := uc.promptsRepo.FindActiveByUserIDAndType(ctx, topic.UserID, entities.PromptTypeIdeas)
+		if err != nil {
+			return nil, fmt.Errorf("failed to find fallback prompt: %w", err)
+		}
+		if len(fallbackPrompts) == 0 {
+			return nil, fmt.Errorf("prompt not found: %s", topic.Prompt)
+		}
+		prompt = fallbackPrompts[0]
 	}
 
-	// Verify prompt is of type ideas
 	if prompt.Type != entities.PromptTypeIdeas {
-		return nil, fmt.Errorf("prompt is not of type ideas: %s", topic.Prompt)
+		return nil, fmt.Errorf("prompt is not of type ideas: %s", prompt.Name)
 	}
 
-	// Build prompt with variable substitution
-	finalPrompt := uc.buildPromptWithVariablesFromTopic(prompt.PromptTemplate, topic, user, topic.Ideas)
+	return prompt, nil
+}
 
-	// Call LLM with custom prompt
-	response, err := uc.llmService.SendRequest(ctx, finalPrompt)
+func (uc *GenerateIdeasUseCase) requestIdeasFromLLM(ctx context.Context, prompt string) ([]string, error) {
+	response, err := uc.llmService.SendRequest(ctx, prompt)
 	if err != nil {
 		return nil, fmt.Errorf("LLM service error: %w", err)
 	}
 
-	// Parse JSON response
 	ideaContents, err := uc.parseIdeasResponse(response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse LLM response: %w", err)
@@ -211,45 +219,7 @@ func (uc *GenerateIdeasUseCase) GenerateIdeasForTopic(ctx context.Context, topic
 		return nil, fmt.Errorf("LLM generated no ideas")
 	}
 
-	// Create idea entities using factory
-	ideas := make([]*entities.Idea, 0, len(ideaContents))
-	for _, content := range ideaContents {
-		// Skip empty or whitespace-only ideas
-		trimmed := strings.TrimSpace(content)
-		if trimmed == "" {
-			continue
-		}
-
-		// Generate MongoDB ObjectID
-		ideaID := primitive.NewObjectID().Hex()
-
-		idea, err := factories.NewIdea(
-			ideaID,
-			topic.UserID,
-			topic.ID,
-			trimmed,
-		)
-		if err != nil {
-			// Log validation error but continue with other ideas
-			continue
-		}
-
-		// Set the topic name in the idea
-		idea.SetTopicName(topic.Name)
-
-		ideas = append(ideas, idea)
-	}
-
-	if len(ideas) == 0 {
-		return nil, fmt.Errorf("no valid ideas could be created from LLM response")
-	}
-
-	// Save ideas batch to repository
-	if err := uc.ideasRepo.CreateBatch(ctx, ideas); err != nil {
-		return nil, fmt.Errorf("failed to save ideas: %w", err)
-	}
-
-	return ideas, nil
+	return ideaContents, nil
 }
 
 // validateInput validates the input parameters
@@ -271,51 +241,70 @@ func (uc *GenerateIdeasUseCase) validateInput(input GenerateIdeasInput) error {
 
 // buildPromptWithVariables replaces template variables with actual values
 func (uc *GenerateIdeasUseCase) buildPromptWithVariables(template string, topic *entities.Topic, user *entities.User, count int) string {
-	prompt := template
-
-	// Replace {name} with topic name
-	prompt = strings.ReplaceAll(prompt, "{name}", topic.Name)
-
-	// Replace {related_topics} with topic name (or keywords if available)
-	relatedTopics := topic.Name
-	if len(topic.Keywords) > 0 {
-		relatedTopics = strings.Join(topic.Keywords, ", ")
-	}
-	prompt = strings.ReplaceAll(prompt, "{related_topics}", relatedTopics)
-
-	// Replace {language} with user language
-	prompt = strings.ReplaceAll(prompt, "{language}", user.GetLanguage())
-
-	// Replace {count} with idea count
-	prompt = strings.ReplaceAll(prompt, "{count}", fmt.Sprintf("%d", count))
-
-	return prompt
+	return uc.replaceTemplateVariables(template, topic, user, count)
 }
 
 // buildPromptWithVariablesFromTopic replaces template variables with actual values for a specific topic
 func (uc *GenerateIdeasUseCase) buildPromptWithVariablesFromTopic(template string, topic *entities.Topic, user *entities.User, count int) string {
-	prompt := template
+	return uc.replaceTemplateVariables(template, topic, user, count)
+}
 
-	// Replace {name} with topic name
-	prompt = strings.ReplaceAll(prompt, "{name}", topic.Name)
-
-	// Replace {related_topics} with related topics
-	relatedTopics := topic.Name
-	if len(topic.RelatedTopics) > 0 {
-		relatedTopics = strings.Join(topic.RelatedTopics, ", ")
+// replaceTemplateVariables performs variable substitution for idea prompts.
+func (uc *GenerateIdeasUseCase) replaceTemplateVariables(template string, topic *entities.Topic, user *entities.User, count int) string {
+	relatedTopics := strings.Join(topic.RelatedTopics, ", ")
+	if strings.TrimSpace(relatedTopics) == "" {
+		relatedTopics = ""
 	}
-	prompt = strings.ReplaceAll(prompt, "{related_topics}", relatedTopics)
 
-	// Replace {language} with user language
-	prompt = strings.ReplaceAll(prompt, "{language}", user.GetLanguage())
+	replacers := []string{
+		"{name}", topic.Name,
+		"{topic_name}", topic.Name,
+		"{topic}", topic.Name,
+		"{topic_description}", topic.Description,
+		"{ideas}", fmt.Sprintf("%d", count),
+		"{count}", fmt.Sprintf("%d", count),
+		"{language}", user.GetLanguage(),
+		"{related_topics}", relatedTopics,
+		"{[related_topics]}", relatedTopics,
+	}
 
-	// Replace {count} with idea count
-	prompt = strings.ReplaceAll(prompt, "{count}", fmt.Sprintf("%d", count))
+	replacer := strings.NewReplacer(replacers...)
+	prompt := replacer.Replace(template)
 
-	// Replace {ideas} with idea count (alternative syntax)
-	prompt = strings.ReplaceAll(prompt, "{ideas}", fmt.Sprintf("%d", count))
+	// Clean up double spaces when optional values are empty
+	return strings.TrimSpace(prompt)
+}
 
-	return prompt
+// determineIdeaCount enforces defaults and minimums for requested idea count.
+func (uc *GenerateIdeasUseCase) determineIdeaCount(count int) int {
+	if count <= 0 {
+		return entities.DefaultIdeasCount
+	}
+
+	if count > entities.MaxIdeasCount {
+		return entities.MaxIdeasCount
+	}
+
+	return count
+}
+
+// sanitizeIdeaContent trims whitespace and enforces maximum length limits.
+func (uc *GenerateIdeasUseCase) sanitizeIdeaContent(content string) string {
+	trimmed := strings.TrimSpace(content)
+	if trimmed == "" {
+		return ""
+	}
+
+	if len(trimmed) > entities.MaxIdeaContentLength {
+		trimmed = strings.TrimSpace(trimmed[:entities.MaxIdeaContentLength])
+	}
+
+	if len(trimmed) < entities.MinIdeaContentLength {
+		padding := entities.MinIdeaContentLength - len(trimmed)
+		trimmed = fmt.Sprintf("%s%s", trimmed, strings.Repeat(".", padding))
+	}
+
+	return trimmed
 }
 
 // parseIdeasResponse parses the JSON response from LLM

@@ -86,7 +86,7 @@ func (pl *PromptLoader) parsePromptFile(filePath string) (*PromptFile, error) {
 	// Parse YAML front-matter
 	frontMatter := strings.TrimSpace(parts[1])
 	lines := strings.Split(frontMatter, "\n")
-	
+
 	var name, promptType string
 	for _, line := range lines {
 		line = strings.TrimSpace(line)

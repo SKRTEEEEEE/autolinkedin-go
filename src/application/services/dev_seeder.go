@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/linkgen-ai/backend/src/application/usecases"
 	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
 	"github.com/linkgen-ai/backend/src/infrastructure/services"
@@ -205,8 +206,14 @@ func (s *DevSeeder) SeedInitialIdeas(ctx context.Context) error {
 		return nil
 	}
 
-	// Generate ideas for each topic
-	const ideasPerTopic = 5
+	generateIdeasUC := usecases.NewGenerateIdeasUseCase(
+		s.userRepo,
+		s.topicRepo,
+		s.ideasRepo,
+		s.promptsRepo,
+		s.llmService,
+	)
+
 	totalGenerated := 0
 
 	for _, topic := range topics {
@@ -218,10 +225,9 @@ func (s *DevSeeder) SeedInitialIdeas(ctx context.Context) error {
 
 		s.logger.Info("Generating ideas for topic",
 			zap.String("topic", topic.Name),
-			zap.Int("count", ideasPerTopic))
+			zap.Int("count", topic.Ideas))
 
-		// Call LLM to generate ideas
-		ideaContents, err := s.llmService.GenerateIdeas(ctx, topic.Name, ideasPerTopic)
+		generated, err := generateIdeasUC.GenerateIdeasForTopic(ctx, topic.ID)
 		if err != nil {
 			s.logger.Warn("Failed to generate ideas for topic",
 				zap.String("topic", topic.Name),
@@ -230,57 +236,10 @@ func (s *DevSeeder) SeedInitialIdeas(ctx context.Context) error {
 			continue
 		}
 
-		if len(ideaContents) == 0 {
-			s.logger.Warn("No ideas generated for topic", zap.String("topic", topic.Name))
-			continue
-		}
-
-		// Create idea entities
-		ideas := make([]*entities.Idea, 0, len(ideaContents))
-		for _, content := range ideaContents {
-			idea := &entities.Idea{
-				ID:           primitive.NewObjectID().Hex(),
-				UserID:       DevUserID,
-				TopicID:      topic.ID,
-				Content:      content,
-				QualityScore: nil,
-				Used:         false,
-				CreatedAt:    time.Now(),
-			}
-
-			// Set expiration (30 days default)
-			idea.CalculateExpiration(30)
-
-			// Validate idea
-			if err := idea.Validate(); err != nil {
-				s.logger.Warn("Failed to validate idea, skipping",
-					zap.String("topic", topic.Name),
-					zap.Error(err),
-				)
-				continue
-			}
-
-			ideas = append(ideas, idea)
-		}
-
-		if len(ideas) == 0 {
-			s.logger.Warn("No valid ideas created for topic", zap.String("topic", topic.Name))
-			continue
-		}
-
-		// Save ideas batch
-		if err := s.ideasRepo.CreateBatch(ctx, ideas); err != nil {
-			s.logger.Warn("Failed to save ideas batch",
-				zap.String("topic", topic.Name),
-				zap.Error(err),
-			)
-			continue
-		}
-
-		totalGenerated += len(ideas)
+		totalGenerated += len(generated)
 		s.logger.Info("Ideas generated successfully",
 			zap.String("topic", topic.Name),
-			zap.Int("count", len(ideas)),
+			zap.Int("count", len(generated)),
 		)
 	}
 
@@ -302,8 +261,9 @@ func (s *DevSeeder) SeedDefaultPrompts(ctx context.Context) error {
 		return nil
 	}
 
-	// Create prompt loader
-	promptLoader := services.NewPromptLoader(s.logger)
+	// Create prompt loader using zap adapter for interfaces.Logger
+	loggerAdapter := services.NewZapLoggerAdapter(s.logger)
+	promptLoader := services.NewPromptLoader(loggerAdapter)
 
 	// Load prompts from files
 	promptFiles, err := promptLoader.LoadPromptsFromDir(s.promptDir)
