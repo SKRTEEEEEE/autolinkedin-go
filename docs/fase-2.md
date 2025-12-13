@@ -13,9 +13,9 @@
 
 
 ### 0.2 Seeding de Topics Default
-- [ ] Se verifica si `devUser` tiene topics. 
-  - [ ] Si no, se utiliza el archivo [topic.json](../seed/topic.json) para generar-los, utilizando los de dicho archivo
-  - [ ] Si ya tiene topics, se comprobara que estén los mismos que [topic.json](../seed/topic.json), si hay alguno de dicho archivo que no esta guardo en bdd se añade.
+- [x] Se verifica si `devUser` tiene topics. 
+  - [x] Si no, se utiliza el archivo [topic.json](../seed/topic.json) para generar-los, utilizando los de dicho archivo
+  - [x] Si ya tiene topics, se comprobara que estén los mismos que [topic.json](../seed/topic.json), si hay alguno de dicho archivo que no esta guardo en bdd se añade.
 
 ### 0.3 Seeding de Prompts Default
 ##### Funcionamiento actual?
@@ -25,10 +25,10 @@
     - **Prompt para drafts**: Estilo "profesional" con plantilla fija para generar 5 posts y 1 artículo a partir de una idea
   - Los prompts se almacenan en la colección [`prompts`](entity.md#prompt)
 ##### Funcionamiento esperado
-- [ ] Se verifica si `devUser` tiene prompts configurados. 
-  - [ ] Si no hay prompts, se crean prompts por defecto utilizando los archivos de [/seed/prompt/](../seed/prompt/) **que no contengan el final `.old.md`**
-    - [ ] Para esto se utiliza la configuración del front-matter donde esta indica los campos extra requeridos (name & type)
-  - [ ] Si los hay, se comprobara que hayan los mismos que en [/seed/prompt/](../seed/prompt/) **y que no contengan el final `.old.md`**, si hay alguno de esta carpeta que no este en la bdd se creara el/los que falten.
+- [x] Se verifica si `devUser` tiene prompts configurados. 
+  - [x] Si no hay prompts, se crean prompts por defecto utilizando los archivos de [/seed/prompt/](../seed/prompt/) **que no contengan el final `.old.md`**
+    - [x] Para esto se utiliza la configuración del front-matter donde esta indica los campos extra requeridos (name & type)
+  - [x] Si los hay, se comprobara que hayan los mismos que en [/seed/prompt/](../seed/prompt/) **y que no contengan el final `.old.md`**, si hay alguno de esta carpeta que no este en la bdd se creara el/los que falten.
   
 
 ### 0.4 Generación Inicial de Ideas
@@ -36,9 +36,9 @@
 Para cada topic creado, se generan X (indicado en el campo 'ideas' de cada topic) ideas usando el prompt - default: base1 - de ideas:
 - Se almacenan en colección [`ideas`](entity.md#idea) con campo `used: false`
 
-1. [ ] Al iniciar la app, se tendrá que hacer una llamada al LLM **por cada topic existente**
-2. [ ] Se generan X (indicado en el campo 'ideas' de cada topic) ideas
-3. [ ] Se utiliza el prompt indicado en el campo 'prompt', el cual tendrá el mismo nombre que algún 'prompt_template' del user. Sino (por default) se utiliza el que tiene el nombre de 'base1'
+1. [x] Al iniciar la app, se tendrá que hacer una llamada al LLM **por cada topic existente**
+2. [x] Se generan X (indicado en el campo 'ideas' de cada topic) ideas
+3. [x] Se utiliza el prompt indicado en el campo 'prompt', el cual tendrá el mismo nombre que algún 'prompt_template' del user. Sino (por default) se utiliza el que tiene el nombre de 'base1'
 - [Fase 1: Generación de ideas - Funcionamiento](#12-funcionamiento)
 ## Fase 1 — Generación de Ideas 
 
@@ -51,43 +51,43 @@ Una goroutine se ejecuta cada **X horas** (configurable):
 #### 1.1.2 [Activación por inicio app](#04-generación-inicial-de-ideas)
 #### 1.1.3 Activación por modificación de topics
 ##### Funcionamiento esperado
-- [ ] Si se crea un nuevo topic, se generaran 
+- [x] Si se crea un nuevo topic, se generaran 
   - Para cada topic creado, se generan X (indicado en el campo 'ideas' de cada topic) ideas usando el prompt default de ideas:
   - Se almacenan en colección `ideas` con campo `used: false`
-- [ ] Si se modifica un topic, se generaran 
+- [x] Si se modifica un topic, se generaran 
   - Se eliminan las ideas de dicho topic ya generadas, antiguamente.
   - Para el topic modificado, se generan X (indicado en el campo 'ideas' de cada topic) ideas usando el prompt default de ideas
   - Se almacenan en colección `ideas` con campo `used: false`
-- [ ] Si se elimina un topic, se eliminan las ideas vinculadas a dicho topic
+- [x] Si se elimina un topic, se eliminan las ideas vinculadas a dicho topic
 ##### Funcionamiento actual?
 - [x] Si se modifica un topic:
   - El topic se actualiza con los nuevos datos (nombre, descripción, keywords, categoría, etc.)
-  - NO se eliminan las ideas existentes del topic modificado
-  - NO se generan automáticamente nuevas ideas
-  - **Nota**: La regeneración automática de ideas tras modificación no está implementada actualmente
+  - [x] Se eliminan las ideas existentes del topic modificado
+  - [x] Se generan automáticamente nuevas ideas
+  - **Nota**: Implementado con DeleteByTopicID y GenerateIdeasForTopic asíncrono
   
 - [x] Si se elimina un topic:
   - El topic se elimina completamente de la base de datos (hard delete)
-  - Las ideas vinculadas al topic pueden permanecer como registros huérfanos
-  - **Nota**: No se implementa cascading delete para ideas relacionadas con topics eliminados
+  - [x] Las ideas vinculadas al topic se eliminan en cascada
+  - **Nota**: Implementado con DeleteByTopicID antes de eliminar el topic
   
 
 ### 1.2 Funcionamiento
 #### Funcionamiento actual?
 - [x] El generador de ideas funciona así:
-1. Se obtiene un **topic aleatorio** del usuario (de sus topics activos)
-2. Se intenta recuperar el **prompt de ideas activo** de la base de datos (pero NO se utiliza realmente)
-3. Llama al LLM utilizando el prompt hardcodeado en `infrastructure/http/llm/prompts.go`:
-   - Usa la función `BuildIdeasPrompt(topic, count)` que incluye instrucciones predefinidas
+1. Se obtiene un **topic aleatorio** del usuario (de sus topics activos) O un topic específico
+2. Se recupera el **prompt de ideas activo** de la base de datos usando PromptEngine
+3. Llama al LLM utilizando el prompt de la base de datos con variables sustituidas:
+   - Usa el PromptEngine para procesar variables `{name}`, `{ideas}`, `{related_topics}`, etc.
 4. Parsea la respuesta JSON extrayendo el array de ideas
 5. Crea entidades Idea con metadata y las persiste en lote
 
-**Nota importante**: Los prompts guardados en la base de datos se recuperan pero no se utilizan actualmente. La aplicación always usa los prompts hardcodeados en el código.
+**Nota importante**: Los prompts guardados en la base de datos se utilizan mediante PromptEngine. Ya NO se usan prompts hardcodeados.
 #### Funcionamiento esperado
-- [ ] El generador de ideas funciona así, **por cada llamada al LLM necesaria (según [activación](#11-activación)):**
-1. [ ] Llama al LLM utilizando el prompt indicado en el campo 'prompt' del topic, substituyendo los campos dynamicos (name, related_topics)
-2. [ ] Parsea la respuesta JSON extrayendo el array de ideas
-3. [ ] Crea entidades Idea
+- [x] El generador de ideas funciona así, **por cada llamada al LLM necesaria (según [activación](#11-activación)):**
+1. [x] Llama al LLM utilizando el prompt indicado en el campo 'prompt' del topic, substituyendo los campos dynamicos (name, related_topics)
+2. [x] Parsea la respuesta JSON extrayendo el array de ideas
+3. [x] Crea entidades Idea
 #### 1.3 Llamada al LLM
 
 [x] La comunicación con el LLM se realiza a través del cliente HTTP configurado en `http://100.105.212.98:8317/`

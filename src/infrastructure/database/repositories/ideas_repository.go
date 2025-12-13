@@ -246,3 +246,25 @@ func (r *ideasRepository) ClearByUserID(ctx context.Context, userID string) erro
 	// because clearing an empty collection is still a successful operation
 	return nil
 }
+
+// DeleteByTopicID removes all ideas for a specific topic
+func (r *ideasRepository) DeleteByTopicID(ctx context.Context, topicID string) error {
+	if topicID == "" {
+		return database.ErrInvalidID
+	}
+
+	topicObjectID, err := primitive.ObjectIDFromHex(topicID)
+	if err != nil {
+		return database.ErrInvalidID
+	}
+
+	filter := bson.M{"topic_id": topicObjectID}
+	_, err = r.collection.DeleteMany(ctx, filter)
+	if err != nil {
+		return fmt.Errorf("failed to delete ideas by topic: %w", err)
+	}
+
+	// Note: We don't return an error if no documents were deleted
+	// because deleting from an empty topic is still a successful operation
+	return nil
+}
