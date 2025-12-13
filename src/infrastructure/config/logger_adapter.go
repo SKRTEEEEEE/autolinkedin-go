@@ -41,7 +41,7 @@ func (z *ZapLoggerAdapter) Error(msg string, fields ...interface{}) {
 // This is a simplified implementation - in production, you'd want better handling
 func (z *ZapLoggerAdapter) fieldsToZap(fields []interface{}) []zap.Field {
 	var zapFields []zap.Field
-	
+
 	// Process pairs of key-value
 	for i := 0; i < len(fields)-1; i += 2 {
 		if key, ok := fields[i].(string); ok {
@@ -49,6 +49,6 @@ func (z *ZapLoggerAdapter) fieldsToZap(fields []interface{}) []zap.Field {
 			zapFields = append(zapFields, zap.Any(key, value))
 		}
 	}
-	
+
 	return zapFields
 }

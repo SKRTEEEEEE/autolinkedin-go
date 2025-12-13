@@ -13,10 +13,10 @@ import (
 
 // MigrationReport represents the results of a migration operation
 type MigrationReport struct {
-	MigratedCount  int       `json:"migrated_count"`
-	FailedCount    int       `json:"failed_count"`
-	MigrationDate  time.Time `json:"migration_date"`
-	Errors         []string  `json:"errors,omitempty"`
+	MigratedCount int       `json:"migrated_count"`
+	FailedCount   int       `json:"failed_count"`
+	MigrationDate time.Time `json:"migration_date"`
+	Errors        []string  `json:"errors,omitempty"`
 }
 
 // RollbackReport represents the results of a rollback operation
@@ -29,11 +29,11 @@ type RollbackReport struct {
 
 // ValidationReport represents migration validation results
 type ValidationReport struct {
-	ItemsNeedingMigration  int       `json:"items_needing_migration"`
-	ItemsAlreadyMigrated   int       `json:"items_already_migrated"`
-	ConflictCount          int       `json:"conflict_count"`
-	ValidationDate         time.Time `json:"validation_date"`
-	Warnings               []string  `json:"warnings,omitempty"`
+	ItemsNeedingMigration int       `json:"items_needing_migration"`
+	ItemsAlreadyMigrated  int       `json:"items_already_migrated"`
+	ConflictCount         int       `json:"conflict_count"`
+	ValidationDate        time.Time `json:"validation_date"`
+	Warnings              []string  `json:"warnings,omitempty"`
 }
 
 // DataMigrator handles data migration between schemas
@@ -77,13 +77,13 @@ func (m *DataMigrator) MigrateTopics(ctx context.Context) (*MigrationReport, err
 
 	for _, topic := range topicsToMigrate {
 		topicID := topic["_id"].(primitive.ObjectID).Hex()
-		
+
 		// Build update with new fields
 		update := bson.M{
 			"$set": bson.M{
-				"prompt_name":  "base1",             // Default prompt
-				"ideas_count":  getOldIdeasCount(topic),
-				"updated_at":   time.Now(),
+				"prompt_name": "base1", // Default prompt
+				"ideas_count": getOldIdeasCount(topic),
+				"updated_at":  time.Now(),
 			},
 		}
 
@@ -140,7 +140,7 @@ func (m *DataMigrator) MigrateIdeas(ctx context.Context) (*MigrationReport, erro
 
 	for _, idea := range ideasToMigrate {
 		ideaID := idea["_id"].(primitive.ObjectID).Hex()
-		
+
 		// Get the related topic to fetch its name
 		topicID := idea["topic_id"].(primitive.ObjectID)
 		var topic bson.M
@@ -265,7 +265,7 @@ func (m *DataMigrator) RollbackTopics(ctx context.Context, userID string) (*Roll
 		"user_id":     userID,
 		"prompt_name": bson.M{"$exists": true},
 	}
-	
+
 	cursor, err := topicCollection.Find(ctx, filter)
 	if err != nil {
 		report.Errors = append(report.Errors, fmt.Sprintf("Error finding topics to rollback: %v", err))
@@ -283,16 +283,16 @@ func (m *DataMigrator) RollbackTopics(ctx context.Context, userID string) (*Roll
 
 	for _, topic := range topicsToRollback {
 		topicID := topic["_id"].(primitive.ObjectID).Hex()
-		
+
 		// Build update to restore old schema
 		update := bson.M{
 			"$set": bson.M{
-				"ideas":     getIdeasCount(topic), // Convert ideas_count back to ideas
+				"ideas":      getIdeasCount(topic), // Convert ideas_count back to ideas
 				"updated_at": time.Now(),
 			},
 			"$unset": bson.M{
-				"prompt_name":  "",
-				"ideas_count":  "",
+				"prompt_name": "",
+				"ideas_count": "",
 			},
 		}
 
@@ -351,9 +351,9 @@ func (m *DataMigrator) ValidateMigration(ctx context.Context, userID string) (*V
 
 	// Check for potential conflicts
 	cursor, err := topicCollection.Find(ctx, bson.M{
-		"user_id":       userID,
-		"prompt_name":   bson.M{"$exists": true},
-		"ideas_count":   bson.M{"$exists": false},
+		"user_id":     userID,
+		"prompt_name": bson.M{"$exists": true},
+		"ideas_count": bson.M{"$exists": false},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("Error checking conflicts: %v", err)
@@ -371,7 +371,7 @@ func (m *DataMigrator) ValidateMigration(ctx context.Context, userID string) (*V
 		report.Warnings = append(report.Warnings, fmt.Sprintf("Found %d topics with partial migration", report.ConflictCount))
 	}
 
-	log.Printf("Migration validation completed. Need migration: %d, Already migrated: %d, Conflicts: %d", 
+	log.Printf("Migration validation completed. Need migration: %d, Already migrated: %d, Conflicts: %d",
 		report.ItemsNeedingMigration, report.ItemsAlreadyMigrated, report.ConflictCount)
 
 	return report, nil

@@ -394,7 +394,7 @@ func (uc *GenerateIdeasUseCase) generateIdeasWithPromptEngine(ctx context.Contex
 func (uc *GenerateIdeasUseCase) parseIdeasResponse(response string) ([]string, error) {
 	// Clean the response from markdown code blocks if present
 	cleanedResponse := cleanJSONResponse(response)
-	
+
 	var result struct {
 		Ideas []string `json:"ideas"`
 	}
@@ -414,7 +414,7 @@ func (uc *GenerateIdeasUseCase) parseIdeasResponse(response string) ([]string, e
 func cleanJSONResponse(response string) string {
 	// Remove markdown code blocks (```json ... ``` or ``` ... ```)
 	response = strings.TrimSpace(response)
-	
+
 	// Check if response starts with ``` and ends with ```
 	if strings.HasPrefix(response, "```") {
 		// Find the first newline after ```
@@ -424,17 +424,17 @@ func cleanJSONResponse(response string) string {
 		} else {
 			start++ // skip the newline
 		}
-		
+
 		// Find the last ```
 		end := strings.LastIndex(response, "```")
 		if end > start {
 			response = response[start:end]
 		}
 	}
-	
+
 	// Remove backticks at the beginning and end
 	response = strings.Trim(response, "`")
 	response = strings.TrimSpace(response)
-	
+
 	return response
 }

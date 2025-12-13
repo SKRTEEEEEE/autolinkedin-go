@@ -19,8 +19,8 @@ type Prompt struct {
 	ID             string
 	UserID         string
 	Type           PromptType
-	Name           string        // Unique identifier for the prompt
-	StyleName      string        // For backward compatibility
+	Name           string // Unique identifier for the prompt
+	StyleName      string // For backward compatibility
 	PromptTemplate string
 	Active         bool
 	CreatedAt      time.Time

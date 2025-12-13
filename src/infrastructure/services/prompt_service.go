@@ -70,8 +70,8 @@ func (ps *PromptService) SyncSeedPrompts(ctx context.Context, seedDir string) er
 		}
 	}
 
-	ps.logger.Info("Seed prompts synchronized successfully", 
-		"prompt_count", len(promptFiles), 
+	ps.logger.Info("Seed prompts synchronized successfully",
+		"prompt_count", len(promptFiles),
 		"user_count", len(users))
 
 	return nil
@@ -112,8 +112,8 @@ func (ps *PromptService) SyncSeedPromptsForUser(ctx context.Context, userID stri
 		return fmt.Errorf("failed to sync prompts for user %s: %w", userID, err)
 	}
 
-	ps.logger.Info("Seed prompts synchronized for user", 
-		"user_id", userID, 
+	ps.logger.Info("Seed prompts synchronized for user",
+		"user_id", userID,
 		"prompt_count", len(promptFiles))
 
 	return nil
@@ -180,10 +180,10 @@ func (ps *PromptService) CreateCustomPrompt(
 		return nil, fmt.Errorf("failed to retrieve created prompt: %w", err)
 	}
 
-	ps.logger.Info("Custom prompt created", 
-		"user_id", userID, 
-		"prompt_id", promptID, 
-		"prompt_name", name, 
+	ps.logger.Info("Custom prompt created",
+		"user_id", userID,
+		"prompt_id", promptID,
+		"prompt_name", name,
 		"prompt_type", promptType)
 
 	return created, nil
@@ -245,9 +245,9 @@ func (ps *PromptService) UpdateCustomPrompt(
 		return nil, fmt.Errorf("failed to update prompt: %w", err)
 	}
 
-	ps.logger.Info("Custom prompt updated", 
-		"user_id", userID, 
-		"prompt_id", promptID, 
+	ps.logger.Info("Custom prompt updated",
+		"user_id", userID,
+		"prompt_id", promptID,
 		"prompt_name", prompt.Name)
 
 	return prompt, nil
@@ -283,9 +283,9 @@ func (ps *PromptService) DeleteCustomPrompt(ctx context.Context, userID string, 
 		return fmt.Errorf("failed to delete prompt: %w", err)
 	}
 
-	ps.logger.Info("Custom prompt deleted", 
-		"user_id", userID, 
-		"prompt_id", promptID, 
+	ps.logger.Info("Custom prompt deleted",
+		"user_id", userID,
+		"prompt_id", promptID,
 		"prompt_name", prompt.Name)
 
 	return nil
@@ -310,8 +310,8 @@ func (ps *PromptService) ResetToSeedPrompts(ctx context.Context, userID string, 
 	// Delete all custom prompts
 	for _, prompt := range userPrompts {
 		if err := ps.promptsRepo.Delete(ctx, prompt.ID); err != nil {
-			ps.logger.Warn("Failed to delete prompt during reset", 
-				"prompt_id", prompt.ID, 
+			ps.logger.Warn("Failed to delete prompt during reset",
+				"prompt_id", prompt.ID,
 				"error", err)
 		}
 	}
@@ -397,8 +397,8 @@ func (ps *PromptService) syncUserPrompts(ctx context.Context, userID string, pro
 		// Create prompt entity
 		prompt, err := ps.loader.CreatePromptsFromFile(userID, []*PromptFile{promptFile})
 		if err != nil {
-			ps.logger.Warn("Failed to create prompt from file", 
-				"file_name", promptFile.Name, 
+			ps.logger.Warn("Failed to create prompt from file",
+				"file_name", promptFile.Name,
 				"error", err)
 			continue
 		}
@@ -417,8 +417,8 @@ func (ps *PromptService) syncUserPrompts(ctx context.Context, userID string, pro
 				existing.UpdatedAt = now
 
 				if err := ps.promptsRepo.Update(ctx, existing); err != nil {
-					ps.logger.Warn("Failed to update existing prompt", 
-						"prompt_id", existing.ID, 
+					ps.logger.Warn("Failed to update existing prompt",
+						"prompt_id", existing.ID,
 						"error", err)
 				}
 			}
@@ -430,8 +430,8 @@ func (ps *PromptService) syncUserPrompts(ctx context.Context, userID string, pro
 			promptEntity.UpdatedAt = now
 
 			if _, err := ps.promptsRepo.Create(ctx, promptEntity); err != nil {
-				ps.logger.Warn("Failed to create new prompt", 
-					"prompt_name", promptEntity.Name, 
+				ps.logger.Warn("Failed to create new prompt",
+					"prompt_name", promptEntity.Name,
 					"error", err)
 			}
 		}
@@ -445,8 +445,8 @@ func (ps *PromptService) syncUserPrompts(ctx context.Context, userID string, pro
 			orphanPrompt.UpdatedAt = now
 
 			if err := ps.promptsRepo.Update(ctx, orphanPrompt); err != nil {
-				ps.logger.Warn("Failed to deactivate orphan prompt", 
-					"prompt_id", orphanPrompt.ID, 
+				ps.logger.Warn("Failed to deactivate orphan prompt",
+					"prompt_id", orphanPrompt.ID,
 					"error", err)
 			}
 		}
@@ -564,12 +564,12 @@ func (ps *PromptService) GetSeedPrompts(seedDir string) ([]*PromptFile, error) {
 
 // PromptStatistics provides statistics about prompts for a user
 type PromptStatistics struct {
-	TotalCount     int
-	IdeasCount     int
-	DraftsCount    int
-	ActiveCount    int
-	CustomCount    int
-	LastSyncedAt   *time.Time
+	TotalCount   int
+	IdeasCount   int
+	DraftsCount  int
+	ActiveCount  int
+	CustomCount  int
+	LastSyncedAt *time.Time
 }
 
 // GetPromptStatistics returns statistics about prompts for a user

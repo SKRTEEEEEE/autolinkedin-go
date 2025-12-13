@@ -148,7 +148,7 @@ func (h *DraftsHandler) GenerateDrafts(w http.ResponseWriter, r *http.Request) {
 			zap.String("job_id", jobID),
 			zap.Error(err),
 		)
-		
+
 		// Mark job as failed
 		_ = job.MarkAsFailed("Failed to queue: " + err.Error())
 		_ = h.jobRepository.Update(ctx, job)
@@ -421,14 +421,14 @@ func (h *DraftsHandler) RefineDraft(w http.ResponseWriter, r *http.Request) {
 
 // GetJobStatusResponse represents the response for job status query
 type GetJobStatusResponse struct {
-	JobID       string    `json:"job_id"`
-	Status      string    `json:"status"`
-	IdeaID      *string   `json:"idea_id,omitempty"`
-	DraftIDs    []string  `json:"draft_ids,omitempty"`
-	Error       string    `json:"error,omitempty"`
-	CreatedAt   string    `json:"created_at"`
-	StartedAt   *string   `json:"started_at,omitempty"`
-	CompletedAt *string   `json:"completed_at,omitempty"`
+	JobID       string   `json:"job_id"`
+	Status      string   `json:"status"`
+	IdeaID      *string  `json:"idea_id,omitempty"`
+	DraftIDs    []string `json:"draft_ids,omitempty"`
+	Error       string   `json:"error,omitempty"`
+	CreatedAt   string   `json:"created_at"`
+	StartedAt   *string  `json:"started_at,omitempty"`
+	CompletedAt *string  `json:"completed_at,omitempty"`
 }
 
 // GetJobStatus handles GET /v1/drafts/jobs/{jobId}
