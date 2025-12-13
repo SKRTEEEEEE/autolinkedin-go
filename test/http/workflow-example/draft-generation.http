@@ -33,92 +33,137 @@ Content-Type: application/json
 #   }
 # }
 
-# ### Prompt
-# - [ ] al iniciar la app se crea un prompt default para generar ideas y otro para generar draft(estilo: profesional)
-# - [ ] El usuario puede modificar el prompt que genera las ideas 
-# - [ ] El usuario puede vincular a un ESTILO cada prompt que se usara para generar los 'draft' a partir de las 'ideas'
+# ### Prompt (Fase 2 - Sistema de Prompts con Variables)
+# - [x] al iniciar la app se carga prompts desde seed/prompt/
+# - [x] El usuario puede modificar los prompts con variables dinámicas
+# - [x] Los prompts usan variables como {name}, {[keywords]}, {user_context}, etc.
 ### Obtener Todos los Prompts del Usuario
 GET {{baseUrl}}/v1/prompts/{{devUserId}} HTTP/1.1
 Content-Type: application/json
-### Ejemplo real
+### Ejemplo real (con nuevo sistema de prompts y variables)
 # {
-#   "count": 2,
+#   "count": 3,
 #   "prompts": [
 #     {
 #       "id": "6935bbc043319a458b38abc8",
-#       "type": "ideas",
-#       "prompt_template": "Eres un experto en {related_topics}...",
 #       "name": "base1",
+#       "type": "ideas",
+#       "prompt_template": "Generate {ideas} ideas about {name} with keywords: {[keywords]}",
 #       "user_id": "{{devUserId}}",
 #       "active": true
 #     },
 #     {
 #       "id": "6935bbc043319a458b38abc9",
+#       "name": "professional",
 #       "type": "drafts",
-#       "prompt_template": "Genera contenido profesional sobre {topic_name}...",
-#       "name": "profesional-draft",
+#       "prompt_template": "Create professional content based on:\nContent: {content}\nTopic: {topic_name}\nUser Context: {user_context}",
+#       "user_id": "{{devUserId}}",
+#       "active": true
+#     },
+#     {
+#       "id": "6935bbc043319a458b38abc0",
+#       "name": "creative",
+#       "type": "ideas",
+#       "prompt_template": "Generate innovative {ideas} ideas about {name} in category {category}. Focus on: {[related_topics]}",
 #       "user_id": "{{devUserId}}",
 #       "active": true
 #     }
 #   ]
 # }
-# ### Topics
-# - [ ] al iniciar la app se cargan 3 topics por defecto
-# - [ ] el usuario puede introducir nuevos topics, modificar y eliminar topics
+# ### Topics (Fase 2 - Con Soporte de Prompts)
+# - [x] al iniciar la app se cargan topics desde seed/topic.json con referencias a prompts
+# - [x] los topics usan el campo 'prompt' (cambiado de 'prompt_name') para referenciar prompts específicos
+# - [x] el usuario puede introducir, modificar y eliminar topics con sus referencias de prompt
 
-# *AI, backend, nextjs, typescript, etc..*
+# *Variables soportadas en prompts de ideas:*
+# - {name}: topic.name
+# - {ideas}: topic.ideas_count (nuevo campo)
+# - {[keywords]}: topic.keywords (array a texto separado por comas)
+# - {category}: topic.category
+# - {priority}: topic.priority (1-10)
+# - {[related_topics]}: topic.related_topics (array a texto)
 
-# - name: nombre descriptivo, usado por la IA y usuario
+# - name: nombre descriptivo único, usado por la IA y usuario
 # - description: para el usuario
-# - categoría: *por implementar*
-# - priority: *por implementar, importancia a la hora de crear ideas*
-# - related_topics: *por implementar, [ARRAY de topics] usados para generar la idea*
-# - ideas: *por implementar, [num] cantidad de ideas que se generara en cada schedule sobre dicho topic*
+# - prompt: **(NUEVO)** referencia al prompt usado para generar ideas (ej: "base1")
+# - category: categoría/clasificación (default "General")
+# - priority: importancia al crear ideas (1-10, default 5)
+# - ideas_count: **(NUEVO)** cantidad de ideas a generar (default 2)
+# - keywords: **(NUEVO)** array de términos para la variable {[keywords]}
+# - related_topics: array de nombres de otros topics para variable {[related_topics]}
 GET {{baseUrl}}/v1/topics/{{devUserId}} HTTP/1.1
 Content-Type: application/json
-### Ejemplo real
+### Ejemplo real (con nuevo sistema de prompts y variables)
 # {
 #   "count": 4,
 #   "topics": [
 #     { 
 #       "id": "6935bbc043319a458b38abcb", 
+#       "user_id": "{{devUserId}}",
 #       "name": "Desarrollo Backend",
+#       "description": "Creación de APIs y microservicios",
 #       "prompt": "base1",
-#       "ideas": 5,
-#       "related_topics": ["Microservicios", "APIs", "MongoDB"]
+#       "category": "Backend",
+#       "priority": 8,
+#       "ideas_count": 5,
+#       "keywords": ["microservicios", "apis", "mongodb", "rest", "graphql"],
+#       "related_topics": ["Docker", "Kubernetes", "Go"],
+#       "active": true,
+#       "created_at": "2025-12-10T12:00:00Z"
 #     },
 #     { 
 #       "id": "6935bbc043319a458b38abca", 
+#       "user_id": "{{devUserId}}",
 #       "name": "Inteligencia Artificial",
+#       "description": "Machine Learning y deep learning",
 #       "prompt": "creative",
-#       "ideas": 7,
-#       "related_topics": ["Machine Learning", "Deep Learning", "Neural Networks"]
+#       "category": "AI/ML",
+#       "priority": 9,
+#       "ideas_count": 7,
+#       "keywords": ["machinelearning", "deeplearning", "neuralnetworks", "python"],
+#       "related_topics": ["Python", "Data Science", "TensorFlow"],
+#       "active": true,
+#       "created_at": "2025-12-10T12:00:00Z"
 #     },
 #     { 
 #       "id": "6935bbc043319a458b38abcc", 
+#       "user_id": "{{devUserId}}",
 #       "name": "TypeScript",
+#       "description": "Tipado estático en JavaScript",
 #       "prompt": "base1",
-#       "ideas": 3,
-#       "related_topics": ["JavaScript", "Node.js", "TypeScript"]
+#       "category": "Frontend",
+#       "priority": 7,
+#       "ideas_count": 3,
+#       "keywords": ["typescript", "javascript", "nodejs", "react"],
+#       "related_topics": ["JavaScript ES6", "Node.js", "React"],
+#       "active": true,
+#       "created_at": "2025-12-10T12:00:00Z"
 #     },
 #     { 
 #       "id": "6935d512c95d0eae4a13975e", 
+#       "user_id": "{{devUserId}}",
 #       "name": "DevOps y Cloud",
-#       "prompt": "base1",
-#       "ideas": 4,
-#       "related_topics": ["Docker", "Kubernetes", "AWS"]
+#       "description": "Contenerización y orquestación",
+#       "prompt": "professional",
+#       "category": "DevOps",
+#       "priority": 8,
+#       "ideas_count": 4,
+#       "keywords": ["docker", "kubernetes", "aws", "cicd"],
+#       "related_topics": ["Docker", "Kubernetes", "AWS"],
+#       "active": true,
+#       "created_at": "2025-12-10T12:00:00Z"
 #     }
 #   ]
 # }
 
 # ### Ideas
 # - [ ] se generan tantas ideas como este indicado para cada topic
-#   - [ ] al iniciar la app se crean ideas para los topics por defecto
-#   - [ ] cada vez que el usuario introduce un nuevo topic, elimina o modifica un topic
-#   - [ ] cada X tiempo 
+#   - [x] al iniciar la app se crean ideas usando los prompts referenciados por topic
+#   - [x] cada vez que el usuario introduce/modifica topic, se genera ideas con su prompt específico
+#   - [x] [NUEVO] las ideas tienen validación de longitud 10-200 caracteres (cambiado de 10-5000)
 
-# *AI -> Importancia de la IA en el dia a dia del estudiante..., La burbuja de la IA, ¿verdad o mentira?, etc...*
-# *Backend -> El 80% de los programadores backend cobran mas, descubre..., etc...*
+# *Ejemplos de ideas generadas con variables:*
+# *Topic "TypeScript" con prompt "base1" -> "5 tips avanzados para TypeScript con generics y decorators"*
 
 ### Obtener Todas las Ideas del Usuario
 GET {{baseUrl}}/v1/ideas/{{devUserId}} HTTP/1.1
@@ -265,10 +310,19 @@ Content-Type: application/json
 # mongo "mongodb://localhost:27017/linkgenai" --quiet --eval 'db.jobErrors.find({job_id: "{{jobId}}"}).sort({created_at:-1}).limit(1)' | jq
 
 
-# ### Draft
-# - ideaId: id de la idea para crear los draft
-# - estilo: *por implementar, estilo vinculado a un prompt para crear los draft*
+# ### Draft (Fase 2 - Sistema con Prompts Dinámicos)
+# Variables soportadas en prompts de draft:
+# - {content}: idea.content (idea original)
+# - {topic_name}: idea.topic_name (nombre del topic relacionado)
+# - {user_context}: contexto del usuario construido desde su configuración
 
-# - [ ] El usuario ejecuta esta función por una 'idea' y se genera:
-#   - [ ] 5 'draft' o sugerencias de publicaciones listas para LinkedIn
-#   - [ ] 1 articulo, listo para publicar 
+# - [x] El usuario ejecuta esta función y el sistema usa prompts activos de tipo 'drafts'
+# - [x] El contexto del usuario se incluye automáticamente en {user_context}
+# - [x] Se genera contenido personalizado:
+#   - [x] 5 posts para LinkedIn (120-260 palabras cada uno)
+#   - [x] 1 artículo extenso (con título)
+
+# Ejemplo de {user_context} generado:
+# Name: Juan García
+# Expertise: Desarrollo Backend  
+# Tone: Profesional 

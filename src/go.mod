@@ -2,7 +2,7 @@ module github.com/linkgen-ai/backend/src
 
 go 1.25
 
-	require (
+require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/nats-io/nats.go v1.47.0
@@ -27,4 +27,3 @@ require (
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 )
-

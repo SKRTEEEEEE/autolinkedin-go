@@ -189,8 +189,8 @@ func TestPromptLoader(t *testing.T) {
 		assert.Equal(t, "existing-id", updatedPrompt.ID) // Same ID, not new
 		assert.Contains(t, updatedPrompt.PromptTemplate, "Genera {ideas} ideas")
 		assert.True(t, updatedPrompt.UpdatedAt.After(existingPrompt.UpdatedAt))
-})
-})
+	})
+}
 
 // Test helper functions
 func createTestSeedFiles(t *testing.T, dir string) {

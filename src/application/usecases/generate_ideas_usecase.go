@@ -9,16 +9,18 @@ import (
 	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/domain/factories"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
+	"github.com/linkgen-ai/backend/src/infrastructure/services"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // GenerateIdeasUseCase orchestrates the generation of content ideas
 type GenerateIdeasUseCase struct {
-	userRepo    interfaces.UserRepository
-	topicRepo   interfaces.TopicRepository
-	ideasRepo   interfaces.IdeasRepository
-	promptsRepo interfaces.PromptsRepository
-	llmService  interfaces.LLMService
+	userRepo     interfaces.UserRepository
+	topicRepo    interfaces.TopicRepository
+	ideasRepo    interfaces.IdeasRepository
+	promptsRepo  interfaces.PromptsRepository
+	promptEngine *services.PromptEngine
+	llmService   interfaces.LLMService
 }
 
 // NewGenerateIdeasUseCase creates a new instance of GenerateIdeasUseCase
@@ -27,14 +29,16 @@ func NewGenerateIdeasUseCase(
 	topicRepo interfaces.TopicRepository,
 	ideasRepo interfaces.IdeasRepository,
 	promptsRepo interfaces.PromptsRepository,
+	promptEngine *services.PromptEngine,
 	llmService interfaces.LLMService,
 ) *GenerateIdeasUseCase {
 	return &GenerateIdeasUseCase{
-		userRepo:    userRepo,
-		topicRepo:   topicRepo,
-		ideasRepo:   ideasRepo,
-		promptsRepo: promptsRepo,
-		llmService:  llmService,
+		userRepo:     userRepo,
+		topicRepo:    topicRepo,
+		ideasRepo:    ideasRepo,
+		promptsRepo:  promptsRepo,
+		promptEngine: promptEngine,
+		llmService:   llmService,
 	}
 }
 
@@ -122,6 +126,11 @@ func (uc *GenerateIdeasUseCase) generateIdeasForTopicContext(ctx context.Context
 
 	if user == nil {
 		return nil, fmt.Errorf("user cannot be nil")
+	}
+
+	// Use PromptEngine if available, otherwise fall back to legacy method
+	if uc.promptEngine != nil {
+		return uc.generateIdeasWithPromptEngine(ctx, topic, user)
 	}
 
 	prompt, err := uc.resolvePrompt(ctx, topic)
@@ -312,6 +321,73 @@ func (uc *GenerateIdeasUseCase) sanitizeIdeaContent(content string) string {
 	}
 
 	return trimmed
+}
+
+// generateIdeasWithPromptEngine uses the PromptEngine to generate ideas
+func (uc *GenerateIdeasUseCase) generateIdeasWithPromptEngine(ctx context.Context, topic *entities.Topic, user *entities.User) ([]*entities.Idea, error) {
+	// Determine the prompt name to use
+	promptName := "base1"
+	if topic.Prompt != "" {
+		promptName = topic.Prompt
+	}
+
+	// Process the prompt using PromptEngine
+	finalPrompt, err := uc.promptEngine.ProcessPrompt(
+		ctx,
+		user.ID,
+		promptName,
+		entities.PromptTypeIdeas,
+		topic,
+		nil, // No idea needed for idea generation
+		user,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to process prompt with PromptEngine: %w", err)
+	}
+
+	// Request ideas from LLM
+	ideaContents, err := uc.requestIdeasFromLLM(ctx, finalPrompt)
+	if err != nil {
+		return nil, err
+	}
+
+	ideaCount := uc.determineIdeaCount(topic.Ideas)
+	limitedIdeas := ideaContents
+	if ideaCount > 0 && len(ideaContents) > ideaCount {
+		limitedIdeas = ideaContents[:ideaCount]
+	}
+
+	ideas := make([]*entities.Idea, 0, len(limitedIdeas))
+	for _, content := range limitedIdeas {
+		trimmed := uc.sanitizeIdeaContent(content)
+		if trimmed == "" {
+			continue
+		}
+
+		ideaID := primitive.NewObjectID().Hex()
+		idea, err := factories.NewIdea(
+			ideaID,
+			topic.UserID,
+			topic.ID,
+			topic.Name,
+			trimmed,
+		)
+		if err != nil {
+			continue
+		}
+
+		ideas = append(ideas, idea)
+	}
+
+	if len(ideas) == 0 {
+		return nil, fmt.Errorf("no valid ideas could be created from LLM response")
+	}
+
+	if err := uc.ideasRepo.CreateBatch(ctx, ideas); err != nil {
+		return nil, fmt.Errorf("failed to save ideas: %w", err)
+	}
+
+	return ideas, nil
 }
 
 // parseIdeasResponse parses the JSON response from LLM

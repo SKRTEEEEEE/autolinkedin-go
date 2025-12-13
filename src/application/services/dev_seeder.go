@@ -29,6 +29,7 @@ type DevSeeder struct {
 	topicRepo     interfaces.TopicRepository
 	ideasRepo     interfaces.IdeasRepository
 	promptsRepo   interfaces.PromptsRepository
+	promptEngine  *services.PromptEngine
 	llmService    interfaces.LLMService
 	logger        *zap.Logger
 	promptDir     string
@@ -47,6 +48,7 @@ func NewDevSeeder(
 	topicRepo interfaces.TopicRepository,
 	ideasRepo interfaces.IdeasRepository,
 	promptsRepo interfaces.PromptsRepository,
+	promptEngine *services.PromptEngine,
 	llmService interfaces.LLMService,
 	logger *zap.Logger,
 	config *DevSeederConfig,
@@ -68,6 +70,7 @@ func NewDevSeeder(
 		topicRepo:     topicRepo,
 		ideasRepo:     ideasRepo,
 		promptsRepo:   promptsRepo,
+		promptEngine:  promptEngine,
 		llmService:    llmService,
 		logger:        logger,
 		promptDir:     promptDir,
@@ -207,6 +210,7 @@ func (s *DevSeeder) SeedInitialIdeas(ctx context.Context) error {
 		s.topicRepo,
 		s.ideasRepo,
 		s.promptsRepo,
+		s.promptEngine,
 		s.llmService,
 	)
 
