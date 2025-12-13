@@ -72,9 +72,8 @@ docker-compose -f docker-compose.test.yml down -v
 
 ## 📚 Documentation
 
-- [Application Flow](./docs/flujo-app.md)
+- [Application Flow](./docs/workflow.md)
 - [Agent Guidelines](./AGENTS.md)
-- [API Documentation](./docs/api/)
 
 ## 🤝 Contributing
 

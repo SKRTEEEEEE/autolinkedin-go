@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -9,15 +10,18 @@ import (
 	domainErrors "github.com/linkgen-ai/backend/src/domain/errors"
 	"github.com/linkgen-ai/backend/src/domain/factories"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
+	"github.com/linkgen-ai/backend/src/infrastructure/services"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // GenerateDraftsUseCase orchestrates draft generation from ideas
 type GenerateDraftsUseCase struct {
-	userRepo   interfaces.UserRepository
-	ideasRepo  interfaces.IdeasRepository
-	draftRepo  interfaces.DraftRepository
-	llmService interfaces.LLMService
+	userRepo     interfaces.UserRepository
+	ideasRepo    interfaces.IdeasRepository
+	draftRepo    interfaces.DraftRepository
+	promptsRepo  interfaces.PromptsRepository
+	promptEngine *services.PromptEngine
+	llmService   interfaces.LLMService
 }
 
 // NewGenerateDraftsUseCase creates a new instance of GenerateDraftsUseCase
@@ -25,13 +29,17 @@ func NewGenerateDraftsUseCase(
 	userRepo interfaces.UserRepository,
 	ideasRepo interfaces.IdeasRepository,
 	draftRepo interfaces.DraftRepository,
+	promptsRepo interfaces.PromptsRepository,
+	promptEngine *services.PromptEngine,
 	llmService interfaces.LLMService,
 ) *GenerateDraftsUseCase {
 	return &GenerateDraftsUseCase{
-		userRepo:   userRepo,
-		ideasRepo:  ideasRepo,
-		draftRepo:  draftRepo,
-		llmService: llmService,
+		userRepo:     userRepo,
+		ideasRepo:    ideasRepo,
+		draftRepo:    draftRepo,
+		promptsRepo:  promptsRepo,
+		promptEngine: promptEngine,
+		llmService:   llmService,
 	}
 }
 
@@ -66,6 +74,11 @@ func (uc *GenerateDraftsUseCase) Execute(ctx context.Context, input GenerateDraf
 	idea, err := uc.getAndValidateIdea(ctx, input.UserID, input.IdeaID)
 	if err != nil {
 		return nil, err
+	}
+
+	// Use PromptEngine if available, otherwise fall back to legacy method
+	if uc.promptEngine != nil {
+		return uc.generateDraftsWithPromptEngine(ctx, idea, user)
 	}
 
 	// Get user context (name, expertise, preferences)
@@ -353,6 +366,139 @@ func (uc *GenerateDraftsUseCase) saveDrafts(ctx context.Context, drafts []*entit
 	}
 
 	return nil
+}
+
+// generateDraftsWithPromptEngine uses the PromptEngine to generate drafts
+func (uc *GenerateDraftsUseCase) generateDraftsWithPromptEngine(ctx context.Context, idea *entities.Idea, user *entities.User) ([]*entities.Draft, error) {
+	// Default to "profesional" prompt name (from pro.draft.md)
+	promptName := "profesional"
+
+	// Try to find a custom drafts prompt for the user
+	if uc.promptsRepo != nil {
+		activePrompts, err := uc.promptsRepo.FindActiveByUserIDAndType(ctx, user.ID, entities.PromptTypeDrafts)
+		if err == nil && len(activePrompts) > 0 {
+			// Use the first active prompt found
+			promptName = activePrompts[0].Name
+		}
+	}
+
+	// Process the prompt using PromptEngine
+	finalPrompt, err := uc.promptEngine.ProcessPrompt(
+		ctx,
+		user.ID,
+		promptName,
+		entities.PromptTypeDrafts,
+		nil, // No topic needed for draft generation
+		idea,
+		user,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to process prompt with PromptEngine: %w", err)
+	}
+
+	// Create a simplified draft set by calling LLM service with the processed prompt
+	// Note: We need to use a different approach here since LLMService.GenerateDrafts expects content and context
+	// We'll need to extend LLMService or create a custom method
+	
+	// For now, let's simulate by using the existing LLM service but with our processed prompt
+	response, err := uc.llmService.SendRequest(ctx, finalPrompt)
+	if err != nil {
+		return nil, fmt.Errorf("LLM service error: %w", err)
+	}
+
+	// Parse the response to extract drafts
+	draftSet, err := uc.parseDraftsResponse(response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse LLM response: %w", err)
+	}
+
+	// Validate the parsed response
+	if err := uc.validateDraftSet(draftSet); err != nil {
+		return nil, domainErrors.NewLLMResponseError(
+			"drafts_validation",
+			err.Error(),
+			finalPrompt,
+			response,
+			err,
+		)
+	}
+
+	// Create draft entities
+	drafts, err := uc.createDraftEntities(user.ID, idea.ID, draftSet)
+	if err != nil {
+		return nil, domainErrors.NewLLMResponseError(
+			"drafts_entity_creation",
+			err.Error(),
+			finalPrompt,
+			response,
+			err,
+		)
+	}
+
+	// Save drafts to repository
+	if err := uc.saveDrafts(ctx, drafts); err != nil {
+		return nil, err
+	}
+
+	// Mark idea as used (only after successful draft save)
+	if err := uc.markIdeaAsUsed(ctx, idea); err != nil {
+		// Log error but don't fail the operation
+		// The drafts are already saved
+		return drafts, fmt.Errorf("drafts created but failed to mark idea as used: %w", err)
+	}
+
+	return drafts, nil
+}
+
+// parseDraftsResponse parses the JSON response from LLM for drafts
+func (uc *GenerateDraftsUseCase) parseDraftsResponse(response string) (interfaces.DraftSet, error) {
+	// Clean the response from markdown code blocks if present
+	cleanedResponse := cleanDraftJSONResponse(response)
+	
+	var result struct {
+		Posts    []string `json:"posts"`
+		Articles []string `json:"articles"`
+	}
+
+	if err := json.Unmarshal([]byte(cleanedResponse), &result); err != nil {
+		return interfaces.DraftSet{}, fmt.Errorf("failed to unmarshal JSON response: %w", err)
+	}
+
+	return interfaces.DraftSet{
+		Posts:       result.Posts,
+		Articles:    result.Articles,
+		Prompt:      "", // Not tracked in this simplified version
+		RawResponse: response,
+	}, nil
+}
+
+// cleanDraftJSONResponse removes markdown code blocks and extracts JSON
+func cleanDraftJSONResponse(response string) string {
+	// Remove markdown code blocks (```json ... ``` or ``` ... ```)
+	response = strings.TrimSpace(response)
+	
+	// Check if response starts with ``` and ends with ```
+	if strings.HasPrefix(response, "```") {
+		// Find the first newline after ```
+		start := strings.Index(response, "\n")
+		if start == -1 {
+			start = 3 // just skip ```
+		} else {
+			start++ // skip the newline
+		}
+		
+		// Find the last ```
+		end := strings.LastIndex(response, "```")
+		if end > start {
+			response = response[start:end]
+		}
+	}
+	
+	// Remove backticks at the beginning and end
+	response = strings.Trim(response, "`")
+	response = strings.TrimSpace(response)
+	
+	return response
 }
 
 // markIdeaAsUsed marks the idea as used in the repository

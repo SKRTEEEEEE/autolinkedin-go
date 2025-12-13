@@ -7,16 +7,19 @@ import (
 	"github.com/linkgen-ai/backend/src/domain/entities"
 )
 
-// NewIdea creates a new Idea entity with validation and expiration
-func NewIdea(id, userID, topicID, content string) (*entities.Idea, error) {
+// NewIdea creates a new Idea entity with validation and expiration.
+// The topicName parameter is required to ensure ideas are linked to their topic context.
+func NewIdea(id, userID, topicID, topicName, content string) (*entities.Idea, error) {
 	idea := &entities.Idea{
 		ID:           id,
 		UserID:       userID,
 		TopicID:      topicID,
+		TopicName:    topicName,
 		Content:      content,
-		QualityScore: nil,
+		QualityScore: func() *float64 { v := 0.0; return &v }(),
 		Used:         false,
 		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 		ExpiresAt:    nil,
 	}
 
@@ -31,8 +34,8 @@ func NewIdea(id, userID, topicID, content string) (*entities.Idea, error) {
 }
 
 // NewIdeaWithTTL creates a new Idea with custom TTL
-func NewIdeaWithTTL(id, userID, topicID, content string, ttlDays int) (*entities.Idea, error) {
-	idea, err := NewIdea(id, userID, topicID, content)
+func NewIdeaWithTTL(id, userID, topicID, topicName, content string, ttlDays int) (*entities.Idea, error) {
+	idea, err := NewIdea(id, userID, topicID, topicName, content)
 	if err != nil {
 		return nil, err
 	}
@@ -44,8 +47,8 @@ func NewIdeaWithTTL(id, userID, topicID, content string, ttlDays int) (*entities
 }
 
 // NewIdeaWithQuality creates a new Idea with quality score
-func NewIdeaWithQuality(id, userID, topicID, content string, qualityScore float64) (*entities.Idea, error) {
-	idea, err := NewIdea(id, userID, topicID, content)
+func NewIdeaWithQuality(id, userID, topicID, topicName, content string, qualityScore float64) (*entities.Idea, error) {
+	idea, err := NewIdea(id, userID, topicID, topicName, content)
 	if err != nil {
 		return nil, err
 	}
@@ -60,15 +63,17 @@ func NewIdeaWithQuality(id, userID, topicID, content string, qualityScore float6
 }
 
 // NewIdeaWithoutExpiration creates a new Idea without expiration
-func NewIdeaWithoutExpiration(id, userID, topicID, content string) (*entities.Idea, error) {
+func NewIdeaWithoutExpiration(id, userID, topicID, topicName, content string) (*entities.Idea, error) {
 	idea := &entities.Idea{
 		ID:           id,
 		UserID:       userID,
 		TopicID:      topicID,
+		TopicName:    topicName,
 		Content:      content,
-		QualityScore: nil,
+		QualityScore: func() *float64 { v := 0.0; return &v }(),
 		Used:         false,
 		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 		ExpiresAt:    nil,
 	}
 

@@ -29,6 +29,7 @@ type promptDocument struct {
 	ID             primitive.ObjectID `bson:"_id,omitempty"`
 	UserID         string             `bson:"user_id"`
 	Type           string             `bson:"type"`
+	Name           string             `bson:"name"`
 	StyleName      string             `bson:"style_name,omitempty"`
 	PromptTemplate string             `bson:"prompt_template"`
 	Active         bool               `bson:"active"`
@@ -54,6 +55,7 @@ func (r *PromptsRepository) toDocument(prompt *entities.Prompt) (*promptDocument
 		ID:             oid,
 		UserID:         prompt.UserID,
 		Type:           string(prompt.Type),
+		Name:           prompt.Name,
 		StyleName:      prompt.StyleName,
 		PromptTemplate: prompt.PromptTemplate,
 		Active:         prompt.Active,
@@ -68,6 +70,7 @@ func (r *PromptsRepository) toEntity(doc *promptDocument) *entities.Prompt {
 		ID:             doc.ID.Hex(),
 		UserID:         doc.UserID,
 		Type:           entities.PromptType(doc.Type),
+		Name:           doc.Name,
 		StyleName:      doc.StyleName,
 		PromptTemplate: doc.PromptTemplate,
 		Active:         doc.Active,
@@ -110,6 +113,25 @@ func (r *PromptsRepository) FindByID(ctx context.Context, id string) (*entities.
 			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to find prompt: %w", err)
+	}
+
+	return r.toEntity(&doc), nil
+}
+
+// FindByName implements PromptsRepository.FindByName
+func (r *PromptsRepository) FindByName(ctx context.Context, userID string, name string) (*entities.Prompt, error) {
+	filter := bson.M{
+		"user_id": userID,
+		"name":    name,
+	}
+
+	var doc promptDocument
+	err := r.collection.FindOne(ctx, filter).Decode(&doc)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to find prompt by name: %w", err)
 	}
 
 	return r.toEntity(&doc), nil
@@ -280,4 +302,198 @@ func (r *PromptsRepository) CountByUserID(ctx context.Context, userID string) (i
 	}
 
 	return count, nil
+}
+
+// CreateBatch implements PromptsRepository.CreateBatch
+func (r *PromptsRepository) CreateBatch(ctx context.Context, prompts []*entities.Prompt) ([]string, error) {
+	if len(prompts) == 0 {
+		return []string{}, nil
+	}
+
+	var documents []interface{}
+	for _, prompt := range prompts {
+		doc, err := r.toDocument(prompt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert prompt to document: %w", err)
+		}
+		documents = append(documents, doc)
+	}
+
+	// InsertMany for batch creation
+	result, err := r.collection.InsertMany(ctx, documents)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert prompts batch: %w", err)
+	}
+
+	// Convert ObjectIDs to strings
+	var ids []string
+	for _, id := range result.InsertedIDs {
+		if oid, ok := id.(primitive.ObjectID); ok {
+			ids = append(ids, oid.Hex())
+		}
+	}
+
+	return ids, nil
+}
+
+// FindOrCreateByName implements PromptsRepository.FindOrCreateByName
+func (r *PromptsRepository) FindOrCreateByName(
+	ctx context.Context,
+	userID string,
+	name string,
+	promptType entities.PromptType,
+	template string,
+) (*entities.Prompt, error) {
+	// Try to find existing prompt
+	prompt, err := r.FindByName(ctx, userID, name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find prompt by name: %w", err)
+	}
+
+	// If found, return it
+	if prompt != nil {
+		return prompt, nil
+	}
+
+	// Create new prompt if not found
+	now := time.Now()
+	newPrompt := &entities.Prompt{
+		ID:             primitive.NewObjectID().Hex(),
+		UserID:         userID,
+		Type:           promptType,
+		Name:           name,
+		StyleName:      name,
+		PromptTemplate: template,
+		Active:         true,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	// Validate the prompt
+	if err := newPrompt.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid prompt: %w", err)
+	}
+
+	// Create the prompt
+	promptID, err := r.Create(ctx, newPrompt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create prompt: %w", err)
+	}
+
+	// Get the created prompt with ID
+	created, err := r.FindByID(ctx, promptID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve created prompt: %w", err)
+	}
+
+	return created, nil
+}
+
+// ListActiveByUserIDAndType implements PromptsRepository.ListActiveByUserIDAndType
+// This is an alias for FindActiveByUserIDAndType for consistency
+func (r *PromptsRepository) ListActiveByUserIDAndType(
+	ctx context.Context,
+	userID string,
+	promptType entities.PromptType,
+) ([]*entities.Prompt, error) {
+	return r.FindActiveByUserIDAndType(ctx, userID, promptType)
+}
+
+// DeactivateByUserIDAndName implements PromptsRepository.DeactivateByUserIDAndName
+func (r *PromptsRepository) DeactivateByUserIDAndName(ctx context.Context, userID string, name string) error {
+	if userID == "" {
+		return fmt.Errorf("user ID cannot be empty")
+	}
+	if name == "" {
+		return fmt.Errorf("prompt name cannot be empty")
+	}
+
+	filter := bson.M{
+		"user_id": userID,
+		"name":    name,
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"active":     false,
+			"updated_at": time.Now(),
+		},
+	}
+
+	result, err := r.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return fmt.Errorf("failed to deactivate prompt: %w", err)
+	}
+
+	if result.MatchedCount == 0 {
+		return fmt.Errorf("prompt not found for user")
+	}
+
+	return nil
+}
+
+// Upsert implements PromptsRepository.Upsert
+func (r *PromptsRepository) Upsert(ctx context.Context, prompt *entities.Prompt) (string, error) {
+	if prompt == nil {
+		return "", fmt.Errorf("prompt cannot be nil")
+	}
+
+	if prompt.ID != "" {
+		// Try to update first
+		var oid primitive.ObjectID
+		var err error
+
+		oid, err = primitive.ObjectIDFromHex(prompt.ID)
+		if err != nil {
+			return "", fmt.Errorf("invalid prompt ID: %w", err)
+		}
+
+		// Check if prompt exists
+		filter := bson.M{"_id": oid}
+		count, err := r.collection.CountDocuments(ctx, filter)
+		if err != nil {
+			return "", fmt.Errorf("failed to check prompt existence: %w", err)
+		}
+
+		if count > 0 {
+			// Update existing prompt
+			update := bson.M{
+				"$set": bson.M{
+					"user_id":         prompt.UserID,
+					"type":            string(prompt.Type),
+					"name":            prompt.Name,
+					"style_name":      prompt.StyleName,
+					"prompt_template": prompt.PromptTemplate,
+					"active":          prompt.Active,
+					"updated_at":      prompt.UpdatedAt,
+				},
+			}
+
+			result, err := r.collection.UpdateOne(ctx, filter, update)
+			if err != nil {
+				return "", fmt.Errorf("failed to update prompt: %w", err)
+			}
+
+			if result.MatchedCount == 0 {
+				return "", fmt.Errorf("prompt not found for update")
+			}
+
+			return prompt.ID, nil
+		}
+	}
+
+	// Create new prompt (either ID is empty or prompt doesn't exist)
+	if prompt.ID == "" {
+		prompt.ID = primitive.NewObjectID().Hex()
+	}
+
+	// Ensure timestamps are set
+	if prompt.CreatedAt.IsZero() {
+		prompt.CreatedAt = time.Now()
+	}
+	if prompt.UpdatedAt.IsZero() {
+		prompt.UpdatedAt = time.Now()
+	}
+
+	return r.Create(ctx, prompt)
 }

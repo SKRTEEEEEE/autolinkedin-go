@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
@@ -32,10 +33,12 @@ type ideaDocument struct {
 	ID           primitive.ObjectID  `bson:"_id,omitempty"`
 	UserID       primitive.ObjectID  `bson:"user_id"`
 	TopicID      primitive.ObjectID  `bson:"topic_id"`
+	TopicName    string              `bson:"topic_name"`
 	Content      string              `bson:"content"`
 	QualityScore *float64            `bson:"quality_score,omitempty"`
 	Used         bool                `bson:"used"`
 	CreatedAt    primitive.DateTime  `bson:"created_at"`
+	UpdatedAt    primitive.DateTime  `bson:"updated_at"`
 	ExpiresAt    *primitive.DateTime `bson:"expires_at,omitempty"`
 }
 
@@ -58,10 +61,12 @@ func (r *ideasRepository) toDocument(idea *entities.Idea) (*ideaDocument, error)
 	doc := &ideaDocument{
 		UserID:       userObjectID,
 		TopicID:      topicObjectID,
+		TopicName:    idea.TopicName,
 		Content:      idea.Content,
 		QualityScore: idea.QualityScore,
 		Used:         idea.Used,
 		CreatedAt:    primitive.NewDateTimeFromTime(idea.CreatedAt),
+		UpdatedAt:    primitive.NewDateTimeFromTime(idea.UpdatedAt),
 	}
 
 	// Only set ID if it's valid
@@ -92,10 +97,18 @@ func (r *ideasRepository) toEntity(doc *ideaDocument) *entities.Idea {
 		ID:           doc.ID.Hex(),
 		UserID:       doc.UserID.Hex(),
 		TopicID:      doc.TopicID.Hex(),
+		TopicName:    doc.TopicName,
 		Content:      doc.Content,
 		QualityScore: doc.QualityScore,
 		Used:         doc.Used,
 		CreatedAt:    doc.CreatedAt.Time(),
+		UpdatedAt: func() time.Time {
+			updatedAt := doc.UpdatedAt.Time()
+			if updatedAt.IsZero() {
+				return doc.CreatedAt.Time()
+			}
+			return updatedAt
+		}(),
 	}
 
 	if doc.ExpiresAt != nil {

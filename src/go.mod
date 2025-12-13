@@ -1,11 +1,10 @@
-module github.com/linkgen-ai/backend
+module github.com/linkgen-ai/backend/src
 
 go 1.25
 
 require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
-	github.com/linkgen-ai/backend/src v0.0.0-00010101000000-000000000000
 	github.com/nats-io/nats.go v1.47.0
 	go.mongodb.org/mongo-driver v1.17.6
 	go.uber.org/zap v1.27.1
@@ -28,5 +27,3 @@ require (
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 )
-
-replace github.com/linkgen-ai/backend/src => ./

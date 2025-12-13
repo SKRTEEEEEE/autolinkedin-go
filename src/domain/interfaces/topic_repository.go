@@ -26,4 +26,10 @@ type TopicRepository interface {
 
 	// Delete removes a topic from the system
 	Delete(ctx context.Context, topicID string) error
+
+	// FindByPrompt retrieves topics that reference a specific prompt
+	FindByPrompt(ctx context.Context, userID string, promptName string) ([]*entities.Topic, error)
+
+	// FindByIdeasRange retrieves topics with ideas count in the specified range
+	FindByIdeasRange(ctx context.Context, userID string, minIdeas, maxIdeas int) ([]*entities.Topic, error)
 }

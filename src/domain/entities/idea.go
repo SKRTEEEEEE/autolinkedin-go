@@ -11,16 +11,18 @@ type Idea struct {
 	ID           string
 	UserID       string
 	TopicID      string
+	TopicName    string // Name of the related topic
 	Content      string
 	QualityScore *float64
 	Used         bool
 	CreatedAt    time.Time
+	UpdatedAt    time.Time
 	ExpiresAt    *time.Time
 }
 
 const (
 	MinIdeaContentLength = 10
-	MaxIdeaContentLength = 5000
+	MaxIdeaContentLength = 200 // Updated from 5000 to 200 as specified in entity.md
 	DefaultIdeaTTLDays   = 30
 )
 
@@ -38,6 +40,10 @@ func (i *Idea) Validate() error {
 		return fmt.Errorf("topic ID cannot be empty")
 	}
 
+	if i.TopicName == "" {
+		return fmt.Errorf("topic name cannot be empty")
+	}
+
 	if err := i.ValidateContent(); err != nil {
 		return err
 	}
@@ -52,6 +58,18 @@ func (i *Idea) Validate() error {
 
 	if i.CreatedAt.After(time.Now()) {
 		return fmt.Errorf("created timestamp cannot be in the future")
+	}
+
+	if i.UpdatedAt.IsZero() {
+		return fmt.Errorf("updated timestamp cannot be zero")
+	}
+
+	if i.UpdatedAt.Before(i.CreatedAt) {
+		return fmt.Errorf("updated timestamp cannot be before created timestamp")
+	}
+
+	if i.UpdatedAt.After(time.Now()) {
+		return fmt.Errorf("updated timestamp cannot be in the future")
 	}
 
 	return nil
@@ -81,6 +99,11 @@ func (i *Idea) ValidateContent() error {
 
 // validateQualityScore validates quality score range
 func (i *Idea) validateQualityScore() error {
+	if i.QualityScore == nil {
+		defaultScore := 0.0
+		i.QualityScore = &defaultScore
+	}
+
 	if i.QualityScore != nil {
 		score := *i.QualityScore
 		if score < 0.0 || score > 1.0 {
@@ -127,4 +150,9 @@ func (i *Idea) CalculateExpiration(ttlDays int) {
 
 	expiresAt := i.CreatedAt.Add(time.Duration(ttlDays) * 24 * time.Hour)
 	i.ExpiresAt = &expiresAt
+}
+
+// SetTopicName sets the topic name for the idea
+func (i *Idea) SetTopicName(topicName string) {
+	i.TopicName = topicName
 }

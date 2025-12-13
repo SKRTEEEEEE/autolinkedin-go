@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
@@ -29,15 +30,18 @@ func NewTopicRepository(collection *mongo.Collection) interfaces.TopicRepository
 
 // topicDocument represents the MongoDB document structure for Topic
 type topicDocument struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty"`
-	UserID      primitive.ObjectID `bson:"user_id"`
-	Name        string             `bson:"name"`
-	Description string             `bson:"description"`
-	Keywords    []string           `bson:"keywords"`
-	Category    string             `bson:"category"`
-	Priority    int                `bson:"priority"`
-	Active      bool               `bson:"active"`
-	CreatedAt   primitive.DateTime `bson:"created_at"`
+	ID            primitive.ObjectID `bson:"_id,omitempty"`
+	UserID        primitive.ObjectID `bson:"user_id"`
+	Name          string             `bson:"name"`
+	Description   string             `bson:"description"`
+	Category      string             `bson:"category"`
+	Priority      int                `bson:"priority"`
+	Ideas         int                `bson:"ideas"`
+	Prompt        string             `bson:"prompt"`
+	RelatedTopics []string           `bson:"related_topics"`
+	Active        bool               `bson:"active"`
+	CreatedAt     primitive.DateTime `bson:"created_at"`
+	UpdatedAt     primitive.DateTime `bson:"updated_at"`
 }
 
 // toDocument converts a Topic entity to a MongoDB document
@@ -52,14 +56,17 @@ func (r *topicRepository) toDocument(topic *entities.Topic) (*topicDocument, err
 	}
 
 	doc := &topicDocument{
-		UserID:      userObjectID,
-		Name:        topic.Name,
-		Description: topic.Description,
-		Keywords:    topic.Keywords,
-		Category:    topic.Category,
-		Priority:    topic.Priority,
-		Active:      topic.Active,
-		CreatedAt:   primitive.NewDateTimeFromTime(topic.CreatedAt),
+		UserID:        userObjectID,
+		Name:          topic.Name,
+		Description:   topic.Description,
+		Category:      topic.Category,
+		Priority:      topic.Priority,
+		Ideas:         topic.Ideas,
+		Prompt:        topic.Prompt,
+		RelatedTopics: topic.RelatedTopics,
+		Active:        topic.Active,
+		CreatedAt:     primitive.NewDateTimeFromTime(topic.CreatedAt),
+		UpdatedAt:     primitive.NewDateTimeFromTime(topic.UpdatedAt),
 	}
 
 	// Only set ID if it's valid
@@ -81,15 +88,24 @@ func (r *topicRepository) toEntity(doc *topicDocument) *entities.Topic {
 	}
 
 	return &entities.Topic{
-		ID:          doc.ID.Hex(),
-		UserID:      doc.UserID.Hex(),
-		Name:        doc.Name,
-		Description: doc.Description,
-		Keywords:    doc.Keywords,
-		Category:    doc.Category,
-		Priority:    doc.Priority,
-		Active:      doc.Active,
-		CreatedAt:   doc.CreatedAt.Time(),
+		ID:            doc.ID.Hex(),
+		UserID:        doc.UserID.Hex(),
+		Name:          doc.Name,
+		Description:   doc.Description,
+		Category:      doc.Category,
+		Priority:      doc.Priority,
+		Ideas:         doc.Ideas,
+		Prompt:        doc.Prompt,
+		RelatedTopics: doc.RelatedTopics,
+		Active:        doc.Active,
+		CreatedAt:     doc.CreatedAt.Time(),
+		UpdatedAt: func() time.Time {
+			updatedAt := doc.UpdatedAt.Time()
+			if updatedAt.IsZero() {
+				return doc.CreatedAt.Time()
+			}
+			return updatedAt
+		}(),
 	}
 }
 
@@ -97,6 +113,10 @@ func (r *topicRepository) toEntity(doc *topicDocument) *entities.Topic {
 func (r *topicRepository) Create(ctx context.Context, topic *entities.Topic) (string, error) {
 	if topic == nil {
 		return "", database.ErrInvalidEntity
+	}
+
+	if topic.UpdatedAt.IsZero() {
+		topic.UpdatedAt = topic.CreatedAt
 	}
 
 	// Validate topic before persisting
@@ -233,6 +253,8 @@ func (r *topicRepository) Update(ctx context.Context, topic *entities.Topic) err
 		return database.ErrInvalidID
 	}
 
+	topic.UpdatedAt = time.Now()
+
 	// Validate topic before persisting
 	if err := topic.Validate(); err != nil {
 		return fmt.Errorf("topic validation failed: %w", err)
@@ -246,12 +268,15 @@ func (r *topicRepository) Update(ctx context.Context, topic *entities.Topic) err
 	// Prepare update document (excluding ID, UserID, and CreatedAt)
 	update := bson.M{
 		"$set": bson.M{
-			"name":        topic.Name,
-			"description": topic.Description,
-			"keywords":    topic.Keywords,
-			"category":    topic.Category,
-			"priority":    topic.Priority,
-			"active":      topic.Active,
+			"name":           topic.Name,
+			"description":    topic.Description,
+			"category":       topic.Category,
+			"priority":       topic.Priority,
+			"ideas":          topic.Ideas,
+			"prompt":         topic.Prompt,
+			"related_topics": topic.RelatedTopics,
+			"active":         topic.Active,
+			"updated_at":     primitive.NewDateTimeFromTime(topic.UpdatedAt),
 		},
 	}
 
@@ -290,4 +315,77 @@ func (r *topicRepository) Delete(ctx context.Context, topicID string) error {
 	}
 
 	return nil
+}
+
+// FindByPrompt retrieves topics that reference a specific prompt
+func (r *topicRepository) FindByPrompt(ctx context.Context, userID string, promptName string) ([]*entities.Topic, error) {
+	userObjectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, database.ErrInvalidID
+	}
+
+	filter := bson.M{
+		"user_id": userObjectID,
+		"prompt":  promptName,
+	}
+
+	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+	cursor, err := r.collection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find topics by prompt: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var topics []*entities.Topic
+	for cursor.Next(ctx) {
+		var doc topicDocument
+		if err := cursor.Decode(&doc); err != nil {
+			return nil, fmt.Errorf("failed to decode topic: %w", err)
+		}
+		topics = append(topics, r.toEntity(&doc))
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, fmt.Errorf("cursor error: %w", err)
+	}
+
+	return topics, nil
+}
+
+// FindByIdeasRange retrieves topics with ideas count in the specified range
+func (r *topicRepository) FindByIdeasRange(ctx context.Context, userID string, minIdeas, maxIdeas int) ([]*entities.Topic, error) {
+	userObjectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, database.ErrInvalidID
+	}
+
+	filter := bson.M{
+		"user_id": userObjectID,
+		"ideas": bson.M{
+			"$gte": minIdeas,
+			"$lte": maxIdeas,
+		},
+	}
+
+	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+	cursor, err := r.collection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find topics by ideas range: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var topics []*entities.Topic
+	for cursor.Next(ctx) {
+		var doc topicDocument
+		if err := cursor.Decode(&doc); err != nil {
+			return nil, fmt.Errorf("failed to decode topic: %w", err)
+		}
+		topics = append(topics, r.toEntity(&doc))
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, fmt.Errorf("cursor error: %w", err)
+	}
+
+	return topics, nil
 }

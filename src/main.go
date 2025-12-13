@@ -9,7 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/linkgen-ai/backend/src/application/services"
+	appServices "github.com/linkgen-ai/backend/src/application/services"
+	infraServices "github.com/linkgen-ai/backend/src/infrastructure/services"
 	"github.com/linkgen-ai/backend/src/application/usecases"
 	"github.com/linkgen-ai/backend/src/application/workers"
 	"github.com/linkgen-ai/backend/src/domain/entities"
@@ -43,6 +44,9 @@ type Application struct {
 	promptsRepo interfaces.PromptsRepository
 	jobRepo     interfaces.JobRepository
 	jobErrorRepo interfaces.JobErrorRepository
+
+	// Services
+	promptEngine *infraServices.PromptEngine
 
 	// Use cases
 	generateDraftsUC *usecases.GenerateDraftsUseCase
@@ -301,11 +305,19 @@ func (a *Application) initialize(ctx context.Context) error {
 		a.logger.Info("Connected to NATS")
 	}
 
+	// Initialize PromptEngine
+	a.promptEngine = infraServices.NewPromptEngine(
+		a.promptsRepo,
+		config.NewZapLoggerAdapter(a.logger),
+	)
+
 	// Initialize use cases
 	a.generateDraftsUC = usecases.NewGenerateDraftsUseCase(
 		a.userRepo,
 		a.ideaRepo,
 		a.draftRepo,
+		a.promptsRepo,
+		a.promptEngine,
 		a.llmClient,
 	)
 	a.generateIdeasUC = usecases.NewGenerateIdeasUseCase(
@@ -313,6 +325,7 @@ func (a *Application) initialize(ctx context.Context) error {
 		a.topicRepo,
 		a.ideaRepo,
 		a.promptsRepo,
+		a.promptEngine,
 		a.llmClient,
 	)
 	a.listIdeasUC = usecases.NewListIdeasUseCase(a.userRepo, a.ideaRepo)
@@ -343,13 +356,15 @@ func (a *Application) initialize(ctx context.Context) error {
 func (a *Application) seedDevelopmentData(ctx context.Context) error {
 	a.logger.Info("Seeding development data...")
 
-	seeder := services.NewDevSeeder(
+	seeder := appServices.NewDevSeeder(
 		a.userRepo,
 		a.topicRepo,
 		a.ideaRepo,
 		a.promptsRepo,
+		a.promptEngine,
 		a.llmClient,
 		a.logger,
+		nil,
 	)
 
 	if err := seeder.SeedAll(ctx); err != nil {
@@ -408,15 +423,22 @@ func (a *Application) initializeHTTPServer() error {
 	topicsHandler := handlers.NewTopicsHandler(
 		a.topicRepo,
 		a.userRepo,
+		a.promptsRepo,
 		a.generateIdeasUC,
 		a.logger,
 	)
 	topicsHandler.RegisterRoutes(router)
 
 	// Register prompts handler
+	promptService := infraServices.NewPromptService(
+		a.promptsRepo,
+		a.userRepo,
+		config.NewZapLoggerAdapter(a.logger),
+	)
 	promptsHandler := handlers.NewPromptsHandler(
 		a.promptsRepo,
 		a.userRepo,
+		promptService,
 		a.logger,
 	)
 	promptsHandler.RegisterRoutes(router)

@@ -50,9 +50,7 @@ func ValidateRequiredFields(cfg *Config) error {
 	if cfg.LLM.Endpoint == "" {
 		return fmt.Errorf("%w: llm_endpoint", ErrMissingRequiredField)
 	}
-	if cfg.LLM.APIKey == "" {
-		return fmt.Errorf("%w: llm_api_key", ErrMissingRequiredField)
-	}
+	// Note: LLM.APIKey is optional - many LLM providers (like local proxies) don't require authentication
 	return nil
 }
 

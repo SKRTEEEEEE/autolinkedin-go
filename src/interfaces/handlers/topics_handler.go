@@ -1,12 +1,12 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
-
-	"context"
 
 	"github.com/gorilla/mux"
 	"github.com/linkgen-ai/backend/src/domain/entities"
@@ -19,6 +19,7 @@ import (
 type TopicsHandler struct {
 	topicRepo       interfaces.TopicRepository
 	userRepo        interfaces.UserRepository
+	promptsRepo     interfaces.PromptsRepository
 	generateIdeasUC GenerateIdeasUseCase
 	logger          *zap.Logger
 }
@@ -26,12 +27,14 @@ type TopicsHandler struct {
 // GenerateIdeasUseCase defines the interface for generating ideas
 type GenerateIdeasUseCase interface {
 	GenerateIdeasForUser(ctx context.Context, userID string, count int) ([]*entities.Idea, error)
+	GenerateIdeasForTopic(ctx context.Context, topicID string) ([]*entities.Idea, error)
 }
 
 // NewTopicsHandler creates a new TopicsHandler instance
 func NewTopicsHandler(
 	topicRepo interfaces.TopicRepository,
 	userRepo interfaces.UserRepository,
+	promptsRepo interfaces.PromptsRepository,
 	generateIdeasUC GenerateIdeasUseCase,
 	logger *zap.Logger,
 ) *TopicsHandler {
@@ -42,6 +45,7 @@ func NewTopicsHandler(
 	return &TopicsHandler{
 		topicRepo:       topicRepo,
 		userRepo:        userRepo,
+		promptsRepo:     promptsRepo,
 		generateIdeasUC: generateIdeasUC,
 		logger:          logger,
 	}
@@ -49,22 +53,31 @@ func NewTopicsHandler(
 
 // TopicDTO represents a topic in the response
 type TopicDTO struct {
-	ID          string   `json:"id"`
-	UserID      string   `json:"user_id"`
-	Name        string   `json:"name"`
-	Description string   `json:"description,omitempty"`
-	Keywords    []string `json:"keywords,omitempty"`
-	Category    string   `json:"category,omitempty"`
-	Priority    int      `json:"priority"`
-	Active      bool     `json:"active"`
-	CreatedAt   string   `json:"created_at"`
+	ID            string   `json:"id"`
+	UserID        string   `json:"user_id"`
+	Name          string   `json:"name"`
+	Description   string   `json:"description,omitempty"`
+	Category      string   `json:"category,omitempty"`
+	Priority      int      `json:"priority"`
+	Ideas         int      `json:"ideas"`
+	Prompt        string   `json:"prompt"`
+	RelatedTopics []string `json:"related_topics,omitempty"`
+	Active        bool     `json:"active"`
+	CreatedAt     string   `json:"created_at"`
+	UpdatedAt     string   `json:"updated_at"`
 }
 
 // CreateTopicRequest represents the request to create a topic
 type CreateTopicRequest struct {
-	UserID      string `json:"user_id"`
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
+	UserID        string   `json:"user_id"`
+	Name          string   `json:"name"`
+	Description   string   `json:"description,omitempty"`
+	Category      string   `json:"category,omitempty"`
+	Priority      *int     `json:"priority,omitempty"`
+	Ideas         *int     `json:"ideas,omitempty"`
+	Prompt        *string  `json:"prompt,omitempty"`
+	RelatedTopics []string `json:"related_topics,omitempty"`
+	Active        *bool    `json:"active,omitempty"`
 }
 
 // Validate validates the create topic request
@@ -81,17 +94,34 @@ func (r *CreateTopicRequest) Validate() error {
 	if len(r.Description) > 500 {
 		return fmt.Errorf("description must be less than 500 characters")
 	}
+	if len(r.Category) > 50 {
+		return fmt.Errorf("category must be less than 50 characters")
+	}
+	if r.Priority != nil && (*r.Priority < 1 || *r.Priority > 10) {
+		return fmt.Errorf("priority must be between 1 and 10")
+	}
+	if r.Ideas != nil && (*r.Ideas < 1 || *r.Ideas > 20) {
+		return fmt.Errorf("ideas must be between 1 and 20")
+	}
+	if r.Prompt != nil && len(*r.Prompt) > 50 {
+		return fmt.Errorf("prompt must be less than 50 characters")
+	}
+	if len(r.RelatedTopics) > 10 {
+		return fmt.Errorf("related_topics must contain 10 or fewer items")
+	}
 	return nil
 }
 
 // UpdateTopicRequest represents the request to update a topic
 type UpdateTopicRequest struct {
-	Name        string   `json:"name,omitempty"`
-	Description string   `json:"description,omitempty"`
-	Keywords    []string `json:"keywords,omitempty"`
-	Category    string   `json:"category,omitempty"`
-	Priority    *int     `json:"priority,omitempty"`
-	Active      *bool    `json:"active,omitempty"`
+	Name          string   `json:"name,omitempty"`
+	Description   string   `json:"description,omitempty"`
+	Category      string   `json:"category,omitempty"`
+	Priority      *int     `json:"priority,omitempty"`
+	Ideas         *int     `json:"ideas,omitempty"`
+	Prompt        *string  `json:"prompt,omitempty"`
+	RelatedTopics []string `json:"related_topics,omitempty"`
+	Active        *bool    `json:"active,omitempty"`
 }
 
 // Validate validates the update topic request
@@ -101,6 +131,21 @@ func (r *UpdateTopicRequest) Validate() error {
 	}
 	if len(r.Description) > 500 {
 		return fmt.Errorf("description must be less than 500 characters")
+	}
+	if len(r.Category) > 50 {
+		return fmt.Errorf("category must be less than 50 characters")
+	}
+	if r.Priority != nil && (*r.Priority < 1 || *r.Priority > 10) {
+		return fmt.Errorf("priority must be between 1 and 10")
+	}
+	if r.Ideas != nil && (*r.Ideas < 1 || *r.Ideas > 20) {
+		return fmt.Errorf("ideas must be between 1 and 20")
+	}
+	if r.Prompt != nil && len(*r.Prompt) > 50 {
+		return fmt.Errorf("prompt must be less than 50 characters")
+	}
+	if len(r.RelatedTopics) > 10 {
+		return fmt.Errorf("related_topics must contain 10 or fewer items")
 	}
 	return nil
 }
@@ -143,15 +188,18 @@ func (h *TopicsHandler) GetTopics(w http.ResponseWriter, r *http.Request) {
 	topicDTOs := make([]TopicDTO, 0, len(topics))
 	for _, topic := range topics {
 		topicDTOs = append(topicDTOs, TopicDTO{
-			ID:          topic.ID,
-			UserID:      topic.UserID,
-			Name:        topic.Name,
-			Description: topic.Description,
-			Keywords:    topic.Keywords,
-			Category:    topic.Category,
-			Priority:    topic.Priority,
-			Active:      topic.Active,
-			CreatedAt:   topic.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			ID:            topic.ID,
+			UserID:        topic.UserID,
+			Name:          topic.Name,
+			Description:   topic.Description,
+			Category:      topic.Category,
+			Priority:      topic.Priority,
+			Ideas:         topic.Ideas,
+			Prompt:        topic.Prompt,
+			RelatedTopics: topic.RelatedTopics,
+			Active:        topic.Active,
+			CreatedAt:     topic.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:     topic.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		})
 	}
 
@@ -192,20 +240,44 @@ func (h *TopicsHandler) CreateTopic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create topic entity
-	topic := &entities.Topic{
-		ID:          primitive.NewObjectID().Hex(),
-		UserID:      req.UserID,
-		Name:        req.Name,
-		Description: req.Description,
-		Keywords:    []string{},
-		Category:    "General",
-		Priority:    5,
-		Active:      true,
-		CreatedAt:   time.Now(),
+	if err := h.validatePromptReference(ctx, req.UserID, req.Prompt); err != nil {
+		WriteError(w, http.StatusBadRequest, ErrorCodeValidation, err.Error(), nil, h.logger)
+		return
 	}
 
-	// Validate topic
+	// Create topic entity
+	topic := &entities.Topic{
+		ID:            primitive.NewObjectID().Hex(),
+		UserID:        req.UserID,
+		Name:          req.Name,
+		Description:   req.Description,
+		Category:      req.Category,
+		Priority:      entities.DefaultPriority,
+		Ideas:         entities.DefaultIdeasCount,
+		RelatedTopics: req.RelatedTopics,
+		Active:        true,
+		CreatedAt:     time.Now(),
+	}
+
+	// Set optional fields if provided
+	if req.Category != "" {
+		topic.Category = req.Category
+	}
+	if req.Priority != nil {
+		topic.Priority = *req.Priority
+	}
+	if req.Ideas != nil {
+		topic.Ideas = *req.Ideas
+	}
+	if req.Prompt != nil {
+		topic.Prompt = strings.TrimSpace(*req.Prompt)
+	}
+	if req.Active != nil {
+		topic.Active = *req.Active
+	}
+
+	// Set defaults and validate
+	topic.SetDefaults()
 	if err := topic.Validate(); err != nil {
 		WriteError(w, http.StatusBadRequest, ErrorCodeValidation, err.Error(), nil, h.logger)
 		return
@@ -219,11 +291,11 @@ func (h *TopicsHandler) CreateTopic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Trigger idea generation for new topic (async, don't block response)
+	// Use the specific topic's prompt for idea generation instead of auto-generating
 	if h.generateIdeasUC != nil {
 		go func() {
 			generateCtx := context.Background()
-			_, generateErr := h.generateIdeasUC.GenerateIdeasForUser(generateCtx, req.UserID, 10)
+			_, generateErr := h.generateIdeasUC.GenerateIdeasForTopic(generateCtx, topicID)
 			if generateErr != nil {
 				h.logger.Warn("Failed to auto-generate ideas for new topic",
 					zap.String("topic_id", topicID),
@@ -237,15 +309,18 @@ func (h *TopicsHandler) CreateTopic(w http.ResponseWriter, r *http.Request) {
 
 	// Return created topic
 	WriteJSON(w, http.StatusCreated, TopicDTO{
-		ID:          topicID,
-		UserID:      topic.UserID,
-		Name:        topic.Name,
-		Description: topic.Description,
-		Keywords:    topic.Keywords,
-		Category:    topic.Category,
-		Priority:    topic.Priority,
-		Active:      topic.Active,
-		CreatedAt:   topic.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		ID:            topicID,
+		UserID:        topic.UserID,
+		Name:          topic.Name,
+		Description:   topic.Description,
+		Category:      topic.Category,
+		Priority:      topic.Priority,
+		Ideas:         topic.Ideas,
+		Prompt:        topic.Prompt,
+		RelatedTopics: topic.RelatedTopics,
+		Active:        topic.Active,
+		CreatedAt:     topic.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:     topic.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}, h.logger)
 }
 
@@ -295,20 +370,37 @@ func (h *TopicsHandler) UpdateTopic(w http.ResponseWriter, r *http.Request) {
 	if req.Description != "" {
 		topic.Description = req.Description
 	}
-	if req.Keywords != nil {
-		topic.Keywords = req.Keywords
-	}
 	if req.Category != "" {
 		topic.Category = req.Category
 	}
 	if req.Priority != nil {
 		topic.Priority = *req.Priority
 	}
+	if req.Ideas != nil {
+		topic.Ideas = *req.Ideas
+	}
+	if req.Prompt != nil {
+		topic.Prompt = strings.TrimSpace(*req.Prompt)
+	}
+	if req.RelatedTopics != nil {
+		topic.RelatedTopics = req.RelatedTopics
+		topic.NormalizeRelatedTopics()
+	}
 	if req.Active != nil {
 		topic.Active = *req.Active
 	}
 
-	// Validate updated topic
+	if req.Prompt != nil {
+		if err := h.validatePromptReference(ctx, topic.UserID, req.Prompt); err != nil {
+			WriteError(w, http.StatusBadRequest, ErrorCodeValidation, err.Error(), nil, h.logger)
+			return
+		}
+	}
+
+	topic.UpdatedAt = time.Now()
+
+	// Set defaults and validate
+	topic.SetDefaults()
 	if err := topic.Validate(); err != nil {
 		WriteError(w, http.StatusBadRequest, ErrorCodeValidation, err.Error(), nil, h.logger)
 		return
@@ -323,15 +415,18 @@ func (h *TopicsHandler) UpdateTopic(w http.ResponseWriter, r *http.Request) {
 
 	// Return updated topic
 	WriteJSON(w, http.StatusOK, TopicDTO{
-		ID:          topic.ID,
-		UserID:      topic.UserID,
-		Name:        topic.Name,
-		Description: topic.Description,
-		Keywords:    topic.Keywords,
-		Category:    topic.Category,
-		Priority:    topic.Priority,
-		Active:      topic.Active,
-		CreatedAt:   topic.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		ID:            topic.ID,
+		UserID:        topic.UserID,
+		Name:          topic.Name,
+		Description:   topic.Description,
+		Category:      topic.Category,
+		Priority:      topic.Priority,
+		Ideas:         topic.Ideas,
+		Prompt:        topic.Prompt,
+		RelatedTopics: topic.RelatedTopics,
+		Active:        topic.Active,
+		CreatedAt:     topic.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:     topic.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}, h.logger)
 }
 
@@ -357,6 +452,32 @@ func (h *TopicsHandler) DeleteTopic(w http.ResponseWriter, r *http.Request) {
 
 	// Return success
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *TopicsHandler) validatePromptReference(ctx context.Context, userID string, promptName *string) error {
+	if promptName == nil {
+		return nil
+	}
+
+	trimmed := strings.TrimSpace(*promptName)
+	if trimmed == "" {
+		return fmt.Errorf("prompt reference cannot be empty")
+	}
+
+	prompt, err := h.promptsRepo.FindByName(ctx, userID, trimmed)
+	if err != nil {
+		return fmt.Errorf("failed to validate prompt reference: %w", err)
+	}
+
+	if prompt == nil {
+		return fmt.Errorf("prompt reference not found: %s", trimmed)
+	}
+
+	if prompt.Type != entities.PromptTypeIdeas {
+		return fmt.Errorf("prompt reference must be of ideas type")
+	}
+
+	return nil
 }
 
 // RegisterRoutes registers all topic routes
