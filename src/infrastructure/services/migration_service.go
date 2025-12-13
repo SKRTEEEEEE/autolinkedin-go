@@ -9,8 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-
-	"github.com/linkgen-ai/backend/src/domain/entities"
 )
 
 // MigrationReport represents the results of a migration operation

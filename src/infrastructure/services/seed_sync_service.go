@@ -13,14 +13,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/linkgen-ai/backend/src/domain/entities"
+	"github.com/linkgen-ai/backend/src/domain/interfaces"
 	"github.com/linkgen-ai/backend/src/infrastructure/database/repositories"
 )
 
 // SeedSyncService handles synchronization between seed files and database
 type SeedSyncService struct {
 	db                *mongo.Database
-	promptRepo        repositories.PromptRepository
-	topicRepo         repositories.TopicRepository
+	promptRepo        interfaces.PromptsRepository
+	topicRepo         interfaces.TopicRepository
 	promptLoader      *PromptLoader
 	promptEngine      *PromptEngine
 }
@@ -29,8 +30,8 @@ type SeedSyncService struct {
 func NewSeedSyncService(db *mongo.Database, promptLoader *PromptLoader, promptEngine *PromptEngine) *SeedSyncService {
 	return &SeedSyncService{
 		db:           db,
-		promptRepo:   repositories.NewPromptRepository(db),
-		topicRepo:    repositories.NewTopicRepository(db),
+		promptRepo:   repositories.NewPromptsRepository(db.Collection("prompts")),
+		topicRepo:    repositories.NewTopicRepository(db.Collection("topics")),
 		promptLoader: promptLoader,
 		promptEngine: promptEngine,
 	}
@@ -83,7 +84,7 @@ func (s *SeedSyncService) processPromptFile(ctx context.Context, userID, filePat
 	}
 
 	// Check if prompt already exists for this user
-	existing, err := s.promptRepo.GetByName(ctx, userID, prompt.Name)
+	existing, err := s.promptRepo.FindByName(ctx, userID, prompt.Name)
 	if err == nil && existing != nil {
 		// Update existing prompt
 		prompt.ID = existing.ID
@@ -100,7 +101,7 @@ func (s *SeedSyncService) processPromptFile(ctx context.Context, userID, filePat
 		prompt.CreatedAt = time.Now()
 		prompt.UpdatedAt = time.Now()
 
-		if err := s.promptRepo.Create(ctx, prompt); err != nil {
+		if _, err := s.promptRepo.Create(ctx, prompt); err != nil {
 			return fmt.Errorf("failed to create new prompt: %v", err)
 		}
 		log.Printf("Created new prompt: %s", prompt.Name)
@@ -185,38 +186,51 @@ func (s *SeedSyncService) SeedTopicsFromFile(ctx context.Context, userID, topicF
 		topic.UpdatedAt = time.Now()
 
 		// Ensure required fields have default values
-		if topic.PromptName == "" {
-			topic.PromptName = "base1"
+		if topic.Prompt == "" {
+			topic.Prompt = "base1"
 		}
-		if topic.IdeasCount == 0 {
-			topic.IdeasCount = 3
+		if topic.Ideas == 0 {
+			topic.Ideas = 3
 		}
 		if topic.Priority == 0 {
 			topic.Priority = 5
 		}
 
 		// Check if topic already exists for this user
-		existing, err := s.topicRepo.GetByName(ctx, userID, topic.Name)
-		if err == nil && existing != nil {
-			// Update existing topic
-			topic.ID = existing.ID
-			topic.CreatedAt = existing.CreatedAt
-			topic.UpdatedAt = time.Now()
-			
-			if err := s.topicRepo.Update(ctx, topic); err != nil {
-				log.Printf("Error updating topic %s: %v", topic.Name, err)
-				continue
-			}
-			log.Printf("Updated existing topic: %s", topic.Name)
+		// We need to list all topics and find by name since there's no FindByName method
+		topics, err := s.topicRepo.ListByUserID(ctx, userID)
+		if err != nil {
+			log.Printf("Error listing topics: %v", err)
 		} else {
-			// Create new topic
-			topic.ID = primitive.NewObjectID().Hex()
-			
-			if err := s.topicRepo.Create(ctx, topic); err != nil {
-				log.Printf("Error creating topic %s: %v", topic.Name, err)
-				continue
+			var existing *entities.Topic
+			for _, t := range topics {
+				if t.Name == topic.Name {
+					existing = t
+					break
+				}
 			}
-			log.Printf("Created new topic: %s", topic.Name)
+			
+			if existing != nil {
+				// Update existing topic
+				topic.ID = existing.ID
+				topic.CreatedAt = existing.CreatedAt
+				topic.UpdatedAt = time.Now()
+				
+				if err := s.topicRepo.Update(ctx, topic); err != nil {
+					log.Printf("Error updating topic %s: %v", topic.Name, err)
+					continue
+				}
+				log.Printf("Updated existing topic: %s", topic.Name)
+			} else {
+				// Create new topic
+				topic.ID = primitive.NewObjectID().Hex()
+				
+				if _, err := s.topicRepo.Create(ctx, topic); err != nil {
+					log.Printf("Error creating topic %s: %v", topic.Name, err)
+					continue
+				}
+				log.Printf("Created new topic: %s", topic.Name)
+			}
 		}
 
 		// Generate ideas for this topic using its associated prompt
@@ -232,13 +246,13 @@ func (s *SeedSyncService) SeedTopicsFromFile(ctx context.Context, userID, topicF
 // generateIdeasForTopic generates ideas for a topic using its associated prompt
 func (s *SeedSyncService) generateIdeasForTopic(ctx context.Context, userID string, topic *entities.Topic) error {
 	// Get the prompt specified by the topic
-	prompt, err := s.promptRepo.GetByName(ctx, userID, topic.PromptName)
+	prompt, err := s.promptRepo.FindByName(ctx, userID, topic.Prompt)
 	if err != nil {
-		return fmt.Errorf("failed to get prompt %s: %v", topic.PromptName, err)
+		return fmt.Errorf("failed to get prompt %s: %v", topic.Prompt, err)
 	}
 
 	// Process the prompt template with topic variables
-	processedPrompt, err := s.promptEngine.ProcessTemplate(
+	_, err = s.promptEngine.ProcessTemplate(
 		prompt.PromptTemplate,
 		topic,
 		nil,
@@ -249,28 +263,30 @@ func (s *SeedSyncService) generateIdeasForTopic(ctx context.Context, userID stri
 
 	// For now, we'll create mock ideas until LLM integration is complete
 	// In a full implementation, this would call the LLM service
-	ideas := s.createMockIdeas(topic, topic.IdeasCount)
+	generatedIdeas := s.createMockIdeas(topic, topic.Ideas)
 
-	// Save ideas to database
-	ideaRepo := repositories.NewIdeaRepository(s.db)
-	for _, idea := range ideas {
-		ideaID := primitive.NewObjectID().Hex()
-		idea := &entities.Idea{
-			ID:        ideaID,
+	// Save ideas to database using batch API
+	ideaRepo := repositories.NewIdeasRepository(s.db.Collection("ideas"))
+	var ideasToStore []*entities.Idea
+	for _, idea := range generatedIdeas {
+		ideasToStore = append(ideasToStore, &entities.Idea{
+			ID:        primitive.NewObjectID().Hex(),
 			Content:   idea.Content,
 			TopicID:   topic.ID,
 			TopicName: topic.Name,
 			UserID:    userID,
 			Used:      false,
 			CreatedAt: time.Now(),
-		}
+		})
+	}
 
-		if err := ideaRepo.Create(ctx, idea); err != nil {
-			log.Printf("Failed to save idea: %v", err)
+	if len(ideasToStore) > 0 {
+		if err := ideaRepo.CreateBatch(ctx, ideasToStore); err != nil {
+			log.Printf("Failed to save ideas for topic %s: %v", topic.Name, err)
 		}
 	}
 
-	log.Printf("Generated %d ideas for topic %s", len(ideas), topic.Name)
+	log.Printf("Generated %d ideas for topic %s", len(ideasToStore), topic.Name)
 	return nil
 }
 
@@ -323,14 +339,14 @@ func (s *SeedSyncService) ValidateSeedConfiguration(ctx context.Context, userID 
 		// Check if referenced prompt exists
 		promptExists := false
 		for _, prompt := range prompts {
-			if prompt.Name == topic.PromptName {
+			if prompt.Name == topic.Prompt {
 				promptExists = true
 				break
 			}
 		}
 
 		if !promptExists {
-			return fmt.Errorf("topic %s references non-existent prompt %s", topic.Name, topic.PromptName)
+			return fmt.Errorf("topic %s references non-existent prompt %s", topic.Name, topic.Prompt)
 		}
 	}
 

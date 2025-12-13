@@ -447,7 +447,7 @@ func (p *PromptEngine) ProcessTemplate(template string, topic *entities.Topic, v
 	// Handle topic variables
 	if topic != nil {
 		result = strings.ReplaceAll(result, "{name}", topic.Name)
-		result = strings.ReplaceAll(result, "{ideas}", fmt.Sprintf("%d", topic.IdeasCount))
+		result = strings.ReplaceAll(result, "{ideas}", fmt.Sprintf("%d", topic.Ideas))
 		
 		// Handle category
 		if topic.Category != "" {
@@ -459,13 +459,8 @@ func (p *PromptEngine) ProcessTemplate(template string, topic *entities.Topic, v
 			result = strings.ReplaceAll(result, "{priority}", fmt.Sprintf("%d", topic.Priority))
 		}
 		
-		// Handle keywords array
-		if len(topic.Keywords) > 0 {
-			keywordsStr := strings.Join(topic.Keywords, ", ")
-			result = strings.ReplaceAll(result, "{[keywords]}", keywordsStr)
-		} else {
-			result = strings.ReplaceAll(result, "{[keywords]}", "")
-		}
+		// Keywords field doesn't exist in Topic entity, keeping empty for compatibility
+		result = strings.ReplaceAll(result, "{[keywords]}", "")
 		
 		// Handle related topics array
 		if len(topic.RelatedTopics) > 0 {
@@ -476,8 +471,8 @@ func (p *PromptEngine) ProcessTemplate(template string, topic *entities.Topic, v
 		}
 		
 		// Handle ideas_count for backward compatibility
-		if topic.IdeasCount > 0 {
-			result = strings.ReplaceAll(result, "{ideas_count}", fmt.Sprintf("%d", topic.IdeasCount))
+		if topic.Ideas > 0 {
+			result = strings.ReplaceAll(result, "{ideas_count}", fmt.Sprintf("%d", topic.Ideas))
 		}
 	}
 	
