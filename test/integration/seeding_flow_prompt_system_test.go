@@ -14,8 +14,8 @@ import (
 
 	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/infrastructure/database/repositories"
-	"github.com/linkgen-ai/backend/test/utils"
 	"github.com/linkgen-ai/backend/src/infrastructure/services"
+	"github.com/linkgen-ai/backend/test/utils"
 )
 
 // TestSeedingFlowWithPromptSystem tests the complete seeding flow with the new prompt system
@@ -54,7 +54,7 @@ func TestSeedingFlowWithPromptSystem(tt *testing.T) {
 			// Parse prompt content
 			var prompt entities.Prompt
 			err = json.Unmarshal(content, &prompt)
-			
+
 			if err != nil {
 				// Try parsing as markdown if JSON fails
 				prompt.Name = "base1"
@@ -62,17 +62,17 @@ func TestSeedingFlowWithPromptSystem(tt *testing.T) {
 				prompt.PromptTemplate = string(content)
 				prompt.Active = true
 			}
-			
+
 			prompt.UserID = userID
 			prompt.ID = primitive.NewObjectID().Hex()
 			prompt.CreatedAt = time.Now()
 			prompt.UpdatedAt = time.Now()
-			
+
 			// Create prompt in database
 			err = testDB.PromptRepo.Create(context.Background(), &prompt)
 			require.NoError(t, err)
 		}
-		
+
 		// THEN verify prompts were created
 		prompts, err := testDB.PromptRepo.ListByUserID(context.Background(), userID)
 		require.NoError(t, err)
@@ -100,7 +100,7 @@ func TestSeedingFlowWithPromptSystem(tt *testing.T) {
 			seedTopics[i].UserID = userID
 			seedTopics[i].CreatedAt = time.Now()
 			seedTopics[i].UpdatedAt = time.Now()
-			
+
 			// Ensure required fields have default values
 			if seedTopics[i].PromptName == "" {
 				seedTopics[i].PromptName = "base1"
@@ -108,17 +108,17 @@ func TestSeedingFlowWithPromptSystem(tt *testing.T) {
 			if seedTopics[i].IdeasCount == 0 {
 				seedTopics[i].IdeasCount = 3
 			}
-			
+
 			// Create topic
 			_, err := testDB.TopicRepo.Create(ctx, &seedTopics[i])
 			require.NoError(t, err)
 		}
-		
+
 		// THEN verify topics were created
 		topics, err := testDB.TopicRepo.ListByUserID(ctx, userID)
 		require.NoError(t, err)
 		assert.Equal(t, len(seedTopics), len(topics), "Should have created all seed topics")
-		
+
 		for _, topic := range topics {
 			assert.NotEmpty(t, topic.PromptName, "Each topic should have a prompt reference")
 			assert.Greater(t, topic.IdeasCount, 0, "Each topic should have ideas count > 0")
@@ -146,19 +146,19 @@ func TestSeedingFlowWithPromptSystem(tt *testing.T) {
 
 		// Create test topic with all the new fields
 		topic := &entities.Topic{
-			ID:             primitive.NewObjectID().Hex(),
-			UserID:         userID,
-			Name:           "Test Topic",
-			Description:    "Test Description",
-			Keywords:       []string{"test", "integration"},
-			Category:       "Testing",
-			Priority:       5,
-			IdeasCount:     3,
-			Active:         true,
-			PromptName:     "base1", // Reference to seed prompt
-			RelatedTopics:  []string{"Related Topic 1", "Related Topic 2"},
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
+			ID:            primitive.NewObjectID().Hex(),
+			UserID:        userID,
+			Name:          "Test Topic",
+			Description:   "Test Description",
+			Keywords:      []string{"test", "integration"},
+			Category:      "Testing",
+			Priority:      5,
+			IdeasCount:    3,
+			Active:        true,
+			PromptName:    "base1", // Reference to seed prompt
+			RelatedTopics: []string{"Related Topic 1", "Related Topic 2"},
+			CreatedAt:     time.Now(),
+			UpdatedAt:     time.Now(),
 		}
 
 		// Save topic and prompt
@@ -170,10 +170,10 @@ func TestSeedingFlowWithPromptSystem(tt *testing.T) {
 		// WHEN generating ideas using the seeded prompt with dynamic variables
 		// For now, we'll create mock ideas until LLM integration is complete
 		ideas := test.CreateTestIdeas(t, testDB, userID, createdTopic.ID, createdTopic.Name, topic.IdeasCount)
-		
+
 		// THEN should generate ideas with proper variable substitution
 		require.Len(t, ideas, topic.IdeasCount, "Should generate the requested number of ideas")
-		
+
 		for _, idea := range ideas {
 			assert.NotEmpty(t, idea.Content, "Ideas should have content")
 			assert.Equal(t, createdTopic.ID, idea.TopicID, "Ideas should reference correct topic")
@@ -190,21 +190,21 @@ func TestSeedingFlowWithPromptSystem(tt *testing.T) {
 		defer utils.CleanupTestDB(t, testDB)
 
 		userID := test.CreateTestUser(t, testDB).ID
-		
+
 		// WHEN checking synchronization between seed files and database
 		err := testDB.SeedSyncService.ValidateSeedConfiguration(context.Background(), userID)
 		require.NoError(t, err, "Seed configuration should be valid")
-		
+
 		// THEN should verify:
 		// 1. All seed prompts are in database
 		prompts, err := testDB.PromptRepo.ListByUserID(context.Background(), userID)
 		require.NoError(t, err)
 		assert.Greater(t, len(prompts), 0, "Should have prompts in database")
-		
+
 		// 2. All seed topics reference valid prompt names
 		topics, err := testDB.TopicRepo.ListByUserID(context.Background(), userID)
 		require.NoError(t, err)
-		
+
 		for _, topic := range topics {
 			// Check if referenced prompt exists
 			promptExists := false
@@ -216,13 +216,13 @@ func TestSeedingFlowWithPromptSystem(tt *testing.T) {
 			}
 			assert.True(t, promptExists, "Topic %s should reference existing prompt %s", topic.Name, topic.PromptName)
 		}
-		
+
 		// 3. Database schema matches seed files structure
 		for _, topic := range topics {
 			assert.NotEmpty(t, topic.PromptName, "Topic should have prompt name")
 			assert.Greater(t, topic.IdeasCount, 0, "Topic should have ideas count")
 		}
-		
+
 		// 4. No orphaned prompt references exist
 		// This is verified in step 2 above
 	})
@@ -238,7 +238,7 @@ func TestPromptVariableReplacement(tt *testing.T) {
 		defer utils.CleanupTestDB(t, testDB)
 		// GIVEN a prompt template with all supported variables
 		template := "Generate {ideas} ideas about {name} in category {category} with priority {priority} and keywords {[keywords]}"
-		
+
 		topic := &entities.Topic{
 			Name:       "Test Topic",
 			Category:   "Testing",
@@ -246,25 +246,25 @@ func TestPromptVariableReplacement(tt *testing.T) {
 			IdeasCount: 5,
 			Keywords:   []string{"test", "integration", "go"},
 		}
-		
+
 		// WHEN processing the template with topic data
 		processedPrompt, err := testDB.PromptEngine.ProcessTemplate(template, topic, nil)
 		require.NoError(t, err, "Template processing should succeed")
-		
+
 		// THEN should get properly replaced content
 		// Verify:
 		// 1. {name} -> topic.Name
 		assert.Contains(t, processedPrompt, "Test Topic", "Should contain topic name")
-		
+
 		// 2. {ideas} -> topic.IdeasCount
 		assert.Contains(t, processedPrompt, "5", "Should contain ideas count")
-		
+
 		// 3. {[keywords]} -> comma-separated keywords
 		assert.Contains(t, processedPrompt, "test, integration, go", "Should contain comma-separated keywords")
-		
+
 		// 4. {category} -> topic.Category
 		assert.Contains(t, processedPrompt, "Testing", "Should contain category")
-		
+
 		// 5. {priority} -> topic.Priority
 		assert.Contains(t, processedPrompt, "8", "Should contain priority")
 	})
@@ -291,9 +291,9 @@ Generate LinkedIn content following professional tone.`
 
 		// Mock user context
 		userContext := map[string]interface{}{
-			"name":       "Test User",
-			"expertise":  "Software Development",
-			"tone":       "Professional",
+			"name":      "Test User",
+			"expertise": "Software Development",
+			"tone":      "Professional",
 		}
 
 		// WHEN processing the template
@@ -303,11 +303,11 @@ Generate LinkedIn content following professional tone.`
 			"user_context": userContext,
 		})
 		require.NoError(t, err, "Template processing should succeed")
-		
+
 		// THEN should replace {content} and {user_context} variables
 		// Check that idea content is replaced
 		assert.Contains(t, processedPrompt, idea.Content, "Should contain idea content")
-		
+
 		// Check that topic name is referenced
 		assert.Contains(t, processedPrompt, idea.TopicName, "Should contain topic name")
 	})
@@ -350,19 +350,19 @@ Generate LinkedIn content following professional tone.`
 				// Process template with edge case topic
 				processedPrompt, err := testDB.PromptEngine.ProcessTemplate(tc.template, tc.topic, nil)
 				require.NoError(t, err, "Template processing should succeed")
-				
+
 				// Basic validation
 				assert.NotEmpty(t, processedPrompt, "Processed prompt should not be empty")
 				assert.Contains(t, processedPrompt, tc.topic.Name, "Should contain topic name")
-				
+
 				// Check specific edge cases
 				switch tc.name {
 				case "empty related_topics array":
 					assert.Contains(t, processedPrompt, "Test Topic", "Should contain topic name even with empty related topics")
-					
+
 				case "missing optional variables":
 					assert.Contains(t, processedPrompt, "Simple Topic", "Should handle templates with only required variables")
-					
+
 				case "array with special characters":
 					assert.Contains(t, processedPrompt, "web-dev", "Should handle special characters in keywords")
 					assert.Contains(t, processedPrompt, "AI/ML", "Should handle slash in keywords")
@@ -387,7 +387,7 @@ func TestSeedingErrorHandling(tt *testing.T) {
 
 		// WHEN attempting to seed from the non-existent path
 		err := testDB.SeedSyncService.SeedPromptsFromFiles(ctx, userID, nonExistentPath)
-		
+
 		// THEN should return appropriate error without panic
 		assert.Error(t, err, "Should return error when path doesn't exist")
 		assert.Contains(t, err.Error(), "failed to read seed directory", "Error should indicate directory read failure")
@@ -426,16 +426,16 @@ func TestSeedingErrorHandling(tt *testing.T) {
 			t.Run(prompt.Name, func(t *testing.T) {
 				// WHEN attempting to save invalid prompt
 				err := testDB.PromptRepo.Create(ctx, &prompt)
-				
+
 				// THEN should return validation error (for now, just verify we can create and process)
 				// Note: Template validation is implemented at process time, not at save time
 				require.NoError(t, err, "Should be able to save prompt template (validation at process time)")
-				
+
 				// Try to process the template to trigger validation
 				_, processErr := testDB.PromptEngine.ProcessTemplate(prompt.PromptTemplate, &entities.Topic{
 					Name: "Test Topic",
 				}, nil)
-				
+
 				// Should fail when processing invalid template
 				assert.Error(t, processErr, "Should return validation error when processing invalid template")
 			})

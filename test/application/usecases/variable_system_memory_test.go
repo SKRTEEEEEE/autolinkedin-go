@@ -40,7 +40,7 @@ func TestVariableSystemMemoryUsage(tt *testing.T) {
 		for round := 0; round < iterations; round++ {
 			for i, template := range templates {
 				topic := &entities.Topic{
-					Name:       fmt.Sprintf("Topic %d", i%50),  // Reuse 50 topics
+					Name:       fmt.Sprintf("Topic %d", i%50), // Reuse 50 topics
 					IdeasCount: i%5 + 1,
 				}
 
@@ -89,7 +89,7 @@ func TestVariableSystemMemoryUsage(tt *testing.T) {
 		for i := 0; i < iterations; i++ {
 			// Create progressively larger arrays
 			keywordSize := (i % 10) + 5 // 5-15 keywords
-			relatedSize := (i % 5) + 3   // 3-8 related topics
+			relatedSize := (i % 5) + 3  // 3-8 related topics
 
 			keywords := make([]string, keywordSize)
 			relatedTopics := make([]string, relatedSize)
@@ -105,7 +105,7 @@ func TestVariableSystemMemoryUsage(tt *testing.T) {
 				Name:          fmt.Sprintf("Topic %d", i),
 				Keywords:      keywords,
 				RelatedTopics: relatedTopics,
-				Priority:      i % 10 + 1,
+				Priority:      i%10 + 1,
 			}
 
 			// This will fail until array processing is implemented
@@ -120,11 +120,11 @@ func TestVariableSystemMemoryUsage(tt *testing.T) {
 				var m runtime.MemStats
 				runtime.ReadMemStats(&m)
 				memoryGrowth := m.Alloc - initialMemory
-				
+
 				tt.Logf("Iteration %d: Memory growth: %d bytes", i, memoryGrowth)
-				
+
 				// Should not grow unbounded
-				assert.Less(tt, memoryGrowth, uint64(10*1024*1024), 
+				assert.Less(tt, memoryGrowth, uint64(10*1024*1024),
 					"Memory growth should be bounded with large arrays")
 			}
 		}
@@ -214,8 +214,8 @@ func TestUserContextMemoryEfficiency(tt *testing.T) {
 					"expertise":        fmt.Sprintf("Expertise %d", i),
 					"tone_preference":  fmt.Sprintf("Tone %d", i%3),
 					"industry":         fmt.Sprintf("Industry %d", i%5),
-					"experience_years":  i,
-					"specializations":   []string{fmt.Sprintf("Spec %d", i), fmt.Sprintf("Spec %d", i+1)},
+					"experience_years": i,
+					"specializations":  []string{fmt.Sprintf("Spec %d", i), fmt.Sprintf("Spec %d", i+1)},
 				},
 			}
 		}
@@ -264,31 +264,31 @@ func TestUserContextMemoryEfficiency(tt *testing.T) {
 		// Create complex nested configuration
 		complexConfig := map[string]interface{}{
 			"profile": map[string]interface{}{
-				"name":      "Complex User",
-				"title":     "Senior Developer",
-				"company":   "Tech Corp",
-				"location":  "Remote",
+				"name":     "Complex User",
+				"title":    "Senior Developer",
+				"company":  "Tech Corp",
+				"location": "Remote",
 			},
 			"preferences": map[string]interface{}{
-				"tone":        "Professional",
-				"style":       "Technical",
-				"language":    "Spanish",
-				"format":      "Detailed",
+				"tone":     "Professional",
+				"style":    "Technical",
+				"language": "Spanish",
+				"format":   "Detailed",
 			},
 			"expertise": map[string]interface{}{
 				"primary":   "Backend Development",
 				"secondary": "Cloud Architecture",
 				"skills":    []string{"Go", "Kubernetes", "AWS", "Docker"},
 				"years": map[string]interface{}{
-					"backend":  8,
-					"cloud":    5,
-					"total":    12,
+					"backend": 8,
+					"cloud":   5,
+					"total":   12,
 				},
 			},
 			"network": map[string]interface{}{
 				"connections": 1500,
 				"followers":   2500,
-				"engagement":  map[string]interface{}{
+				"engagement": map[string]interface{}{
 					"rate":  0.85,
 					"reach": 10000,
 				},
@@ -296,8 +296,8 @@ func TestUserContextMemoryEfficiency(tt *testing.T) {
 		}
 
 		user := &entities.User{
-			ID:           primitive.NewObjectID(),
-			Name:         "Complex User",
+			ID:            primitive.NewObjectID(),
+			Name:          "Complex User",
 			Configuration: complexConfig,
 		}
 
@@ -349,14 +349,14 @@ func TestVariableProcessorGarbageCollection(tt *testing.T) {
 
 		// Process many templates and collect memory stats
 		memorySnapshots := []MemorySnapshot{}
-		
+
 		for batch := 0; batch < 5; batch++ {
 			// Process a batch of templates
 			for i := 0; i < 1000; i++ {
 				template := fmt.Sprintf("Batch %d - Generate {ideas} ideas about {name}", batch)
 				topic := &entities.Topic{
 					Name:       fmt.Sprintf("Topic %d-%d", batch, i),
-					IdeasCount: i % 5 + 1,
+					IdeasCount: i%5 + 1,
 					Keywords:   []string{"keyword1", "keyword2", "keyword3"},
 				}
 
@@ -371,11 +371,11 @@ func TestVariableProcessorGarbageCollection(tt *testing.T) {
 			runtime.GC()
 			var m runtime.MemStats
 			runtime.ReadMemStats(&m)
-			
+
 			memorySnapshots = append(memorySnapshots, MemorySnapshot{
-				Batch:   batch,
-				Memory:  m.Alloc,
-				Time:    time.Now(),
+				Batch:  batch,
+				Memory: m.Alloc,
+				Time:   time.Now(),
 			})
 
 			tt.Logf("After batch %d: Memory = %d bytes", batch, m.Alloc)
@@ -384,7 +384,7 @@ func TestVariableProcessorGarbageCollection(tt *testing.T) {
 		// Analyze memory growth
 		maxMemory := uint64(0)
 		minMemory := uint64(999999999)
-		
+
 		for _, snapshot := range memorySnapshots {
 			if snapshot.Memory > maxMemory {
 				maxMemory = snapshot.Memory
@@ -399,7 +399,7 @@ func TestVariableProcessorGarbageCollection(tt *testing.T) {
 
 		// THEN should release memory properly
 		assert.Less(tt, memoryRange, uint64(5*1024*1024), "Memory usage should be stable across batches")
-		
+
 		// Memory should not continuously grow
 		if len(memorySnapshots) > 3 {
 			sorted := make([]MemorySnapshot, len(memorySnapshots))
@@ -407,11 +407,11 @@ func TestVariableProcessorGarbageCollection(tt *testing.T) {
 			sort.Slice(sorted, func(i, j int) bool {
 				return sorted[i].Memory < sorted[j].Memory
 			})
-			
+
 			lowerQuartile := sorted[len(sorted)/4]
 			upperQuartile := sorted[3*len(sorted)/4]
 			growth := upperQuartile.Memory - lowerQuartile.Memory
-			
+
 			tt.Logf("Memory growth between quartiles: %d bytes", growth)
 			assert.Less(tt, growth, uint64(2*1024*1024), "Memory growth should be limited")
 		}

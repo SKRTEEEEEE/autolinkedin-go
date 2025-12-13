@@ -414,7 +414,7 @@ func NewDefaultConfig() *Config {
 			ReconnectWait: 2 * time.Second,
 		},
 		LLM: LLMConfig{
-			Timeout:     60 * time.Second,
+			Timeout:     45 * time.Second,
 			MaxTokens:   2000,
 			Temperature: 0.7,
 		},

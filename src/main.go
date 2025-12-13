@@ -424,6 +424,7 @@ func (a *Application) initializeHTTPServer() error {
 		a.topicRepo,
 		a.userRepo,
 		a.promptsRepo,
+		a.ideaRepo,
 		a.generateIdeasUC,
 		a.logger,
 	)

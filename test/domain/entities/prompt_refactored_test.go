@@ -109,10 +109,10 @@ func TestPromptRefactored(t *testing.T) {
 	t.Run("should validate prompt template contains proper placeholders", func(t *testing.T) {
 		// GIVEN prompts with different template formats
 		testCases := []struct {
-			name           string
-			template       string
-			valid          bool
-			expectedError  string
+			name          string
+			template      string
+			valid         bool
+			expectedError string
 		}{
 			{
 				"valid template with single placeholder",
@@ -277,7 +277,7 @@ func TestPromptRefactored(t *testing.T) {
 		prompt := &Prompt{
 			ID:             "prompt-vars",
 			UserID:         "user-vars",
-			Name:          ="base1",
+			Name:           "base1",
 			Type:           PromptTypeIdeas,
 			PromptTemplate: "Genera {ideas} ideas sobre {name} con temas {related_topics}",
 			Active:         true,
@@ -373,7 +373,7 @@ func (p *Prompt) ValidateRefactored() error {
 // NEW method to extract template variables from prompt template
 func (p *Prompt) GetTemplateVariables() []string {
 	// Extract variables in the format {variable_name}
-	re := regexp.MustCompile `\{([^}]+)\}`
+	re := regexp.MustCompile(`\{([^}]+)\}`)
 	matches := re.FindAllStringSubmatch(p.PromptTemplate, -1)
 
 	variables := make([]string, 0, len(matches))

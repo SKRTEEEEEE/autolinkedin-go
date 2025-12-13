@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/linkgen-ai/backend/src/domain/entities"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -59,10 +59,10 @@ func TestPromptRepositorySynchronization(t *testing.T) {
 
 		// AND invalid templates should fail
 		invalidTemplates := []string{
-			"", // Empty template
+			"",                          // Empty template
 			"Template with {incomplete", // Unclosed variable
 			"Template with invalid {unknown_variable}", // Unknown variable
-			"Template with {{double} curly", // Malformed
+			"Template with {{double} curly",            // Malformed
 		}
 
 		for _, template := range invalidTemplates {
@@ -88,7 +88,7 @@ func TestPromptRepositorySynchronization(t *testing.T) {
 			},
 			{
 				template:    "Topics: {[related_topics]} and content: {content}",
-				expected:    []string{ "[related_topics]", "content"},
+				expected:    []string{"[related_topics]", "content"},
 				description: "Array and content variable",
 			},
 			{
@@ -116,39 +116,39 @@ func TestPromptRepositorySynchronization(t *testing.T) {
 
 		// THEN validation should work correctly
 		typeTestCases := []struct {
-			promptType entities.PromptType
-			template   string
-			shouldPass bool
+			promptType  entities.PromptType
+			template    string
+			shouldPass  bool
 			description string
 		}{
 			{
-				promptType: entities.PromptTypeIdeas,
-				template:   "Genera {ideas} ideas sobre {name}",
-				shouldPass: true,
+				promptType:  entities.PromptTypeIdeas,
+				template:    "Genera {ideas} ideas sobre {name}",
+				shouldPass:  true,
 				description: "Valid ideas prompt template",
 			},
 			{
-				promptType: entities.PromptTypeIdeas,
-				template:   "Genera ideas sobre {name}", // Missing {ideas}
-				shouldPass: false,
+				promptType:  entities.PromptTypeIdeas,
+				template:    "Genera ideas sobre {name}", // Missing {ideas}
+				shouldPass:  false,
 				description: "Ideas prompt missing required {ideas}",
 			},
 			{
-				promptType: entities.PromptTypeIdeas,
-				template:   "Genera {ideas} ideas", // Missing {name}
-				shouldPass: false,
+				promptType:  entities.PromptTypeIdeas,
+				template:    "Genera {ideas} ideas", // Missing {name}
+				shouldPass:  false,
 				description: "Ideas prompt missing required {name}",
 			},
 			{
-				promptType: entities.PromptTypeDrafts,
-				template:   "Escribe sobre {content} con contexto {user_context}",
-				shouldPass: true,
+				promptType:  entities.PromptTypeDrafts,
+				template:    "Escribe sobre {content} con contexto {user_context}",
+				shouldPass:  true,
 				description: "Valid drafts prompt template",
 			},
 			{
-				promptType: entities.PromptTypeDrafts,
-				template:   "Escribe sobre {content}", // Missing {user_context}
-				shouldPass: false,
+				promptType:  entities.PromptTypeDrafts,
+				template:    "Escribe sobre {content}", // Missing {user_context}
+				shouldPass:  false,
 				description: "Drafts prompt missing required {user_context}",
 			},
 		}
@@ -308,14 +308,14 @@ func TestPromptRepositorySynchronization(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, base1Prompt)
 		assert.Contains(t, base1Prompt.PromptTemplate, "Genera {ideas} ideas") // Content from seed file
-		assert.False(t, base1Prompt.Active) // Should be inactive until explicitly activated
+		assert.False(t, base1Prompt.Active)                                    // Should be inactive until explicitly activated
 
 		// Verify pro was reset
 		proPrompt, err := repo.FindByNameAndType(context.Background(), userID, "pro", entities.PromptTypeDrafts)
 		require.NoError(t, err)
 		assert.NotNil(t, proPrompt)
 		assert.Contains(t, proPrompt.PromptTemplate, "Escribe un post profesional") // Content from seed file
-		assert.False(t, proPrompt.Active) // Should be inactive until explicitly activated
+		assert.False(t, proPrompt.Active)                                           // Should be inactive until explicitly activated
 	})
 
 	t.Run("should validate variable placeholders format", func(t *testing.T) {
@@ -337,12 +337,12 @@ func TestPromptRepositorySynchronization(t *testing.T) {
 		}
 
 		invalidFormats := []string{
-			"{name", // Missing closing brace
-			"name}", // Missing opening brace
-			"{name}", // Extra space
+			"{name",           // Missing closing brace
+			"name}",           // Missing opening brace
+			"{name}",          // Extra space
 			"{name-variable}", // Hyphen not allowed
-			"{123name}", // Numbers not allowed at start
-			"{name!}", // Exclamation not allowed
+			"{123name}",       // Numbers not allowed at start
+			"{name!}",         // Exclamation not allowed
 		}
 
 		for _, variable := range invalidFormats {

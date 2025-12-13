@@ -25,27 +25,27 @@ func TestPromptCaching(t *testing.T) {
 	// 6. Prevent memory leaks by limiting cache size
 
 	ctx := context.Background()
-	
+
 	// Setup test environment
 	testDB := setupTestDB(t, "test_caching")
 	defer testDB.Disconnect(ctx)
-	
+
 	promptsRepo := NewMockPromptsRepository()
 	logger := &mockLogger{}
 	engine := services.NewPromptEngine(promptsRepo, logger)
-	
+
 	t.Run("should cache processed prompts", func(t *testing.T) {
 		// Setup test data
 		userID := "cache-test-user"
 		now := time.Now()
-		
+
 		testUser := &entities.User{
 			ID:        userID,
 			Email:     "cache@example.com",
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
-		
+
 		testTopic := &entities.Topic{
 			ID:            primitive.NewObjectID().Hex(),
 			UserID:        userID,
@@ -56,9 +56,9 @@ func TestPromptCaching(t *testing.T) {
 			CreatedAt:     now,
 			UpdatedAt:     now,
 		}
-		
+
 		template := `Test template for {name} with {ideas} ideas`
-		
+
 		prompt := &entities.Prompt{
 			ID:             primitive.NewObjectID().Hex(),
 			UserID:         userID,
@@ -71,10 +71,10 @@ func TestPromptCaching(t *testing.T) {
 			UpdatedAt:      now,
 		}
 		promptsRepo.AddPrompt(prompt)
-		
+
 		// Initial cache should be empty
 		assert.Equal(t, 0, engine.CacheSize())
-		
+
 		// Process prompt first time (cache miss)
 		processed1, err := engine.ProcessPrompt(
 			ctx,
@@ -86,10 +86,10 @@ func TestPromptCaching(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
+
 		// Should be cached now
 		assert.Equal(t, 1, engine.CacheSize())
-		
+
 		// Process same prompt again (cache hit)
 		processed2, err := engine.ProcessPrompt(
 			ctx,
@@ -101,21 +101,21 @@ func TestPromptCaching(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
+
 		// Should return same cached result
 		assert.Equal(t, processed1, processed2)
 		assert.Equal(t, 1, engine.CacheSize()) // Still only one entry
 	})
-	
+
 	t.Run("should generate unique cache keys for different parameters", func(t *testing.T) {
 		userID := "cache-key-user"
 		now := time.Now()
-		
+
 		testUser := &entities.User{
 			ID:    userID,
 			Email: "key@example.com",
 		}
-		
+
 		// Create two different topics
 		topic1 := &entities.Topic{
 			ID:            primitive.NewObjectID().Hex(),
@@ -127,7 +127,7 @@ func TestPromptCaching(t *testing.T) {
 			CreatedAt:     now,
 			UpdatedAt:     now,
 		}
-		
+
 		topic2 := &entities.Topic{
 			ID:            primitive.NewObjectID().Hex(),
 			UserID:        userID,
@@ -138,9 +138,9 @@ func TestPromptCaching(t *testing.T) {
 			CreatedAt:     now,
 			UpdatedAt:     now,
 		}
-		
+
 		template := `Template for {name} with {ideas} ideas`
-		
+
 		prompt := &entities.Prompt{
 			ID:             primitive.NewObjectID().Hex(),
 			UserID:         userID,
@@ -153,7 +153,7 @@ func TestPromptCaching(t *testing.T) {
 			UpdatedAt:      now,
 		}
 		promptsRepo.AddPrompt(prompt)
-		
+
 		// Process with topic 1
 		_, err := engine.ProcessPrompt(
 			ctx,
@@ -165,9 +165,9 @@ func TestPromptCaching(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, 1, engine.CacheSize())
-		
+
 		// Process with topic 2 (should create new cache entry)
 		_, err = engine.ProcessPrompt(
 			ctx,
@@ -179,9 +179,9 @@ func TestPromptCaching(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, 2, engine.CacheSize()) // Two entries for different topics
-		
+
 		// Process topic 1 again (should reuse cache)
 		_, err = engine.ProcessPrompt(
 			ctx,
@@ -193,23 +193,23 @@ func TestPromptCaching(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, 2, engine.CacheSize()) // Still two entries (cache hit for topic 1)
 	})
-	
+
 	t.Run("should generate unique cache keys for different users", func(t *testing.T) {
 		now := time.Now()
-		
+
 		user1 := &entities.User{
 			ID:    "user-1",
 			Email: "user1@example.com",
 		}
-		
+
 		user2 := &entities.User{
 			ID:    "user-2",
 			Email: "user2@example.com",
 		}
-		
+
 		// Same topic for both users
 		topic := &entities.Topic{
 			ID:            primitive.NewObjectID().Hex(),
@@ -221,9 +221,9 @@ func TestPromptCaching(t *testing.T) {
 			CreatedAt:     now,
 			UpdatedAt:     now,
 		}
-		
+
 		template := `Template for {name}`
-		
+
 		// Create prompts for each user
 		prompt1 := &entities.Prompt{
 			ID:             primitive.NewObjectID().Hex(),
@@ -237,7 +237,7 @@ func TestPromptCaching(t *testing.T) {
 			UpdatedAt:      now,
 		}
 		promptsRepo.AddPrompt(prompt1)
-		
+
 		prompt2 := &entities.Prompt{
 			ID:             primitive.NewObjectID().Hex(),
 			UserID:         user2.ID,
@@ -250,7 +250,7 @@ func TestPromptCaching(t *testing.T) {
 			UpdatedAt:      now,
 		}
 		promptsRepo.AddPrompt(prompt2)
-		
+
 		// Process for user 1
 		_, err := engine.ProcessPrompt(
 			ctx,
@@ -262,9 +262,9 @@ func TestPromptCaching(t *testing.T) {
 			user1,
 		)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, 1, engine.CacheSize())
-		
+
 		// Process for user 2 (different user context)
 		_, err = engine.ProcessPrompt(
 			ctx,
@@ -276,19 +276,19 @@ func TestPromptCaching(t *testing.T) {
 			user2,
 		)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, 2, engine.CacheSize()) // Different cache entries for different users
 	})
-	
+
 	t.Run("should handle cache clearing", func(t *testing.T) {
 		userID := "clear-test-user"
 		now := time.Now()
-		
+
 		testUser := &entities.User{
 			ID:    userID,
 			Email: "clear@example.com",
 		}
-		
+
 		testTopic := &entities.Topic{
 			ID:            primitive.NewObjectID().Hex(),
 			UserID:        userID,
@@ -299,9 +299,9 @@ func TestPromptCaching(t *testing.T) {
 			CreatedAt:     now,
 			UpdatedAt:     now,
 		}
-		
+
 		template := `Template for {name}`
-		
+
 		prompt := &entities.Prompt{
 			ID:             primitive.NewObjectID().Hex(),
 			UserID:         userID,
@@ -314,7 +314,7 @@ func TestPromptCaching(t *testing.T) {
 			UpdatedAt:      now,
 		}
 		promptsRepo.AddPrompt(prompt)
-		
+
 		// Add entries to cache
 		_, err := engine.ProcessPrompt(
 			ctx,
@@ -326,49 +326,49 @@ func TestPromptCaching(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, 1, engine.CacheSize())
-		
+
 		// Clear cache
 		engine.ClearCache()
-		
+
 		// Cache should be empty
 		assert.Equal(t, 0, engine.CacheSize())
-		
+
 		// Hit count should be reset
 		assert.Equal(t, 0, engine.CacheHitCount())
 	})
-	
+
 	t.Run("should include idea content in cache key for drafts", func(t *testing.T) {
 		userID := "draft-cache-user"
 		now := time.Now()
-		
+
 		testUser := &entities.User{
 			ID:    userID,
 			Email: "draft@example.com",
 		}
-		
+
 		// Two different ideas for the same topic
 		idea1 := &entities.Idea{
-			ID:      primitive.NewObjectID().Hex(),
-			UserID:  userID,
-			Content: "First idea content",
-			Active:  true,
+			ID:        primitive.NewObjectID().Hex(),
+			UserID:    userID,
+			Content:   "First idea content",
+			Active:    true,
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
-		
+
 		idea2 := &entities.Idea{
-			ID:      primitive.NewObjectID().Hex(),
-			UserID:  userID,
-			Content: "Second idea content",
-			Active:  true,
+			ID:        primitive.NewObjectID().Hex(),
+			UserID:    userID,
+			Content:   "Second idea content",
+			Active:    true,
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
-		
+
 		template := `Based on: {content}`
-		
+
 		prompt := &entities.Prompt{
 			ID:             primitive.NewObjectID().Hex(),
 			UserID:         userID,
@@ -381,7 +381,7 @@ func TestPromptCaching(t *testing.T) {
 			UpdatedAt:      now,
 		}
 		promptsRepo.AddPrompt(prompt)
-		
+
 		// Process with first idea
 		processed1, err := engine.ProcessPrompt(
 			ctx,
@@ -393,11 +393,11 @@ func TestPromptCaching(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, 1, engine.CacheSize())
 		assert.Contains(t, processed1, "First idea content")
 		assert.NotContains(t, processed1, "Second idea content")
-		
+
 		// Process with second idea (different cache entry)
 		processed2, err := engine.ProcessPrompt(
 			ctx,
@@ -409,11 +409,11 @@ func TestPromptCaching(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, 2, engine.CacheSize()) // Two entries for different ideas
 		assert.Contains(t, processed2, "Second idea content")
 		assert.NotContains(t, processed2, "First idea content")
-		
+
 		// Process first idea again (should reuse cache)
 		processed3, err := engine.ProcessPrompt(
 			ctx,
@@ -425,23 +425,23 @@ func TestPromptCaching(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, processed1, processed3) // Same as cached for first idea
 		assert.Equal(t, 2, engine.CacheSize())  // Still two entries
 	})
-	
+
 	t.Run("should track cache performance metrics", func(t *testing.T) {
 		// Reset engine to start with fresh metrics
 		engine.ClearCache()
-		
+
 		userID := "metrics-user"
 		now := time.Now()
-		
+
 		testUser := &entities.User{
 			ID:    userID,
 			Email: "metrics@example.com",
 		}
-		
+
 		testTopic := &entities.Topic{
 			ID:            primitive.NewObjectID().Hex(),
 			UserID:        userID,
@@ -452,9 +452,9 @@ func TestPromptCaching(t *testing.T) {
 			CreatedAt:     now,
 			UpdatedAt:     now,
 		}
-		
+
 		template := `Template for {name}`
-		
+
 		prompt := &entities.Prompt{
 			ID:             primitive.NewObjectID().Hex(),
 			UserID:         userID,
@@ -467,7 +467,7 @@ func TestPromptCaching(t *testing.T) {
 			UpdatedAt:      now,
 		}
 		promptsRepo.AddPrompt(prompt)
-		
+
 		// Process first time (cache miss)
 		_, err := engine.ProcessPrompt(
 			ctx,
@@ -479,10 +479,10 @@ func TestPromptCaching(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
+
 		// Initially has cache miss and no hit
 		assert.GreaterOrEqual(t, engine.CacheHitCount(), 1) // At least one attempt
-		
+
 		// Process multiple times to get hits
 		for i := 0; i < 5; i++ {
 			_, err := engine.ProcessPrompt(
@@ -496,20 +496,20 @@ func TestPromptCaching(t *testing.T) {
 			)
 			require.NoError(t, err)
 		}
-		
+
 		// Should have cache hits now
 		assert.GreaterOrEqual(t, engine.CacheHitCount(), 6) // 1 initial + 5 more
 	})
-	
+
 	t.Run("should provide access to cache contents for diagnostics", func(t *testing.T) {
 		userID := "diagnostics-user"
 		now := time.Now()
-		
+
 		testUser := &entities.User{
 			ID:    userID,
 			Email: "diag@example.com",
 		}
-		
+
 		testTopic := &entities.Topic{
 			ID:            primitive.NewObjectID().Hex(),
 			UserID:        userID,
@@ -520,9 +520,9 @@ func TestPromptCaching(t *testing.T) {
 			CreatedAt:     now,
 			UpdatedAt:     now,
 		}
-		
+
 		template := `Template for {name}`
-		
+
 		prompt := &entities.Prompt{
 			ID:             primitive.NewObjectID().Hex(),
 			UserID:         userID,
@@ -535,7 +535,7 @@ func TestPromptCaching(t *testing.T) {
 			UpdatedAt:      now,
 		}
 		promptsRepo.AddPrompt(prompt)
-		
+
 		// Add to cache
 		processed, err := engine.ProcessPrompt(
 			ctx,
@@ -547,13 +547,13 @@ func TestPromptCaching(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
+
 		// Get cache contents
 		cacheContents := engine.GetCacheContents()
-		
+
 		// Should have our entry
 		assert.Len(t, cacheContents, 1)
-		
+
 		// Should contain the processed value
 		var found bool
 		for _, value := range cacheContents {

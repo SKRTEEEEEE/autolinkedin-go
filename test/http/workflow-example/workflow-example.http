@@ -16,7 +16,7 @@
 
 # ⚠️ IMPORTANTE: Reemplaza estos IDs con los valores reales de las respuestas
 @ideaId = 6935d53ac95d0eae4a139760
-@draftId = REPLACE_WITH_ACTUAL_DRAFT_ID
+@draftId = 693dc32284f4164d74f9bc73
 @topicId = REPLACE_WITH_ACTUAL_TOPIC_ID
 @promptId = REPLACE_WITH_ACTUAL_PROMPT_ID
 @jobId = b147c30c-e70e-4746-8335-2903da42eed4
@@ -224,24 +224,75 @@ GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=PUBLISHED HTTP/1.1
 Content-Type: application/json
 
 ###
-### Refinar un Draft Existente (hacerlo más profesional)
+### Refinar un Draft (hacerlo más engaging con emojis)
 POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
 Content-Type: application/json
 
 {
-  "prompt": "Hazlo más profesional y añade una llamada a la acción al final",
-  "user_id": "{{devUserId}}"
+  "prompt": "Hazlo más engaging y añade emojis apropiados para LinkedIn. Incluye un gancho potente al inicio y una llamada a la acción al final."
 }
 
 ###
-### Refinar Draft (acortar y añadir datos)
+### Refinar Draft (añadir datos técnicos y métricas)
 POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
 Content-Type: application/json
 
 {
-  "prompt": "Acórtalo a 200 palabras, añade métricas o datos concretos y hazlo más atractivo",
-  "user_id": "{{devUserId}}"
+  "prompt": "Transforma a estilo técnico: añade métricas específicas, datos concretos y estadísticas verificables. Cita benchmarks o estudios cuando sea posible."
 }
+
+###
+### Refinar Draft (ajustar tono corporativo)
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Adopta un tono corporativo ejecutivo: lenguaje profesional, sin jerga informal, enfocado en ROI y beneficios de negocio. Elimina excesos de emojis."
+}
+
+###
+### Refinar Draft (optimizar para algoritmo de LinkedIn)
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Optimiza para el algoritmo de LinkedIn: incluye 3-5 hashtags relevantes, estructura con espacios en blanco, pregunta enganchadora y mencionakeywords de industria."
+}
+
+###
+### Refinar Draft (acortar y hacerlo más directo)
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Reduce a 150-200 palabras manteniendo el mensaje clave. Elimina redundancias y ve directo al punto. Incluye bullet points si ayuda la claridad."
+}
+
+###
+### Refinar Draft (añadir storytelling)
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Convierte en narrativa personal: incluye una breve historia o caso real, conecta emocionalmente con la audiencia, muestra vulnerabilidad y aprendizaje."
+}
+
+###
+### Refinar Draft (formato tutorial/pasos)
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Restructura como guía práctica: utiliza números o pasos secuenciales, incluye consejos accionables, formato fácil de escanear y aplicar."
+}
+
+###
+### Refinar Draft (enfocar en audiencia específica)
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Adapta para tech leads senior: lenguaje técnico pero accesible, menciona arquitectura, escalabilidad, trade-offs y decisiones de diseño."
 
 ###
 # Flujo de Trabajo Completo - Ejemplo Paso a Paso

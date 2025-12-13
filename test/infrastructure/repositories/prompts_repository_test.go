@@ -15,9 +15,9 @@ import (
 // PromptsRepositoryTestSuite contains all tests for PromptsRepository
 type PromptsRepositoryTestSuite struct {
 	suite.Suite
-	db     *database.Database
-	repo   *PromptsRepository
-	ctx    context.Context
+	db      *database.Database
+	repo    *PromptsRepository
+	ctx     context.Context
 	cleanUp func()
 }
 
@@ -54,7 +54,7 @@ func (suite *PromptsRepositoryTestSuite) Test_FindByName_ShouldReturnPromptByNam
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
-	
+
 	err := suite.repo.Create(suite.ctx, expectedPrompt)
 	require.NoError(suite.T(), err)
 
@@ -87,7 +87,7 @@ func (suite *PromptsRepositoryTestSuite) Test_FindByName_ShouldReturnErrorForNon
 func (suite *PromptsRepositoryTestSuite) Test_FindActiveByName_ShouldOnlyReturnActivePrompts() {
 	// Given
 	userID := "user-123"
-	
+
 	// Create active prompt
 	activePrompt := &entities.Prompt{
 		ID:             "prompt-active",
@@ -99,7 +99,7 @@ func (suite *PromptsRepositoryTestSuite) Test_FindActiveByName_ShouldOnlyReturnA
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
-	
+
 	// Create inactive prompt with same name
 	inactivePrompt := &entities.Prompt{
 		ID:             "prompt-inactive",
@@ -111,7 +111,7 @@ func (suite *PromptsRepositoryTestSuite) Test_FindActiveByName_ShouldOnlyReturnA
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
-	
+
 	err := suite.repo.Create(suite.ctx, activePrompt)
 	require.NoError(suite.T(), err)
 	err = suite.repo.Create(suite.ctx, inactivePrompt)
@@ -145,7 +145,7 @@ func (suite *PromptsRepositoryTestSuite) Test_Create_ShouldHandleNewNameField() 
 
 	// Then
 	assert.NoError(suite.T(), err)
-	
+
 	// Verify the prompt was created with the Name field
 	found, err := suite.repo.FindByID(suite.ctx, prompt.ID)
 	require.NoError(suite.T(), err)
@@ -165,10 +165,10 @@ func (suite *PromptsRepositoryTestSuite) Test_Update_ShouldHandleNameField() {
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
-	
+
 	err := suite.repo.Create(suite.ctx, originalPrompt)
 	require.NoError(suite.T(), err)
-	
+
 	// Modify the prompt
 	originalPrompt.Name = "updated-name"
 	originalPrompt.PromptTemplate = "Updated template"
@@ -179,7 +179,7 @@ func (suite *PromptsRepositoryTestSuite) Test_Update_ShouldHandleNameField() {
 
 	// Then
 	assert.NoError(suite.T(), err)
-	
+
 	// Verify the update
 	updated, err := suite.repo.FindByID(suite.ctx, originalPrompt.ID)
 	require.NoError(suite.T(), err)

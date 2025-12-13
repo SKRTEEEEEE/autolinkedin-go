@@ -23,9 +23,9 @@ func Test_NewTopic_ShouldCreateTopicWithDefaultValues(t *testing.T) {
 	assert.Equal(t, id, topic.ID)
 	assert.Equal(t, userID, topic.UserID)
 	assert.Equal(t, name, topic.Name)
-	assert.Equal(t, 2, topic.Ideas) // Default value should be 2
+	assert.Equal(t, 2, topic.Ideas)        // Default value should be 2
 	assert.Equal(t, "base1", topic.Prompt) // Default prompt should be base1
-	assert.True(t, topic.Active) // Default should be active
+	assert.True(t, topic.Active)           // Default should be active
 }
 
 func Test_NewTopicWithDetails_ShouldCreateTopicWithCustomValues(t *testing.T) {

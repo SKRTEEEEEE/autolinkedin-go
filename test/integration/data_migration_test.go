@@ -11,8 +11,8 @@ import (
 
 	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/infrastructure/database/repositories"
-	"github.com/linkgen-ai/backend/test/utils"
 	"github.com/linkgen-ai/backend/src/infrastructure/services"
+	"github.com/linkgen-ai/backend/test/utils"
 )
 
 // TestDataMigration tests migration from old to new data structures
@@ -67,10 +67,10 @@ func TestDataMigration(tt *testing.T) {
 		// WHEN running data migration
 		migrator := NewDataMigrator(db)
 		migrationReport, err := migrator.MigrateTopics(ctx)
-		
+
 		// This will fail until migration logic is implemented
 		t.Fatal("implement topic data migration from old to new schema - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should:
 		// 1. Create new fields (prompt_name, ideas_count)
 		// 2. Map old 'ideas' to 'ideas_count'
@@ -79,13 +79,13 @@ func TestDataMigration(tt *testing.T) {
 		require.NoError(t, err)
 		assert.NotZero(t, migrationReport.MigratedCount)
 		assert.Equal(t, 2, migrationReport.MigratedCount)
-		
+
 		// Verify migration results
 		topicRepo := repositories.NewTopicRepository(db)
 		topics, err := topicRepo.ListByUserID(ctx, userID)
 		require.NoError(t, err)
 		require.Len(t, topics, 2)
-		
+
 		for _, topic := range topics {
 			assert.Equal(t, "base1", topic.PromptName, "Should set default prompt")
 			assert.Greater(t, topic.IdeasCount, 0, "Should map old ideas field")
@@ -103,17 +103,17 @@ func TestDataMigration(tt *testing.T) {
 		// Create topics first (with new structure)
 		topicRepo := repositories.NewTopicRepository(db)
 		topic1 := &entities.Topic{
-			ID:     primitive.NewObjectID().Hex(),
-			UserID: userID,
-			Name:   "GraphQL APIs",
+			ID:        primitive.NewObjectID().Hex(),
+			UserID:    userID,
+			Name:      "GraphQL APIs",
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
 
 		topic2 := &entities.Topic{
-			ID:     primitive.NewObjectID().Hex(),
-			UserID: userID,
-			Name:   "SQL Optimization",
+			ID:        primitive.NewObjectID().Hex(),
+			UserID:    userID,
+			Name:      "SQL Optimization",
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
@@ -126,20 +126,20 @@ func TestDataMigration(tt *testing.T) {
 		// Create old ideas structure (without topic_name)
 		oldIdeas := []map[string]interface{}{
 			{
-				"_id":      primitive.NewObjectID().Hex(),
-				"user_id":  userID,
-				"topic_id": createdTopic1.ID,
-				"content":  "Building scalable GraphQL APIs with federation",
-				"used":     false,
+				"_id":        primitive.NewObjectID().Hex(),
+				"user_id":    userID,
+				"topic_id":   createdTopic1.ID,
+				"content":    "Building scalable GraphQL APIs with federation",
+				"used":       false,
 				"created_at": time.Now().Add(-7 * 24 * time.Hour),
 				// Missing: topic_name
 			},
 			{
-				"_id":      primitive.NewObjectID().Hex(),
-				"user_id":  userID,
-				"topic_id": createdTopic2.ID,
-				"content":  "Index optimization strategies for large datasets",
-				"used":     true,
+				"_id":        primitive.NewObjectID().Hex(),
+				"user_id":    userID,
+				"topic_id":   createdTopic2.ID,
+				"content":    "Index optimization strategies for large datasets",
+				"used":       true,
 				"created_at": time.Now().Add(-3 * 24 * time.Hour),
 			},
 		}
@@ -153,20 +153,20 @@ func TestDataMigration(tt *testing.T) {
 		// WHEN running idea migration
 		migrator := NewDataMigrator(db)
 		report, err := migrator.MigrateIdeas(ctx)
-		
+
 		// This will fail until idea migration is implemented
 		t.Fatal("implement idea migration to populate topic_name - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should populate topic_name for all ideas
 		require.NoError(t, err)
 		assert.Equal(t, 2, report.MigratedCount)
-		
+
 		// Verify results
 		ideaRepo := repositories.NewIdeaRepository(db)
 		ideas, err := ideaRepo.ListByUserID(ctx, userID)
 		require.NoError(t, err)
 		require.Len(t, ideas, 2)
-		
+
 		for _, idea := range ideas {
 			assert.NotEmpty(t, idea.TopicName, "Should have topic name populated")
 			if idea.TopicID == createdTopic1.ID {
@@ -188,23 +188,23 @@ func TestDataMigration(tt *testing.T) {
 		// Old prompt structure with style_name
 		oldPrompts := []map[string]interface{}{
 			{
-				"_id":            primitive.NewObjectID().Hex(),
-				"user_id":        userID,
-				"style_name":     "professional", // Old field
-				"type":           "drafts",
+				"_id":             primitive.NewObjectID().Hex(),
+				"user_id":         userID,
+				"style_name":      "professional", // Old field
+				"type":            "drafts",
 				"prompt_template": "Generate professional content about {topic}",
-				"active":         true,
-				"created_at":     time.Now().Add(-15 * 24 * time.Hour),
+				"active":          true,
+				"created_at":      time.Now().Add(-15 * 24 * time.Hour),
 				// Missing: name field
 			},
 			{
-				"_id":            primitive.NewObjectID().Hex(),
-				"user_id":        userID,
-				"style_name":     "creative",
-				"type":           "ideas",
+				"_id":             primitive.NewObjectID().Hex(),
+				"user_id":         userID,
+				"style_name":      "creative",
+				"type":            "ideas",
 				"prompt_template": "Generate creative ideas about {name}",
-				"active":         true,
-				"created_at":     time.Now().Add(-8 * 24 * time.Hour),
+				"active":          true,
+				"created_at":      time.Now().Add(-8 * 24 * time.Hour),
 			},
 		}
 
@@ -217,20 +217,20 @@ func TestDataMigration(tt *testing.T) {
 		// WHEN running prompt migration
 		migrator := NewDataMigrator(db)
 		report, err := migrator.MigratePrompts(ctx)
-		
+
 		// This will fail until prompt migration is implemented
 		t.Fatal("implement prompt migration from style_name to name - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should map style_name to name field
 		require.NoError(t, err)
 		assert.Equal(t, 2, report.MigratedCount)
-		
+
 		// Verify results
 		promptRepo := repositories.NewPromptRepository(db)
 		prompts, err := promptRepo.ListByUserID(ctx, userID)
 		require.NoError(t, err)
 		require.Len(t, prompts, 2)
-		
+
 		hasProfessional := false
 		hasCreative := false
 		for _, prompt := range prompts {
@@ -276,15 +276,15 @@ func TestMigrationRollback(tt *testing.T) {
 		// WHEN rolling back migration
 		migrator := services.NewDataMigrator(testDB.DB)
 		rollbackReport, err := migrator.RollbackTopics(ctx, userID)
-		
+
 		require.NoError(t, err)
 		assert.Equal(t, 1, rollbackReport.RolledBackCount)
-		
+
 		// THEN should:
 		// 1. Remove new fields (prompt_name)
 		// 2. Restore old field name (ideas instead of ideas_count)
 		// 3. Keep existing data intact
-		
+
 		// Verify rollback worked directly in collection
 		topicCollection := testDB.DB.Collection("topics")
 		var rolledBackTopic map[string]interface{}
@@ -292,7 +292,7 @@ func TestMigrationRollback(tt *testing.T) {
 			"_id": createdTopic.ID,
 		}).Decode(&rolledBackTopic)
 		require.NoError(t, err)
-		
+
 		assert.NotNil(t, rolledBackTopic["ideas"])
 		assert.Nil(t, rolledBackTopic["prompt_name"])
 		assert.Nil(t, rolledBackTopic["ideas_count"])
@@ -307,20 +307,20 @@ func TestMigrationRollback(tt *testing.T) {
 
 		// Mix of old and new data
 		oldTopic := map[string]interface{}{
-			"_id":         primitive.NewObjectID().Hex(),
-			"user_id":     userID,
-			"name":        "Old Topic",
-			"ideas":       3,
-			"created_at":  time.Now(),
+			"_id":        primitive.NewObjectID().Hex(),
+			"user_id":    userID,
+			"name":       "Old Topic",
+			"ideas":      3,
+			"created_at": time.Now(),
 		}
 
 		newTopic := map[string]interface{}{
-			"_id":          primitive.NewObjectID().Hex(),
-			"user_id":      userID,
-			"name":         "New Topic",
-			"prompt_name":  "base1",
-			"ideas_count":  4,
-			"created_at":   time.Now(),
+			"_id":         primitive.NewObjectID().Hex(),
+			"user_id":     userID,
+			"name":        "New Topic",
+			"prompt_name": "base1",
+			"ideas_count": 4,
+			"created_at":  time.Now(),
 		}
 
 		topicCollection := testDB.DB.Collection("topics")
@@ -332,9 +332,9 @@ func TestMigrationRollback(tt *testing.T) {
 		// WHEN validating migration
 		migrator := services.NewDataMigrator(testDB.DB)
 		validationReport, err := migrator.ValidateMigration(ctx, userID)
-		
+
 		require.NoError(t, err)
-		
+
 		// THEN should:
 		// 1. Identify which topics need migration
 		// 2. Detect conflicts or issues
@@ -347,10 +347,10 @@ func TestMigrationRollback(tt *testing.T) {
 
 // MigrationReport represents the results of a migration operation
 type MigrationReport struct {
-	MigratedCount  int       `json:"migrated_count"`
-	FailedCount    int       `json:"failed_count"`
-	MigrationDate  time.Time `json:"migration_date"`
-	Errors         []string  `json:"errors,omitempty"`
+	MigratedCount int       `json:"migrated_count"`
+	FailedCount   int       `json:"failed_count"`
+	MigrationDate time.Time `json:"migration_date"`
+	Errors        []string  `json:"errors,omitempty"`
 }
 
 // RollbackReport represents the results of a rollback operation
@@ -363,10 +363,10 @@ type RollbackReport struct {
 
 // ValidationReport represents migration validation results
 type ValidationReport struct {
-	ItemsNeedingMigration  int `json:"items_needing_migration"`
-	ItemsAlreadyMigrated   int `json:"items_already_migrated"`
-	ConflictCount          int `json:"conflict_count"`
-	ValidationDate         time.Time `json:"validation_date"`
+	ItemsNeedingMigration int       `json:"items_needing_migration"`
+	ItemsAlreadyMigrated  int       `json:"items_already_migrated"`
+	ConflictCount         int       `json:"conflict_count"`
+	ValidationDate        time.Time `json:"validation_date"`
 }
 
 // TestDataMigration tests migration from old to new data structures
@@ -383,23 +383,23 @@ func TestDataMigration(tt *testing.T) {
 		// WHEN running data migration
 		migrator := services.NewDataMigrator(testDB.DB)
 		migrationReport, err := migrator.MigrateTopics(ctx)
-		
+
 		require.NoError(t, err)
 		assert.NotZero(t, migrationReport.MigratedCount)
 		assert.Equal(t, 2, migrationReport.MigratedCount)
-		
+
 		// THEN should:
 		// 1. Create new fields (prompt_name, ideas_count)
 		// 2. Map old 'ideas' to 'ideas_count'
 		// 3. Set default prompt_name = "base1"
 		// 4. Provide migration report
-		
+
 		// Verify migration results
 		topicRepo := repositories.NewTopicRepository(testDB.DB)
 		topics, err := topicRepo.ListByUserID(ctx, userID)
 		require.NoError(t, err)
 		require.Len(t, topics, 2)
-		
+
 		for _, topic := range topics {
 			assert.Equal(t, "base1", topic.PromptName, "Should set default prompt")
 			assert.Greater(t, topic.IdeasCount, 0, "Should map old ideas field")
@@ -417,16 +417,16 @@ func TestDataMigration(tt *testing.T) {
 		// WHEN running idea migration
 		migrator := services.NewDataMigrator(testDB.DB)
 		report, err := migrator.MigrateIdeas(ctx)
-		
+
 		require.NoError(t, err)
 		assert.Equal(t, 2, report.MigratedCount)
-		
+
 		// THEN should populate topic_name for all ideas
 		ideaRepo := repositories.NewIdeaRepository(testDB.DB)
 		ideas, err := ideaRepo.ListByUserID(ctx, userID)
 		require.NoError(t, err)
 		require.Len(t, ideas, 2)
-		
+
 		for _, idea := range ideas {
 			assert.NotEmpty(t, idea.TopicName, "Should have topic name populated")
 		}
@@ -442,16 +442,16 @@ func TestDataMigration(tt *testing.T) {
 		// WHEN running prompt migration
 		migrator := services.NewDataMigrator(testDB.DB)
 		report, err := migrator.MigratePrompts(ctx)
-		
+
 		require.NoError(t, err)
 		assert.Equal(t, 2, report.MigratedCount)
-		
+
 		// THEN should map style_name to name field
 		promptRepo := repositories.NewPromptRepository(testDB.DB)
 		prompts, err := promptRepo.ListByUserID(ctx, userID)
 		require.NoError(t, err)
 		require.Len(t, prompts, 2)
-		
+
 		hasProfessional := false
 		hasCreative := false
 		for _, prompt := range prompts {

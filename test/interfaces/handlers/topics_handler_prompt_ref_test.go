@@ -55,7 +55,7 @@ func TestTopicsHandlerPromptRefTestSuite(t *testing.T) {
 func (suite *TopicsHandlerPromptRefTestSuite) Test_CreateTopic_ShouldHandlePromptReference() {
 	// Given
 	userID := "user-123"
-	
+
 	// Create a prompt first
 	prompt := &entities.Prompt{
 		ID:             "prompt-123",
@@ -93,14 +93,14 @@ func (suite *TopicsHandlerPromptRefTestSuite) Test_CreateTopic_ShouldHandlePromp
 
 	// Then
 	assert.Equal(suite.T(), http.StatusCreated, w.Code)
-	
+
 	var response dto.TopicDTO
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(suite.T(), err)
 	assert.Equal(suite.T(), createTopicDTO.Name, response.Name)
 	assert.Equal(suite.T(), createTopicDTO.Prompt, response.Prompt)
 	assert.Equal(suite.T(), createTopicDTO.Ideas, response.Ideas)
-	
+
 	// Verify topic was created in database with prompt reference
 	topic, err := suite.topicRepo.FindByID(context.Background(), response.ID)
 	require.NoError(suite.T(), err)
@@ -112,7 +112,7 @@ func (suite *TopicsHandlerPromptRefTestSuite) Test_CreateTopic_ShouldHandlePromp
 func (suite *TopicsHandlerPromptRefTestSuite) Test_CreateTopic_ShouldReturnErrorForInvalidPromptReference() {
 	// Given
 	userID := "user-123"
-	
+
 	// Prepare request with non-existing prompt reference
 	createTopicDTO := dto.CreateTopicDTO{
 		Name:        "Test Topic",
@@ -136,7 +136,7 @@ func (suite *TopicsHandlerPromptRefTestSuite) Test_CreateTopic_ShouldReturnError
 
 	// Then
 	assert.Equal(suite.T(), http.StatusBadRequest, w.Code)
-	
+
 	var errorResponse map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &errorResponse)
 	require.NoError(suite.T(), err)
@@ -147,7 +147,7 @@ func (suite *TopicsHandlerPromptRefTestSuite) Test_CreateTopic_ShouldReturnError
 func (suite *TopicsHandlerPromptRefTestSuite) Test_UpdateTopic_ShouldUpdatePromptReference() {
 	// Given
 	userID := "user-123"
-	
+
 	// Create two prompts
 	prompt1 := &entities.Prompt{
 		ID:             "prompt-1",
@@ -159,7 +159,7 @@ func (suite *TopicsHandlerPromptRefTestSuite) Test_UpdateTopic_ShouldUpdatePromp
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
-	
+
 	prompt2 := &entities.Prompt{
 		ID:             "prompt-2",
 		UserID:         userID,
@@ -170,12 +170,12 @@ func (suite *TopicsHandlerPromptRefTestSuite) Test_UpdateTopic_ShouldUpdatePromp
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
-	
+
 	err := suite.promptRepo.Create(context.Background(), prompt1)
 	require.NoError(suite.T(), err)
 	err = suite.promptRepo.Create(context.Background(), prompt2)
 	require.NoError(suite.T(), err)
-	
+
 	// Create topic with initial prompt
 	topic := &entities.Topic{
 		ID:          "topic-123",
@@ -212,13 +212,13 @@ func (suite *TopicsHandlerPromptRefTestSuite) Test_UpdateTopic_ShouldUpdatePromp
 
 	// Then
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
-	
+
 	var response dto.TopicDTO
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(suite.T(), err)
 	assert.Equal(suite.T(), "style2", response.Prompt)
 	assert.Equal(suite.T(), 5, response.Ideas)
-	
+
 	// Verify database was updated
 	updatedTopic, err := suite.topicRepo.FindByID(context.Background(), topic.ID)
 	require.NoError(suite.T(), err)
@@ -230,7 +230,7 @@ func (suite *TopicsHandlerPromptRefTestSuite) Test_UpdateTopic_ShouldUpdatePromp
 func (suite *TopicsHandlerPromptRefTestSuite) Test_GetTopic_ShouldIncludePromptAndIdeasField() {
 	// Given
 	userID := "user-123"
-	
+
 	// Create topic with new fields
 	topic := &entities.Topic{
 		ID:          "topic-123",
@@ -258,7 +258,7 @@ func (suite *TopicsHandlerPromptRefTestSuite) Test_GetTopic_ShouldIncludePromptA
 
 	// Then
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
-	
+
 	var response dto.TopicDTO
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(suite.T(), err)
@@ -272,31 +272,31 @@ func (suite *TopicsHandlerPromptRefTestSuite) Test_GetTopic_ShouldIncludePromptA
 func (suite *TopicsHandlerPromptRefTestSuite) Test_ListTopics_ShouldIncludePromptAndIdeasField() {
 	// Given
 	userID := "user-123"
-	
+
 	// Create multiple topics with different prompts/ideas
 	topics := []*entities.Topic{
 		{
-			ID:       "topic-1",
-			UserID:   userID,
-			Name:     "Topic 1",
-			Ideas:    3,
-			Prompt:   "base1",
-			Active:   true,
-			Priority: 5,
+			ID:        "topic-1",
+			UserID:    userID,
+			Name:      "Topic 1",
+			Ideas:     3,
+			Prompt:    "base1",
+			Active:    true,
+			Priority:  5,
 			CreatedAt: time.Now(),
 		},
 		{
-			ID:       "topic-2",
-			UserID:   userID,
-			Name:     "Topic 2",
-			Ideas:    5,
-			Prompt:   "creative",
-			Active:   true,
-			Priority: 8,
+			ID:        "topic-2",
+			UserID:    userID,
+			Name:      "Topic 2",
+			Ideas:     5,
+			Prompt:    "creative",
+			Active:    true,
+			Priority:  8,
 			CreatedAt: time.Now(),
 		},
 	}
-	
+
 	for _, topic := range topics {
 		err := suite.topicRepo.Create(context.Background(), topic)
 		require.NoError(suite.T(), err)
@@ -312,12 +312,12 @@ func (suite *TopicsHandlerPromptRefTestSuite) Test_ListTopics_ShouldIncludePromp
 
 	// Then
 	assert.Equal(suite.T(), http.StatusOK, w.Code)
-	
+
 	var response dto.ListTopicsDTO
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(suite.T(), err)
 	assert.Len(suite.T(), response.Topics, 2)
-	
+
 	// Verify topics include new fields
 	for _, topicDTO := range response.Topics {
 		assert.NotEmpty(suite.T(), topicDTO.Prompt)
@@ -329,7 +329,7 @@ func (suite *TopicsHandlerPromptRefTestSuite) Test_ListTopics_ShouldIncludePromp
 func (suite *TopicsHandlerPromptRefTestSuite) Test_ValidatePromptReference_ShouldCheckIfPromptExists() {
 	// Given
 	userID := "user-123"
-	
+
 	// Create a prompt
 	prompt := &entities.Prompt{
 		ID:             "prompt-123",

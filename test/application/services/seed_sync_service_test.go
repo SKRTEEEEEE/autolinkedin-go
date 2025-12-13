@@ -67,15 +67,15 @@ func TestSeedSyncService(tt *testing.T) {
 		// WHEN synchronizing prompts
 		syncService := NewSeedSyncService(promptRepo)
 		err = syncService.SyncPrompts(ctx, userID, seedPrompts)
-		
+
 		// This will fail until the sync service is implemented
 		t.Fatal("implement seed prompt synchronization service - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should:
 		// 1. Create prompts that don't exist
 		// 2. Update prompts that have changed
 		// 3. Archive/deactivate prompts that no longer exist in seed
-		
+
 		// Verify all prompts are in database
 		dbPrompts, err := promptRepo.ListByUserID(ctx, userID)
 		require.NoError(t, err)
@@ -113,16 +113,16 @@ func TestSeedSyncService(tt *testing.T) {
 		// WHEN synchronizing topics
 		syncService := NewSeedSyncService(topicRepo)
 		err = syncService.SyncTopics(ctx, userID, seedTopics)
-		
+
 		// This will fail until topic sync is implemented
 		t.Fatal("implement seed topic synchronization service - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should:
 		// 1. Create topics that don't exist
 		// 2. Update topics that have changed
 		// 3. Archive topics that no longer exist
 		// 4. Validate that all prompt references exist
-		
+
 		// Verify all topics are in database
 		dbTopics, err := topicRepo.ListByUserID(ctx, userID)
 		require.NoError(t, err)
@@ -154,10 +154,10 @@ func TestSeedSyncService(tt *testing.T) {
 		// WHEN attempting to sync with invalid references
 		syncService := NewSeedSyncService(topicRepo, promptRepo)
 		err := syncService.SyncTopics(ctx, userID, topicsWithInvalidRefs)
-		
+
 		// This will fail until prompt reference validation is implemented
 		t.Fatal("implement prompt reference validation - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should return validation error for missing prompt reference
 		_ = err // Will be properly asserted after implementation
 	})
@@ -244,10 +244,10 @@ func TestSeedSyncDifferentialSync(tt *testing.T) {
 
 		syncService := NewSeedSyncService(promptRepo)
 		err = syncService.SyncPrompts(ctx, userID, []entities.Prompt{updatedPrompt})
-		
+
 		// This will fail until differential sync is implemented
 		t.Fatal("implement differential sync logic - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should update only the changed prompt
 		// Verify prompt was updated
 		updated, err := promptRepo.GetByID(ctx, existingPrompt.ID)
@@ -284,10 +284,10 @@ func TestSeedSyncDifferentialSync(tt *testing.T) {
 
 		syncService := NewSeedSyncService(promptRepo)
 		err = syncService.SyncPrompts(ctx, userID, []entities.Prompt{seedPrompt})
-		
+
 		// This will fail until user preference preservation is implemented
 		t.Fatal("implement user modification preservation during sync - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should preserve user's deactivated status
 		// Verify prompt is still deactivated
 		unmodified, err := promptRepo.GetByID(ctx, userModifiedPrompt.ID)
@@ -298,8 +298,8 @@ func TestSeedSyncDifferentialSync(tt *testing.T) {
 
 // isPromptFile checks if a filename is a valid prompt file
 func isPromptFile(filename string) bool {
-	return filename != ".gitkeep" && 
-		   filename != "README.md"
+	return filename != ".gitkeep" &&
+		filename != "README.md"
 
 	// Will be extended to check for .idea.md, .draft.md patterns when implemented
 }

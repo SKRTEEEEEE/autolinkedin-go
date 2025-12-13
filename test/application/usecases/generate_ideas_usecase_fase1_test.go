@@ -8,20 +8,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/linkgen-ai/backend/src/domain/entities"
+	"github.com/linkgen-ai/backend/src/domain/interfaces"
+	"github.com/linkgen-ai/backend/src/infrastructure/database/repositories/mocks"
+	"github.com/linkgen-ai/backend/src/infrastructure/llm/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/linkgen-ai/backend/src/domain/entities"
-	"github.com/linkgen-ai/backend/src/domain/interfaces"
-	"github.com/linkgen-ai/backend/src/infrastructure/llm/mocks"
-	"github.com/linkgen-ai/backend/src/infrastructure/database/repositories/mocks"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // TestGenerateIdeasUseCaseFase1 tests the refactored GenerateIdeasUseCase for Phase 1
 // TDD Red: Tests will fail initially as the refactored code doesn't exist yet
 func TestGenerateIdeasUseCaseFase1(t *testing.T) {
-	
+
 	t.Run("should generate ideas using topic's specific prompt reference", func(t *testing.T) {
 		// GIVEN mocked dependencies
 		mockTopicRepo := new(repositories_mocks.TopicRepository)
@@ -33,21 +33,21 @@ func TestGenerateIdeasUseCaseFase1(t *testing.T) {
 		topicID := "topic-123"
 		userID := "user-123"
 		topic := &entities.Topic{
-			ID:     topicID,
-			UserID: userID,
-			Name:   "Marketing Digital",
-			Ideas:  3,           // Generate 3 ideas
-			Prompt: "base1",      // Use "base1" prompt
-			Active: true,
+			ID:        topicID,
+			UserID:    userID,
+			Name:      "Marketing Digital",
+			Ideas:     3,       // Generate 3 ideas
+			Prompt:    "base1", // Use "base1" prompt
+			Active:    true,
 			CreatedAt: time.Now(),
 		}
 
 		// AND the referenced prompt from seed/prompt/base1.idea.md
 		prompt := &entities.Prompt{
-			ID:             "prompt-123",
-			UserID:         userID,
-			Name:           "base1",
-			Type:           entities.PromptTypeIdeas,
+			ID:     "prompt-123",
+			UserID: userID,
+			Name:   "base1",
+			Type:   entities.PromptTypeIdeas,
 			PromptTemplate: `Eres un experto en estrategia de contenido para LinkedIn. Genera {ideas} ideas de contenido únicas y atractivas sobre el siguiente tema:
 
 Tema: {name}
@@ -63,9 +63,9 @@ Requisitos:
 
 Devuelve ÚNICAMENTE un objeto JSON con este formato exacto:
 {"ideas": ["idea1", "idea2", "idea3", ...]}`,
-			Active:         true,
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
+			Active:    true,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		}
 
 		// AND mocked LLM response
@@ -89,7 +89,7 @@ Devuelve ÚNICAMENTE un objeto JSON con este formato exacto:
 			mockPromptRepo,
 			mockLLM,
 		)
-		
+
 		// This will fail because the refactored Execute method doesn't exist yet
 		generatedIdeas, err := useCase.GenerateIdeasForTopic(context.Background(), topicID)
 
@@ -108,8 +108,8 @@ Devuelve ÚNICAMENTE un objeto JSON con este formato exacto:
 
 		// AND the LLM should be called with the processed template
 		mockLLM.AssertCalled(t, "SendRequest", mock.Anything, mock.MatchedBy(func(processedPrompt string) bool {
-			return strings.Contains(processedPrompt, "Genera 3 ideas") && 
-				   strings.Contains(processedPrompt, "Marketing Digital")
+			return strings.Contains(processedPrompt, "Genera 3 ideas") &&
+				strings.Contains(processedPrompt, "Marketing Digital")
 		}))
 	})
 
@@ -124,12 +124,12 @@ Devuelve ÚNICAMENTE un objeto JSON con este formato exacto:
 		topicID := "topic-456"
 		userID := "user-456"
 		topic := &entities.Topic{
-			ID:     topicID,
-			UserID: userID,
-			Name:   "Test Topic",
-			Ideas:  2,
-			Prompt: "nonexistent", // This prompt doesn't exist
-			Active: true,
+			ID:        topicID,
+			UserID:    userID,
+			Name:      "Test Topic",
+			Ideas:     2,
+			Prompt:    "nonexistent", // This prompt doesn't exist
+			Active:    true,
 			CreatedAt: time.Now(),
 		}
 
@@ -166,12 +166,12 @@ Devuelve ÚNICAMENTE un objeto JSON con este formato exacto:
 		topicID := "topic-456"
 		userID := "user-456"
 		topic := &entities.Topic{
-			ID:     topicID,
-			UserID: userID,
-			Name:   "SEO Strategy",
-			Ideas:  5, // Request 5 ideas
-			Prompt: "base1",
-			Active: true,
+			ID:        topicID,
+			UserID:    userID,
+			Name:      "SEO Strategy",
+			Ideas:     5, // Request 5 ideas
+			Prompt:    "base1",
+			Active:    true,
 			CreatedAt: time.Now(),
 		}
 
@@ -292,12 +292,12 @@ Devuelve ÚNICAMENTE un objeto JSON con este formato exacto:
 		topicID := "topic-200"
 		userID := "user-200"
 		topic := &entities.Topic{
-			ID:     topicID,
-			UserID: userID,
-			Name:   "Content Length Test",
-			Ideas:  1,
-			Prompt: "base1",
-			Active: true,
+			ID:        topicID,
+			UserID:    userID,
+			Name:      "Content Length Test",
+			Ideas:     1,
+			Prompt:    "base1",
+			Active:    true,
 			CreatedAt: time.Now(),
 		}
 
@@ -351,12 +351,12 @@ Devuelve ÚNICAMENTE un objeto JSON con este formato exacto:
 		userID := "user-save"
 		topicName := "Professional Development"
 		topic := &entities.Topic{
-			ID:     topicID,
-			UserID: userID,
-			Name:   topicName,
-			Ideas:  2,
-			Prompt: "base1",
-			Active: true,
+			ID:        topicID,
+			UserID:    userID,
+			Name:      topicName,
+			Ideas:     2,
+			Prompt:    "base1",
+			Active:    true,
 			CreatedAt: time.Now(),
 		}
 
@@ -478,7 +478,7 @@ func TestTopicEntityFase1(t *testing.T) {
 			UserID:        "user-123",
 			Name:          "Marketing Strategy",
 			Ideas:         5,       // New field
-			Prompt:        "base1",  // New field
+			Prompt:        "base1", // New field
 			RelatedTopics: []string{"SEO", "Content"},
 			Active:        true,
 			CreatedAt:     time.Now(),

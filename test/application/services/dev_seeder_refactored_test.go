@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/infrastructure/database/repositories"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -258,7 +258,7 @@ Template for idea generation`))
 			Description: "Topic with custom ideas count",
 			Category:    "Test",
 			Priority:    7,
-			Ideas:       5, // Custom ideas count
+			Ideas:       5,       // Custom ideas count
 			Prompt:      "base1", // Using seeded prompt
 			Active:      true,
 		}
@@ -423,14 +423,14 @@ func NewDevSeederRefactored(
 func (s *DevSeederRefactored) ParsePromptFile(filename string, content []byte) (*entities.Prompt, error) {
 	// This is a mock implementation - in the real implementation,
 	// this would parse YAML front-matter and extract prompt content
-	
+
 	// For testing purposes, we'll simulate parsing
 	lines := strings.Split(string(content), "\n")
-	
+
 	var name, ptype, template string
 	inContent := false
 	var contentLines []string
-	
+
 	for _, line := range lines {
 		if strings.HasPrefix(line, "---") {
 			if !inContent {
@@ -442,7 +442,7 @@ func (s *DevSeederRefactored) ParsePromptFile(filename string, content []byte) (
 				continue
 			}
 		}
-		
+
 		if inContent {
 			if strings.HasPrefix(line, "name:") {
 				name = strings.TrimSpace(strings.TrimPrefix(line, "name:"))
@@ -454,15 +454,15 @@ func (s *DevSeederRefactored) ParsePromptFile(filename string, content []byte) (
 			contentLines = append(contentLines, line)
 		}
 	}
-	
+
 	template = strings.Join(contentLines, "\n")
 	template = strings.TrimSpace(template)
-	
+
 	// Validate
 	if name == "" {
 		return nil, fmt.Errorf("prompt name is required")
 	}
-	
+
 	var promptType entities.PromptType
 	switch ptype {
 	case "ideas":
@@ -472,11 +472,11 @@ func (s *DevSeederRefactored) ParsePromptFile(filename string, content []byte) (
 	default:
 		return nil, fmt.Errorf("invalid prompt type: %s", ptype)
 	}
-	
+
 	if template == "" {
 		return nil, fmt.Errorf("prompt template cannot be empty")
 	}
-	
+
 	return &entities.Prompt{
 		Name:           name,
 		UserID:         DevUserID,
@@ -494,28 +494,28 @@ func (s *DevSeederRefactored) SeedPromptsFromFiles(ctx context.Context, fs FileS
 	if err != nil {
 		return fmt.Errorf("failed to read prompt directory: %w", err)
 	}
-	
+
 	for _, file := range files {
 		if !strings.HasSuffix(file, ".md") {
 			continue
 		}
-		
+
 		content, err := fs.ReadFile("seed/prompt/" + file)
 		if err != nil {
 			return fmt.Errorf("failed to read file %s: %w", file, err)
 		}
-		
+
 		prompt, err := s.ParsePromptFile(file, content)
 		if err != nil {
 			return fmt.Errorf("failed to parse file %s: %w", file, err)
 		}
-		
+
 		// Check if prompt already exists
 		existingPrompt, err := s.promptsRepo.FindByName(ctx, DevUserID, prompt.Name)
 		if err != nil {
 			return fmt.Errorf("failed to check existing prompt: %w", err)
 		}
-		
+
 		if existingPrompt != nil {
 			// Update existing prompt
 			existingPrompt.PromptTemplate = prompt.PromptTemplate
@@ -533,7 +533,7 @@ func (s *DevSeederRefactored) SeedPromptsFromFiles(ctx context.Context, fs FileS
 			}
 		}
 	}
-	
+
 	return nil
 }
 
@@ -559,14 +559,14 @@ func (s *DevSeederRefactored) SeedDefaultTopics(ctx context.Context) error {
 			Active:      true,
 		},
 	}
-	
+
 	for _, config := range defaultTopics {
 		_, err := s.CreateTopicWithConfig(ctx, config)
 		if err != nil {
 			return fmt.Errorf("failed to create topic %s: %w", config.Name, err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -580,7 +580,7 @@ func (s *DevSeederRefactored) CreateTopicWithConfig(ctx context.Context, config 
 	if referencedPrompt == nil {
 		return nil, fmt.Errorf("referenced prompt not found: %s", config.Prompt)
 	}
-	
+
 	topic := &entities.Topic{
 		UserID:    DevUserID,
 		Name:      config.Name,
@@ -589,12 +589,12 @@ func (s *DevSeederRefactored) CreateTopicWithConfig(ctx context.Context, config 
 		Active:    config.Active,
 		CreatedAt: time.Now(),
 	}
-	
+
 	id, err := s.topicsRepo.Create(ctx, topic)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create topic: %w", err)
 	}
-	
+
 	topic.ID = id
 	return topic, nil
 }
@@ -605,12 +605,12 @@ func (s *DevSeederRefactored) SeedAll(ctx context.Context, fs FileSystem) error 
 	if err := s.SeedPromptsFromFiles(ctx, fs); err != nil {
 		return fmt.Errorf("failed to seed prompts: %w", err)
 	}
-	
+
 	// Then seed topics that reference the prompts
 	if err := s.SeedDefaultTopics(ctx); err != nil {
 		return fmt.Errorf("failed to seed topics: %w", err)
 	}
-	
+
 	return nil
 }
 

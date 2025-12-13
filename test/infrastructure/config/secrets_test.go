@@ -128,10 +128,10 @@ func TestSecretRotation(t *testing.T) {
 // This test will FAIL until GetSecret function is implemented
 func TestGetSecret(t *testing.T) {
 	tests := []struct {
-		name       string
-		secretKey  string
-		expectNil  bool
-		wantErr    bool
+		name      string
+		secretKey string
+		expectNil bool
+		wantErr   bool
 	}{
 		{
 			name:      "get existing secret",
@@ -208,9 +208,9 @@ func TestSetSecret(t *testing.T) {
 // This test will FAIL until secrets encryption is implemented
 func TestSecretsEncryption(t *testing.T) {
 	tests := []struct {
-		name       string
-		plaintext  string
-		wantErr    bool
+		name      string
+		plaintext string
+		wantErr   bool
 	}{
 		{
 			name:      "encrypt simple secret",
@@ -408,28 +408,28 @@ func TestSecretEnvironmentOverride(t *testing.T) {
 // This test will FAIL until secure logging is implemented
 func TestSecureLogging(t *testing.T) {
 	tests := []struct {
-		name          string
-		logMessage    string
+		name           string
+		logMessage     string
 		containsSecret bool
-		wantErr       bool
+		wantErr        bool
 	}{
 		{
-			name:          "log message without secrets",
-			logMessage:    "Configuration loaded successfully",
+			name:           "log message without secrets",
+			logMessage:     "Configuration loaded successfully",
 			containsSecret: false,
-			wantErr:       false,
+			wantErr:        false,
 		},
 		{
-			name:          "log message that should mask secrets",
-			logMessage:    "MongoDB URI: mongodb://user:password@localhost",
+			name:           "log message that should mask secrets",
+			logMessage:     "MongoDB URI: mongodb://user:password@localhost",
 			containsSecret: true,
-			wantErr:       false,
+			wantErr:        false,
 		},
 		{
-			name:          "log structured config with secrets",
-			logMessage:    "Config: {api_key: secret123, port: 8000}",
+			name:           "log structured config with secrets",
+			logMessage:     "Config: {api_key: secret123, port: 8000}",
 			containsSecret: true,
-			wantErr:       false,
+			wantErr:        false,
 		},
 	}
 
@@ -445,10 +445,10 @@ func TestSecureLogging(t *testing.T) {
 // This test will FAIL until secret strength validation is implemented
 func TestValidateSecretStrength(t *testing.T) {
 	tests := []struct {
-		name       string
-		secret     string
-		minLength  int
-		wantErr    bool
+		name      string
+		secret    string
+		minLength int
+		wantErr   bool
 	}{
 		{
 			name:      "strong secret",

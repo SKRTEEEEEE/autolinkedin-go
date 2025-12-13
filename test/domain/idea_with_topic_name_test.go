@@ -73,10 +73,10 @@ func Test_NewIdeaWithQuality_ShouldCreateIdeaWithTopicNameAndQuality(t *testing.
 func Test_Idea_Validate_ShouldEnforceTopicNameConstraints(t *testing.T) {
 	// Given
 	idea := &entities.Idea{
-		ID:       "test-idea-id",
-		UserID:   "user-123",
-		TopicID:  "topic-456",
-		Content:  "Valid content that meets minimum length requirements",
+		ID:        "test-idea-id",
+		UserID:    "user-123",
+		TopicID:   "topic-456",
+		Content:   "Valid content that meets minimum length requirements",
 		TopicName: "", // Invalid: empty topic name
 		CreatedAt: time.Now(),
 	}
@@ -94,10 +94,10 @@ func Test_Idea_Validate_ShouldEnforceTopicNameLength(t *testing.T) {
 	longTopicName := "This is a very long topic name that exceeds the maximum allowed length for topic names in the system and should trigger validation error"
 
 	idea := &entities.Idea{
-		ID:       "test-idea-id",
-		UserID:   "user-123",
-		TopicID:  "topic-456",
-		Content:  "Valid content that meets minimum length requirements",
+		ID:        "test-idea-id",
+		UserID:    "user-123",
+		TopicID:   "topic-456",
+		Content:   "Valid content that meets minimum length requirements",
 		TopicName: longTopicName,
 		CreatedAt: time.Now(),
 	}
@@ -114,10 +114,10 @@ func Test_Idea_UpdateContent_ShouldPreserveTopicName(t *testing.T) {
 	// Given
 	idea, _ := entities.NewIdea("test-id", "user-123", "topic-456", "Original Topic", "Original content")
 	newContent := "Updated content with more details"
-	
+
 	// When
 	err := idea.UpdateContent(newContent)
-	
+
 	// Then
 	require.NoError(t, err)
 	assert.Equal(t, newContent, idea.Content)

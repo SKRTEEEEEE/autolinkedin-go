@@ -20,6 +20,7 @@ type TopicsHandler struct {
 	topicRepo       interfaces.TopicRepository
 	userRepo        interfaces.UserRepository
 	promptsRepo     interfaces.PromptsRepository
+	ideasRepo       interfaces.IdeasRepository
 	generateIdeasUC GenerateIdeasUseCase
 	logger          *zap.Logger
 }
@@ -35,6 +36,7 @@ func NewTopicsHandler(
 	topicRepo interfaces.TopicRepository,
 	userRepo interfaces.UserRepository,
 	promptsRepo interfaces.PromptsRepository,
+	ideasRepo interfaces.IdeasRepository,
 	generateIdeasUC GenerateIdeasUseCase,
 	logger *zap.Logger,
 ) *TopicsHandler {
@@ -46,6 +48,7 @@ func NewTopicsHandler(
 		topicRepo:       topicRepo,
 		userRepo:        userRepo,
 		promptsRepo:     promptsRepo,
+		ideasRepo:       ideasRepo,
 		generateIdeasUC: generateIdeasUC,
 		logger:          logger,
 	}
@@ -413,6 +416,34 @@ func (h *TopicsHandler) UpdateTopic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Delete old ideas for this topic
+	if h.ideasRepo != nil {
+		if err := h.ideasRepo.DeleteByTopicID(ctx, topicID); err != nil {
+			h.logger.Warn("Failed to delete old ideas for topic",
+				zap.String("topic_id", topicID),
+				zap.Error(err))
+			// Don't fail the update if idea deletion fails
+		} else {
+			h.logger.Info("Deleted old ideas for modified topic", zap.String("topic_id", topicID))
+		}
+	}
+
+	// Regenerate ideas for the updated topic asynchronously
+	if h.generateIdeasUC != nil {
+		go func() {
+			generateCtx := context.Background()
+			_, generateErr := h.generateIdeasUC.GenerateIdeasForTopic(generateCtx, topicID)
+			if generateErr != nil {
+				h.logger.Warn("Failed to regenerate ideas for updated topic",
+					zap.String("topic_id", topicID),
+					zap.Error(generateErr))
+			} else {
+				h.logger.Info("Regenerated ideas for updated topic",
+					zap.String("topic_id", topicID))
+			}
+		}()
+	}
+
 	// Return updated topic
 	WriteJSON(w, http.StatusOK, TopicDTO{
 		ID:            topic.ID,
@@ -441,6 +472,18 @@ func (h *TopicsHandler) DeleteTopic(w http.ResponseWriter, r *http.Request) {
 	if topicID == "" {
 		WriteError(w, http.StatusBadRequest, ErrorCodeValidation, "topic_id is required", nil, h.logger)
 		return
+	}
+
+	// First, delete all ideas related to this topic (cascade delete)
+	if h.ideasRepo != nil {
+		if err := h.ideasRepo.DeleteByTopicID(ctx, topicID); err != nil {
+			h.logger.Warn("Failed to delete ideas for topic",
+				zap.String("topic_id", topicID),
+				zap.Error(err))
+			// Don't fail the topic deletion if idea deletion fails
+		} else {
+			h.logger.Info("Deleted ideas for topic", zap.String("topic_id", topicID))
+		}
 	}
 
 	// Delete topic

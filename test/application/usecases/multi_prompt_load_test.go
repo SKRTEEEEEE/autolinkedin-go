@@ -22,18 +22,18 @@ func TestMultiPromptLoad(tt *testing.T) {
 	}
 
 	ctx := context.Background()
-	
+
 	tt.Run("should handle multiple different prompts simultaneously", func(t *testing.T) {
 		// GIVEN multiple prompt configurations
 		prompts := createTestPrompts(10)
 		topics := createTestTopics(20) // More topics than prompts
-		
+
 		// Mock repositories
 		promptRepo := &mocks.MockPromptRepository{}
 		topicRepo := &mocks.MockTopicRepository{}
 		ideaRepo := &mocks.MockIdeaRepository{}
 		llmClient := &mocks.MockLLMClient{}
-		
+
 		// Setup mock responses
 		for i, prompt := range prompts {
 			promptRepo.On("GetActiveByName", ctx, prompt.UserID, prompt.Name).Return(&prompts[i], nil)
@@ -43,39 +43,39 @@ func TestMultiPromptLoad(tt *testing.T) {
 		}
 
 		useCase := usecases.NewGenerateIdeasUseCase(promptRepo, topicRepo, ideaRepo, llmClient)
-		
+
 		// WHEN generating ideas with multiple prompts concurrently
 		numConcurrent := 10
 		var wg sync.WaitGroup
 		results := make(chan TestResult, numConcurrent)
-		
+
 		start := time.Now()
-		
+
 		for i := 0; i < numConcurrent; i++ {
 			wg.Add(1)
 			go func(id int) {
 				defer wg.Done()
-				
+
 				// Use different topic and prompt for each goroutine
 				topic := topics[id%len(topics)]
 				promptName := prompts[id%len(prompts)].Name
-				
+
 				// Update topic to use specific prompt
 				topic.PromptName = promptName
-				
+
 				req := &usecases.GenerateIdeasRequest{
 					UserID:  topic.UserID,
 					TopicID: topic.ID,
 					Count:   3,
 				}
-				
+
 				// This will fail until multi-prompt handling is implemented
 				t.Fatal("implement concurrent idea generation with different prompts - FAILING IN TDD RED PHASE")
-				
+
 				start := time.Now()
 				_, err := useCase.Execute(ctx, req)
 				duration := time.Since(start)
-				
+
 				results <- TestResult{
 					ID:       id,
 					Duration: duration,
@@ -83,17 +83,17 @@ func TestMultiPromptLoad(tt *testing.T) {
 				}
 			}(i)
 		}
-		
+
 		wg.Wait()
 		close(results)
-		
+
 		totalDuration := time.Since(start)
-		
+
 		// THEN should handle all concurrent requests
 		successCount := 0
 		errorCount := 0
 		var totalRequestTime time.Duration
-		
+
 		for result := range results {
 			if result.Error == nil {
 				successCount++
@@ -103,13 +103,13 @@ func TestMultiPromptLoad(tt *testing.T) {
 			}
 			totalRequestTime += result.Duration
 		}
-		
+
 		avgRequestTime := totalRequestTime / time.Duration(numConcurrent)
-		
+
 		t.Logf("Completed %d requests in %v", numConcurrent, totalDuration)
 		t.Logf("Success: %d, Errors: %d", successCount, errorCount)
 		t.Logf("Average request time: %v", avgRequestTime)
-		
+
 		// Assertions
 		assert.Equal(t, numConcurrent, successCount, "All requests should succeed")
 		assert.Equal(t, 0, errorCount, "No requests should fail")
@@ -121,9 +121,9 @@ func TestMultiPromptLoad(tt *testing.T) {
 		// GIVEN users switching between different prompts frequently
 		db := setupTestDB(t)
 		defer cleanupTestDB(t, db)
-		
+
 		userID := primitive.NewObjectID().Hex()
-		
+
 		// Create multiple prompts for the same user
 		ideaPrompts := []*entities.Prompt{
 			{
@@ -151,22 +151,22 @@ func TestMultiPromptLoad(tt *testing.T) {
 				Active:         true,
 			},
 		}
-		
+
 		// Update topics to switch prompts
 		topics := createTestTopics(5)
 		for i := range topics {
 			topics[i].UserID = userID
 			topics[i].PromptName = ideaPrompts[i%len(ideaPrompts)].Name
 		}
-		
+
 		// WHEN switching between prompts rapidly under load
 		useCase := setupGenerateIdeasUseCase(db)
 		iterations := 100
 		switchFrequency := 5 // Switch prompt every 5 iterations
-		
+
 		results := make(chan PromptSwitchResult, iterations)
 		start := time.Now()
-		
+
 		for i := 0; i < iterations; i++ {
 			// Switch prompt periodically
 			if i%switchFrequency == 0 {
@@ -177,23 +177,23 @@ func TestMultiPromptLoad(tt *testing.T) {
 					_ = topics[j] // Will update after implementation
 				}
 			}
-			
+
 			go func(iteration int) {
 				topic := topics[iteration%len(topics)]
-				
+
 				req := &usecases.GenerateIdeasRequest{
 					UserID:  userID,
 					TopicID: topic.ID,
 					Count:   2,
 				}
-				
+
 				// This will fail until prompt switching is implemented
 				t.Fatal("implement prompt switching under load - FAILING IN TDD RED PHASE")
-				
+
 				start := time.Now()
 				response, err := useCase.Execute(ctx, req)
 				duration := time.Since(start)
-				
+
 				results <- PromptSwitchResult{
 					Iteration:  iteration,
 					PromptName: topic.PromptName,
@@ -203,29 +203,29 @@ func TestMultiPromptLoad(tt *testing.T) {
 				}
 			}(i)
 		}
-		
+
 		// Wait for all results
 		var allResults []PromptSwitchResult
 		for i := 0; i < iterations; i++ {
 			allResults = append(allResults, <-results)
 		}
-		
+
 		totalDuration := time.Since(start)
-		
+
 		// THEN should handle prompt switching without errors
 		successCount := 0
 		switchErrors := 0
-		
+
 		promptPerformance := make(map[string][]time.Duration)
-		
+
 		for _, result := range allResults {
 			if result.Error == nil {
 				successCount++
 				promptPerformance[result.PromptName] = append(
-					promptPerformance[result.PromptName], 
+					promptPerformance[result.PromptName],
 					result.Duration,
 				)
-				
+
 				// Should get requested number of ideas
 				assert.Equal(t, 2, result.IdeaCount, "Should generate correct number of ideas")
 			} else {
@@ -233,10 +233,10 @@ func TestMultiPromptLoad(tt *testing.T) {
 				t.Logf("Switch error at iteration %d: %v", result.Iteration, result.Error)
 			}
 		}
-		
+
 		t.Logf("Prompt switching test completed in %v", totalDuration)
 		t.Logf("Success: %d, Switch errors: %d", successCount, switchErrors)
-		
+
 		// Analyze performance per prompt
 		for promptName, durations := range promptPerformance {
 			var total time.Duration
@@ -246,7 +246,7 @@ func TestMultiPromptLoad(tt *testing.T) {
 			avg := total / time.Duration(len(durations))
 			t.Logf("Prompt '%s': %d requests, avg time: %v", promptName, len(durations), avg)
 		}
-		
+
 		// Assertions
 		assert.Equal(t, iterations, successCount, "All requests should succeed")
 		assert.Equal(t, 0, switchErrors, "No prompt switching errors should occur")
@@ -257,7 +257,7 @@ func TestMultiPromptLoad(tt *testing.T) {
 		// GIVEN multiple users with different contexts
 		users := createTestUsers(5)
 		draftPrompts := createDraftPrompts(3)
-		
+
 		// Create ideas for each user
 		ideas := make([]*entities.Idea, len(users)*2)
 		for i, user := range users {
@@ -274,49 +274,49 @@ func TestMultiPromptLoad(tt *testing.T) {
 				UserID:    user.ID,
 			}
 		}
-		
+
 		// WHEN generating drafts with different user contexts
 		useCase := setupGenerateDraftsUseCase()
-		
+
 		concurrent := 10
 		var wg sync.WaitGroup
 		results := make(chan DraftContextResult, concurrent)
-		
+
 		start := time.Now()
-		
+
 		for i := 0; i < concurrent; i++ {
 			wg.Add(1)
 			go func(id int) {
 				defer wg.Done()
-				
+
 				user := users[id%len(users)]
 				idea := ideas[id%len(ideas)]
 				prompt := draftPrompts[id%len(draftPrompts)]
-				
+
 				// Mock user and prompt
 				promptRepo := &mocks.MockPromptRepository{}
 				ideaRepo := &mocks.MockIdeaRepository{}
 				userRepo := &mocks.MockUserRepository{}
 				llmClient := &mocks.MockLLMClient{}
-				
+
 				promptRepo.On("GetActiveByType", ctx, user.ID, entities.PromptTypeDrafts).Return(prompt, nil)
 				ideaRepo.On("GetByID", ctx, idea.ID).Return(idea, nil)
 				userRepo.On("GetByID", ctx, user.ID).Return(user, nil)
-				
+
 				useCase := usecases.NewGenerateDraftsUseCase(promptRepo, ideaRepo, userRepo, llmClient)
-				
+
 				req := &usecases.GenerateDraftsRequest{
 					UserID: user.ID,
 					IdeaID: idea.ID,
 				}
-				
+
 				// This will fail until multi-context draft generation is implemented
 				t.Fatal("implement draft generation with multiple user contexts - FAILING IN TDD RED PHASE")
-				
+
 				start := time.Now()
 				response, err := useCase.Execute(ctx, req)
 				duration := time.Since(start)
-				
+
 				result := DraftContextResult{
 					ID:       id,
 					UserID:   user.ID,
@@ -324,34 +324,34 @@ func TestMultiPromptLoad(tt *testing.T) {
 					Duration: duration,
 					Error:    err,
 				}
-				
+
 				if err == nil {
 					result.PostCount = len(response.Posts)
 					result.ArticleCount = len(response.Articles)
 				}
-				
+
 				results <- result
 			}(i)
 		}
-		
+
 		wg.Wait()
 		close(results)
-		
+
 		totalDuration := time.Since(start)
-		
+
 		// THEN should handle different user contexts correctly
 		successCount := 0
 		var total time.Duration
 		userPerformance := make(map[string][]time.Duration)
-		
+
 		for result := range results {
 			if result.Error == nil {
 				successCount++
 				total += result.Duration
-				
+
 				userID := result.UserID.Hex()
 				userPerformance[userID] = append(userPerformance[userID], result.Duration)
-				
+
 				// Should generate correct number of drafts
 				assert.Equal(t, 5, result.PostCount, "Should generate 5 posts")
 				assert.Equal(t, 1, result.ArticleCount, "Should generate 1 article")
@@ -359,7 +359,7 @@ func TestMultiPromptLoad(tt *testing.T) {
 				t.Logf("Draft generation failed for user %s: %v", result.UserID.Hex(), result.Error)
 			}
 		}
-		
+
 		// Analyze per-user performance
 		for userID, durations := range userPerformance {
 			var userTotal time.Duration
@@ -369,11 +369,11 @@ func TestMultiPromptLoad(tt *testing.T) {
 			avg := userTotal / time.Duration(len(durations))
 			t.Logf("User %s: %d requests, avg time: %v", userID, len(durations), avg)
 		}
-		
+
 		// Assertions
 		assert.Equal(t, concurrent, successCount, "All draft generations should succeed")
 		assert.Less(t, totalDuration, 60*time.Second, "Should complete within 1 minute")
-		
+
 		if successCount > 0 {
 			avgTime := total / time.Duration(successCount)
 			assert.Less(t, avgTime, 10*time.Second, "Average generation should be reasonable")
@@ -398,7 +398,7 @@ func TestResourceExhaustion(tt *testing.T) {
 		userID := primitive.NewObjectID().Hex()
 		requests := make([]*usecases.GenerateIdeasRequest, 50)
 		topicID := primitive.NewObjectID().Hex()
-		
+
 		for i := range requests {
 			requests[i] = &usecases.GenerateIdeasRequest{
 				UserID:  userID,
@@ -409,51 +409,51 @@ func TestResourceExhaustion(tt *testing.T) {
 
 		// WHEN sending more requests than system can handle
 		concurrent := 50 // Large number to test limits
-		
+
 		var wg sync.WaitGroup
 		results := make(chan ResourceResult, concurrent)
-		
+
 		start := time.Now()
-		
+
 		for i := 0; i < concurrent; i++ {
 			wg.Add(1)
 			go func(id int) {
 				defer wg.Done()
-				
+
 				// This will fail until resource limiting is implemented
 				t.Fatal("implement resource limiting and graceful degradation - FAILING IN TDD RED PHASE")
-				
+
 				start := time.Now()
 				_, err := useCase.Execute(ctx, requests[id%len(requests)])
 				duration := time.Since(start)
-				
+
 				result := ResourceResult{
 					ID:       id,
 					Duration: duration,
 					Error:    err,
 				}
-				
+
 				if err != nil {
 					if isResourceError(err) {
 						result.ResourceExhausted = true
 					}
 				}
-				
+
 				results <- result
 			}(i)
 		}
-		
+
 		wg.Wait()
 		close(results)
-		
+
 		totalDuration := time.Since(start)
-		
+
 		// THEN should handle resource exhaustion gracefully
 		successCount := 0
 		resourceExhaustedCount := 0
 		otherErrors := 0
 		var totalTime time.Duration
-		
+
 		for result := range results {
 			if result.Error == nil {
 				successCount++
@@ -467,19 +467,19 @@ func TestResourceExhaustion(tt *testing.T) {
 				}
 			}
 		}
-		
+
 		t.Logf("Resource exhaustion test completed in %v", totalDuration)
-		t.Logf("Success: %d, Resource exhausted: %d, Other errors: %d", 
+		t.Logf("Success: %d, Resource exhausted: %d, Other errors: %d",
 			successCount, resourceExhaustedCount, otherErrors)
-		
+
 		// Assertions
 		assert.Greater(t, successCount, 0, "Some requests should succeed")
 		assert.Equal(t, 0, otherErrors, "Should not have unexpected errors")
-		
+
 		if resourceExhaustedCount > 0 {
 			t.Logf("System properly handled %d resource exhaustion cases", resourceExhaustedCount)
 		}
-		
+
 		// System should recover and operate normally after load
 		assert.Less(t, totalDuration, 120*time.Second, "Should complete within reasonable time")
 	})
@@ -501,20 +501,20 @@ type PromptSwitchResult struct {
 }
 
 type DraftContextResult struct {
-	ID            int
-	UserID        primitive.ObjectID
-	Request       *usecases.GenerateDraftsRequest
-	Duration      time.Duration
-	Error         error
-	PostCount     int
-	ArticleCount  int
+	ID           int
+	UserID       primitive.ObjectID
+	Request      *usecases.GenerateDraftsRequest
+	Duration     time.Duration
+	Error        error
+	PostCount    int
+	ArticleCount int
 }
 
 type ResourceResult struct {
-	ID                 int
-	Duration           time.Duration
-	Error              error
-	ResourceExhausted  bool
+	ID                int
+	Duration          time.Duration
+	Error             error
+	ResourceExhausted bool
 }
 
 // Helper functions that will be implemented

@@ -130,10 +130,10 @@ func TestPromptRepository_FindActiveByName(t *testing.T) {
 			expectedActive: true,
 		},
 		{
-			name:           "trying to find inactive prompt",
-			searchName:     "inactive-prompt",
-			expectFound:    false,
-			expectError:    false,
+			name:        "trying to find inactive prompt",
+			searchName:  "inactive-prompt",
+			expectFound: false,
+			expectError: false,
 		},
 	}
 
@@ -191,10 +191,10 @@ func TestPromptRepository_ListByType(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name         string
-		promptType   string
-		expectCount  int
-		expectError  bool
+		name        string
+		promptType  string
+		expectCount int
+		expectError bool
 	}{
 		{
 			name:        "list ideas prompts",

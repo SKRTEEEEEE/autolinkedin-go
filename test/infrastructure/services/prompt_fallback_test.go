@@ -23,31 +23,31 @@ func TestPromptFallback(t *testing.T) {
 	// 4. Test different default prompts for ideas vs drafts
 
 	ctx := context.Background()
-	
+
 	// Setup test environment
 	testDB := setupTestDB(t, "test_fallback")
 	defer testDB.Disconnect(ctx)
-	
+
 	promptsRepo := NewMockPromptsRepository()
 	logger := &mockLogger{}
 	engine := services.NewPromptEngine(promptsRepo, logger)
-	
+
 	t.Run("should fallback to default ideas prompt when custom not found", func(t *testing.T) {
 		// Setup test data
 		userID := "fallback-ideas-user"
 		now := time.Now()
-		
+
 		testUser := &entities.User{
-			ID:         userID,
-			Email:      "fallback-ideas@example.com",
+			ID:    userID,
+			Email: "fallback-ideas@example.com",
 			Configuration: map[string]interface{}{
-				"name":  "Ana Martínez",
-				"role":  "Product Manager",
+				"name": "Ana Martínez",
+				"role": "Product Manager",
 			},
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
-		
+
 		testTopic := &entities.Topic{
 			ID:            primitive.NewObjectID().Hex(),
 			UserID:        userID,
@@ -58,7 +58,7 @@ func TestPromptFallback(t *testing.T) {
 			CreatedAt:     now,
 			UpdatedAt:     now,
 		}
-		
+
 		// Don't add any custom prompts to repository - should force fallback
 		processed, err := engine.ProcessPrompt(
 			ctx,
@@ -70,51 +70,51 @@ func TestPromptFallback(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
+
 		// Should contain default content with variables substituted
 		assert.Contains(t, processed, "Gestión de Ágil en equipos remotos")  // {name}
-		assert.Contains(t, processed, "4")                                    // {ideas}
-		assert.Contains(t, processed, "Agile, Remote Work, Team Management")   // {[related_topics]}
-		assert.Contains(t, processed, "Ana Martínez")                         // {user_context}
-		
+		assert.Contains(t, processed, "4")                                   // {ideas}
+		assert.Contains(t, processed, "Agile, Remote Work, Team Management") // {[related_topics]}
+		assert.Contains(t, processed, "Ana Martínez")                        // {user_context}
+
 		// Should contain default Spanish instruction
 		assert.Contains(t, processed, "experto en estrategia de contenido para LinkedIn")
-		assert.Contains(t, processed, "Genera 4 ideas")  // Variable was substituted
+		assert.Contains(t, processed, "Genera 4 ideas") // Variable was substituted
 		assert.Contains(t, processed, "json con este formato")
-		
+
 		// Should not contain template variables
 		assert.NotContains(t, processed, "{name}")
 		assert.NotContains(t, processed, "{ideas}")
 		assert.NotContains(t, processed, "{[related_topics]}")
 		assert.NotContains(t, processed, "{user_context}")
 	})
-	
+
 	t.Run("should fallback to default drafts prompt when custom not found", func(t *testing.T) {
 		userID := "fallback-drafts-user"
 		now := time.Now()
-		
+
 		testUser := &entities.User{
-			ID:        userID,
-			Email:     "fallback-drafts@example.com",
-			Language:  "es",
+			ID:       userID,
+			Email:    "fallback-drafts@example.com",
+			Language: "es",
 			Configuration: map[string]interface{}{
-				"name":  "Carlos Rodríguez",
-				"role":  "CTO",
+				"name": "Carlos Rodríguez",
+				"role": "CTO",
 			},
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
-		
+
 		testIdea := &entities.Idea{
-			ID:      primitive.NewObjectID().Hex(),
-			UserID:  userID,
-			TopicID: primitive.NewObjectID().Hex(),
-			Content: "Cómo implementar microservicios con tolerancia a fallos usando circuit breakers",
-			Active:  true,
+			ID:        primitive.NewObjectID().Hex(),
+			UserID:    userID,
+			TopicID:   primitive.NewObjectID().Hex(),
+			Content:   "Cómo implementar microservicios con tolerancia a fallos usando circuit breakers",
+			Active:    true,
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
-		
+
 		// Don't add any custom prompts to repository - should force fallback
 		processed, err := engine.ProcessPrompt(
 			ctx,
@@ -126,36 +126,36 @@ func TestPromptFallback(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
+
 		// Should contain default content with variables substituted
 		assert.Contains(t, processed, "Cómo implementar microservicios con tolerancia a fallos usando circuit breakers") // {content}
-		assert.Contains(t, processed, "Carlos Rodríguez") // {user_context}
-		
+		assert.Contains(t, processed, "Carlos Rodríguez")                                                                // {user_context}
+
 		// Should contain default Spanish instruction for drafts
 		assert.Contains(t, processed, "experto creador de contenido para LinkedIn")
 		assert.Contains(t, processed, "Basándote en la siguiente idea")
 		assert.Contains(t, processed, "Contexto adicional del usuario")
 		assert.Contains(t, processed, "español neutro profesional")
 		assert.Contains(t, processed, "FORMATO OBLIGATORIO")
-		assert.Contains(t, processed, "posts")  // Default posts array
-		assert.Contains(t, processed, "articles")  // Default articles array
-		
+		assert.Contains(t, processed, "posts")    // Default posts array
+		assert.Contains(t, processed, "articles") // Default articles array
+
 		// Should not contain template variables
 		assert.NotContains(t, processed, "{content}")
 		assert.NotContains(t, processed, "{user_context}")
 	})
-	
+
 	t.Run("should handle fallback with minimal user data", func(t *testing.T) {
 		userID := "minimal-fallback-user"
 		now := time.Now()
-		
+
 		// User with minimal data
 		testUser := &entities.User{
-			ID:   userID,
+			ID:    userID,
 			Email: "minimal@example.com",
 			// No Configuration field
 		}
-		
+
 		testTopic := &entities.Topic{
 			ID:            primitive.NewObjectID().Hex(),
 			UserID:        userID,
@@ -166,7 +166,7 @@ func TestPromptFallback(t *testing.T) {
 			CreatedAt:     now,
 			UpdatedAt:     now,
 		}
-		
+
 		processed, err := engine.ProcessPrompt(
 			ctx,
 			userID,
@@ -177,27 +177,27 @@ func TestPromptFallback(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
+
 		// Should still work with minimal data
 		assert.Contains(t, processed, "Simple Topic")
 		assert.Contains(t, processed, "3")
 		assert.Contains(t, processed, "minimal@example.com") // Fallback context uses email
-		
+
 		// Should handle empty related topics gracefully
 		assert.NotContains(t, processed, "{[related_topics]}")
 	})
-	
+
 	t.Run("should use custom prompt when available and fallback only when missing", func(t *testing.T) {
 		userID := "mixed-fallback-user"
 		now := time.Now()
-		
+
 		testUser := &entities.User{
-			ID:    userID,
-			Email: "mixed@example.com",
+			ID:        userID,
+			Email:     "mixed@example.com",
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
-		
+
 		testTopic1 := &entities.Topic{
 			ID:            primitive.NewObjectID().Hex(),
 			UserID:        userID,
@@ -208,7 +208,7 @@ func TestPromptFallback(t *testing.T) {
 			CreatedAt:     now,
 			UpdatedAt:     now,
 		}
-		
+
 		testTopic2 := &entities.Topic{
 			ID:            primitive.NewObjectID().Hex(),
 			UserID:        userID,
@@ -219,7 +219,7 @@ func TestPromptFallback(t *testing.T) {
 			CreatedAt:     now,
 			UpdatedAt:     now,
 		}
-		
+
 		// Create custom prompt for "custom" name
 		customPrompt := &entities.Prompt{
 			ID:             primitive.NewObjectID().Hex(),
@@ -233,7 +233,7 @@ func TestPromptFallback(t *testing.T) {
 			UpdatedAt:      now,
 		}
 		promptsRepo.AddPrompt(customPrompt)
-		
+
 		// Process with custom prompt (should use custom, not fallback)
 		customProcessed, err := engine.ProcessPrompt(
 			ctx,
@@ -245,12 +245,12 @@ func TestPromptFallback(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
-		assert.Contains(t, customProcessed, "CUSTOM TEMPLATE")  // Custom content
-		assert.Contains(t, customProcessed, "5")                 // Variable substituted
-		assert.Contains(t, customProcessed, "Custom Topic")      // Variable substituted
-		assert.NotContains(t, customProcessed, "experto en estrategia")  // Not default
-		
+
+		assert.Contains(t, customProcessed, "CUSTOM TEMPLATE")          // Custom content
+		assert.Contains(t, customProcessed, "5")                        // Variable substituted
+		assert.Contains(t, customProcessed, "Custom Topic")             // Variable substituted
+		assert.NotContains(t, customProcessed, "experto en estrategia") // Not default
+
 		// Process with non-existent prompt (should fallback)
 		defaultProcessed, err := engine.ProcessPrompt(
 			ctx,
@@ -262,24 +262,24 @@ func TestPromptFallback(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
-		assert.Contains(t, defaultProcessed, "experto en estrategia")  // Default content
-		assert.Contains(t, defaultProcessed, "3")                      // Variable substituted
+
+		assert.Contains(t, defaultProcessed, "experto en estrategia") // Default content
+		assert.Contains(t, defaultProcessed, "3")                     // Variable substituted
 		assert.Contains(t, defaultProcessed, "Default Topic")         // Variable substituted
 		assert.NotContains(t, defaultProcessed, "CUSTOM TEMPLATE")    // Not custom
 	})
-	
+
 	t.Run("should return error when default prompt not available", func(t *testing.T) {
 		userID := "error-fallback-user"
 		now := time.Now()
-		
+
 		testUser := &entities.User{
-			ID:    userID,
-			Email: "error@example.com",
+			ID:        userID,
+			Email:     "error@example.com",
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
-		
+
 		testTopic := &entities.Topic{
 			ID:            primitive.NewObjectID().Hex(),
 			UserID:        userID,
@@ -290,7 +290,7 @@ func TestPromptFallback(t *testing.T) {
 			CreatedAt:     now,
 			UpdatedAt:     now,
 		}
-		
+
 		// Try to process with invalid prompt type that has no default
 		// Note: This would require the GetDefaultPrompt method to return empty string for invalid types
 		// The test will fail if the implementation doesn't handle this case properly
@@ -303,25 +303,25 @@ func TestPromptFallback(t *testing.T) {
 			nil,
 			testUser,
 		)
-		
+
 		// Should return error instead of panic
 		if len(processed) == 0 {
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "no default prompt found")
 		}
 	})
-	
+
 	t.Run("should verify all default required variables exist", func(t *testing.T) {
 		userID := "verify-variables-user"
 		now := time.Now()
-		
+
 		testUser := &entities.User{
-			ID:    userID,
-			Email: "verify@example.com",
+			ID:        userID,
+			Email:     "verify@example.com",
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
-		
+
 		testTopic := &entities.Topic{
 			ID:            primitive.NewObjectID().Hex(),
 			UserID:        userID,
@@ -332,16 +332,16 @@ func TestPromptFallback(t *testing.T) {
 			CreatedAt:     now,
 			UpdatedAt:     now,
 		}
-		
+
 		testIdea := &entities.Idea{
-			ID:      primitive.NewObjectID().Hex(),
-			UserID:  userID,
-			Content: "Test idea content for variable verification",
-			Active:  true,
+			ID:        primitive.NewObjectID().Hex(),
+			UserID:    userID,
+			Content:   "Test idea content for variable verification",
+			Active:    true,
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
-		
+
 		// Test default ideas prompt has all expected variables
 		ideasPrompt, err := engine.ProcessPrompt(
 			ctx,
@@ -353,13 +353,13 @@ func TestPromptFallback(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
+
 		// Check all expected variables were in the original template
 		originalDefault := engine.GetDefaultPrompt(entities.PromptTypeIdeas)
 		assert.Contains(t, originalDefault, "{name}")
 		assert.Contains(t, originalDefault, "{ideas}")
 		assert.Contains(t, originalDefault, "{[related_topics]}")
-		
+
 		// Test default drafts prompt has all expected variables
 		draftsPrompt, err := engine.ProcessPrompt(
 			ctx,
@@ -371,7 +371,7 @@ func TestPromptFallback(t *testing.T) {
 			testUser,
 		)
 		require.NoError(t, err)
-		
+
 		// Check all expected variables were in the original template
 		originalDraft := engine.GetDefaultPrompt(entities.PromptTypeDrafts)
 		assert.Contains(t, originalDraft, "{content}")

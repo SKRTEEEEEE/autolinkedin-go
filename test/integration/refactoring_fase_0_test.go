@@ -260,24 +260,7 @@ func TestRefactoringFase0Integration(t *testing.T) {
 
 // Test HTTP endpoints integration (if they exist)
 func TestHTTPIntegrationFase0(t *testing.T) {
-	// Test the HTTP endpoints with the refactored data structure
-	// This would test the actual API endpoints with the new entity structure
-	
-	t.Run("should handle request for ideas generation with new structure", func(t *testing.T) {
-		// This test would verify that HTTP endpoints correctly handle:
-		// - Topic creation with prompt references
-		// - Ideas generation with topic_name field
-		// - Response format includes all new fields
-		
-		// For now, this is a placeholder that shows what should be tested
-		// In the real implementation, we would:
-		// 1. Start a test HTTP server
-		// 2. Make requests to create topics with prompt references
-		// 3. Make requests to generate ideas
-		// 4. Verify the response structure includes topic_name
-		
-		t.Skip("HTTP endpoint testing would be implemented here")
-	})
+	t.Skip("HTTP endpoints integration test not implemented yet")
 }
 
 // Helper functions for integration tests

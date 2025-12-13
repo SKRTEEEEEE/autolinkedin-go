@@ -47,18 +47,18 @@ func TestProductionDataCompatibility(tt *testing.T) {
 		// Simulate inserting legacy data directly into database
 		collection := db.Collection("topics")
 		legacyData := map[string]interface{}{
-			"_id":          legacyTopic.ID,
-			"user_id":      legacyTopic.UserID,
-			"name":         legacyTopic.Name,
-			"description":  legacyTopic.Description,
-			"keywords":     legacyTopic.Keywords,
-			"category":     legacyTopic.Category,
-			"priority":     legacyTopic.Priority,
-			"ideas":        legacyTopic.IdeasCount, // Legacy field name
-			"active":       legacyTopic.Active,
+			"_id":            legacyTopic.ID,
+			"user_id":        legacyTopic.UserID,
+			"name":           legacyTopic.Name,
+			"description":    legacyTopic.Description,
+			"keywords":       legacyTopic.Keywords,
+			"category":       legacyTopic.Category,
+			"priority":       legacyTopic.Priority,
+			"ideas":          legacyTopic.IdeasCount, // Legacy field name
+			"active":         legacyTopic.Active,
 			"related_topics": legacyTopic.RelatedTopics,
-			"created_at":   legacyTopic.CreatedAt,
-			"updated_at":   legacyTopic.UpdatedAt,
+			"created_at":     legacyTopic.CreatedAt,
+			"updated_at":     legacyTopic.UpdatedAt,
 			// No prompt_name field
 		}
 
@@ -67,13 +67,13 @@ func TestProductionDataCompatibility(tt *testing.T) {
 
 		// WHEN fetching topic through new repository
 		topic, err := topicRepo.GetByID(ctx, legacyTopic.ID)
-		
+
 		// This will fail until backward compatibility is implemented
 		t.Fatal("implement backward compatibility for legacy topics - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should:
 		// 1. Handle missing prompt_name gracefully
-		// 2. Map old 'ideas' field to new 'ideas_count' 
+		// 2. Map old 'ideas' field to new 'ideas_count'
 		// 3. Provide default prompt reference
 		require.NoError(t, err)
 		assert.NotNil(t, topic)
@@ -123,16 +123,16 @@ func TestProductionDataCompatibility(tt *testing.T) {
 
 		// WHEN fetching idea through new repository
 		ideas, err := ideaRepo.ListByUserID(ctx, userID)
-		
+
 		// This will fail until idea backward compatibility is implemented
 		t.Fatal("implement backward compatibility for legacy ideas - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should:
 		// 1. Populate topic_name from topic relationship
 		// 2. Handle missing fields gracefully
 		require.NoError(t, err)
 		require.Len(t, ideas, 1)
-		
+
 		idea := ideas[0]
 		assert.Equal(t, "Docker Containerization", idea.TopicName)
 		assert.Equal(t, createdTopic.ID, idea.TopicID)
@@ -147,14 +147,14 @@ func TestProductionDataCompatibility(tt *testing.T) {
 
 		// Simulate legacy prompt structure
 		legacyPromptData := map[string]interface{}{
-			"_id":            primitive.NewObjectID().Hex(),
-			"user_id":        userID,
-			"style_name":     "creative", // Old field name
-			"type":           "ideas",
+			"_id":             primitive.NewObjectID().Hex(),
+			"user_id":         userID,
+			"style_name":      "creative", // Old field name
+			"type":            "ideas",
 			"prompt_template": "Generate creative ideas about {name}",
-			"active":         true,
-			"created_at":     time.Now().Add(-45 * 24 * time.Hour),
-			"updated_at":     time.Now().Add(-45 * 24 * time.Hour),
+			"active":          true,
+			"created_at":      time.Now().Add(-45 * 24 * time.Hour),
+			"updated_at":      time.Now().Add(-45 * 24 * time.Hour),
 			// No name field
 		}
 
@@ -166,16 +166,16 @@ func TestProductionDataCompatibility(tt *testing.T) {
 		// WHEN fetching prompts through new repository
 		promptRepo := repositories.NewPromptRepository(db)
 		prompts, err := promptRepo.ListByUserID(ctx, userID)
-		
+
 		// This will fail until prompt backward compatibility is implemented
 		t.Fatal("implement backward compatibility for legacy prompts (style_name) - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should:
 		// 1. Map style_name to name field
 		// 2. Handle missing new fields gracefully
 		require.NoError(t, err)
 		require.Len(t, prompts, 1)
-		
+
 		prompt := prompts[0]
 		assert.Equal(t, "creative", prompt.Name, "Should map style_name to name")
 		assert.Equal(t, entities.PromptTypeIdeas, prompt.Type)
@@ -190,22 +190,22 @@ func TestProductionDataCompatibility(tt *testing.T) {
 
 		// Create mixed legacy and new entities
 		legacyTopicData := map[string]interface{}{
-			"_id":       primitive.NewObjectID().Hex(),
-			"user_id":   userID,
-			"name":      "Legacy Topic",
-			"ideas":     3, // Legacy field
-			"active":    true,
+			"_id":        primitive.NewObjectID().Hex(),
+			"user_id":    userID,
+			"name":       "Legacy Topic",
+			"ideas":      3, // Legacy field
+			"active":     true,
 			"created_at": time.Now().Add(-20 * 24 * time.Hour),
 		}
 
 		newTopicData := map[string]interface{}{
-			"_id":          primitive.NewObjectID().Hex(),
-			"user_id":      userID,
-			"name":         "New Topic",
-			"prompt_name":  "custom",
-			"ideas_count":  5, // New field name
-			"active":       true,
-			"created_at":   time.Now(),
+			"_id":         primitive.NewObjectID().Hex(),
+			"user_id":     userID,
+			"name":        "New Topic",
+			"prompt_name": "custom",
+			"ideas_count": 5, // New field name
+			"active":      true,
+			"created_at":  time.Now(),
 		}
 
 		// Insert both types
@@ -218,17 +218,17 @@ func TestProductionDataCompatibility(tt *testing.T) {
 		// WHEN running migration or accessing data
 		topicRepo := repositories.NewTopicRepository(db)
 		topics, err := topicRepo.ListByUserID(ctx, userID)
-		
+
 		// This will fail until data migration/compatibility is implemented
 		t.Fatal("implement production data migration logic - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should:
 		// 1. Successfully load both legacy and new topics
 		// 2. Maintain data integrity
 		// 3. Provide sensible defaults for missing fields
 		require.NoError(t, err)
 		require.Len(t, topics, 2)
-		
+
 		// Verify both are accessible
 		hasLegacy := false
 		hasNew := false
@@ -259,35 +259,35 @@ func TestProductionDataValidation(tt *testing.T) {
 		defer cleanupTestDB(t, db)
 
 		userID := primitive.NewObjectID().Hex()
-		
+
 		// Create ideas with different content lengths
 		testIdeas := []map[string]interface{}{
 			{
-				"_id":      primitive.NewObjectID().Hex(),
-				"user_id":  userID,
-				"content":  "Short", // Valid (>=10)
-				"topic_id": primitive.NewObjectID().Hex(),
+				"_id":        primitive.NewObjectID().Hex(),
+				"user_id":    userID,
+				"content":    "Short", // Valid (>=10)
+				"topic_id":   primitive.NewObjectID().Hex(),
 				"created_at": time.Now(),
 			},
 			{
-				"_id":      primitive.NewObjectID().Hex(),
-				"user_id":  userID,
-				"content": string(make([]byte, 150)), // Valid (<200)
-				"topic_id": primitive.NewObjectID().Hex(),
+				"_id":        primitive.NewObjectID().Hex(),
+				"user_id":    userID,
+				"content":    string(make([]byte, 150)), // Valid (<200)
+				"topic_id":   primitive.NewObjectID().Hex(),
 				"created_at": time.Now(),
 			},
 			{
-				"_id":      primitive.NewObjectID().Hex(),
-				"user_id":  userID,
-				"content":  "Too short", // Too short (<10)
-				"topic_id": primitive.NewObjectID().Hex(),
+				"_id":        primitive.NewObjectID().Hex(),
+				"user_id":    userID,
+				"content":    "Too short", // Too short (<10)
+				"topic_id":   primitive.NewObjectID().Hex(),
 				"created_at": time.Now(),
 			},
 			{
-				"_id":      primitive.NewObjectID().Hex(),
-				"user_id":  userID,
-				"content": string(make([]byte, 300)), // Too long (>200)
-				"topic_id": primitive.NewObjectID().Hex(),
+				"_id":        primitive.NewObjectID().Hex(),
+				"user_id":    userID,
+				"content":    string(make([]byte, 300)), // Too long (>200)
+				"topic_id":   primitive.NewObjectID().Hex(),
 				"created_at": time.Now(),
 			},
 		}
@@ -301,7 +301,7 @@ func TestProductionDataValidation(tt *testing.T) {
 		// WHEN validating production ideas against new constraints
 		// This will fail until validation is implemented
 		t.Fatal("implement production data validation for new content length constraints - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should:
 		// 1. Identify ideas that violate new constraints
 		// 2. Provide recommendations for data cleanup

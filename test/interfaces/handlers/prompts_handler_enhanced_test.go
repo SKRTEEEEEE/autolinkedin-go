@@ -10,12 +10,12 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/linkgen-ai/backend/src/domain/entities"
+	"github.com/linkgen-ai/backend/src/domain/interfaces"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/linkgen-ai/backend/src/domain/entities"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
-	"github.com/linkgen-ai/backend/src/domain/interfaces"
 )
 
 // NOTE: These tests are written according to TDD Red pattern - they will FAIL
@@ -33,11 +33,11 @@ func TestPromptsHandlerEnhanced(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	mockPromptsRepo := &MockPromptsRepository{}
 	mockUserRepo := &MockUserRepository{}
-	
+
 	handler := NewPromptsHandler(mockPromptsRepo, mockUserRepo, logger)
 	router := mux.NewRouter()
 	handler.RegisterRoutes(router)
-	
+
 	// Register enhanced routes
 	handler.RegisterEnhancedRoutes(router)
 
@@ -77,16 +77,16 @@ func TestPromptsHandlerEnhanced(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/prompts/"+userID+"/by-name/creative", nil)
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
-		
+
 		router.ServeHTTP(w, req)
 
 		// THEN the response should contain the prompt
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		promptData := response["prompt"].(map[string]interface{})
 		assert.Equal(t, prompt.ID, promptData["id"])
 		assert.Equal(t, "creative", promptData["name"])
@@ -103,16 +103,16 @@ func TestPromptsHandlerEnhanced(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/prompts/"+userID+"/by-name/nonexistent", nil)
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
-		
+
 		router.ServeHTTP(w, req)
 
 		// THEN should return not found
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, "NOT_FOUND", response["code"])
 		assert.Contains(t, response["message"], "not found")
 	})
@@ -127,31 +127,31 @@ func TestPromptsHandlerEnhanced(t *testing.T) {
 			"type":            "ideas",
 			"prompt_template": "Generate {ideas} innovative ideas about {name} with focus on {[related_topics]}",
 		}
-		
+
 		jsonData, err := json.Marshal(createData)
 		require.NoError(t, err)
-		
+
 		// WHEN making the request
 		req := httptest.NewRequest(http.MethodPost, "/v1/prompts/custom", bytes.NewReader(jsonData))
 		req.Header.Set("Content-Type", "application/json")
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
-		
+
 		router.ServeHTTP(w, req)
 
 		// THEN the prompt should be created
 		assert.Equal(t, http.StatusCreated, w.Code)
-		
+
 		var response map[string]interface{}
 		err = json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, "my-custom-prompt", response["name"])
 		assert.Equal(t, userID, response["user_id"])
 		assert.Equal(t, "ideas", response["type"])
 		assert.Contains(t, response["prompt_template"], "innovative ideas")
 		assert.Equal(t, true, response["active"])
-		
+
 		// AND it should be stored in the repository
 		assert.Len(t, mockPromptsRepo.prompts, 1)
 		assert.Equal(t, "my-custom-prompt", mockPromptsRepo.prompts[0].Name)
@@ -162,25 +162,25 @@ func TestPromptsHandlerEnhanced(t *testing.T) {
 
 		// WHEN validating a template with correct variables
 		validData := map[string]interface{}{
-			"type":    "ideas",
+			"type":     "ideas",
 			"template": "Generate {ideas} ideas about {name} using {[related_topics]}",
 		}
-		
+
 		jsonData, _ := json.Marshal(validData)
 		req := httptest.NewRequest(http.MethodPost, "/v1/prompts/validate", bytes.NewReader(jsonData))
 		req.Header.Set("Content-Type", "application/json")
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
-		
+
 		router.ServeHTTP(w, req)
 
 		// THEN should return valid
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, true, response["valid"])
 		assert.Equal(t, []interface{}{"ideas", "name", "[related_topics]"}, response["variables"])
 	})
@@ -190,25 +190,25 @@ func TestPromptsHandlerEnhanced(t *testing.T) {
 
 		// WHEN validating a template with missing required variables
 		invalidData := map[string]interface{}{
-			"type":    "ideas",
+			"type":     "ideas",
 			"template": "Generate ideas about name without placeholders",
 		}
-		
+
 		jsonData, _ := json.Marshal(invalidData)
 		req := httptest.NewRequest(http.MethodPost, "/v1/prompts/validate", bytes.NewReader(jsonData))
 		req.Header.Set("Content-Type", "application/json")
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
-		
+
 		router.ServeHTTP(w, req)
 
 		// THEN should return invalid with error details
 		assert.Equal(t, http.StatusBadRequest, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, false, response["valid"])
 		assert.Contains(t, response["message"], "missing required variables")
 	})
@@ -221,19 +221,19 @@ func TestPromptsHandlerEnhanced(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/prompts/defaults", nil)
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
-		
+
 		router.ServeHTTP(w, req)
 
 		// THEN should return list of default prompt templates
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		defaults := response["defaults"].([]interface{})
 		assert.Greater(t, len(defaults), 0)
-		
+
 		// Verify at least base1 and pro are listed
 		var base1Found, proFound bool
 		for _, item := range defaults {
@@ -273,19 +273,19 @@ func TestPromptsHandlerEnhanced(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/v1/prompts/"+userID+"/reset", nil)
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
-		
+
 		router.ServeHTTP(w, req)
 
 		// THEN user prompts should be reset
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, true, response["reset"])
 		assert.Greater(t, response["count"].(float64), 0)
-		
+
 		// AND verify base1 was reset to default content
 		base1Prompt := mockPromptsRepo.FindByName(ctx, userID, "base1")
 		require.NotNil(t, base1Prompt)
@@ -313,19 +313,19 @@ func TestPromptsHandlerEnhanced(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/v1/prompts/"+userID+"/activate/creative", nil)
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
-		
+
 		router.ServeHTTP(w, req)
 
 		// THEN the prompt should be activated
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, true, response["activated"])
 		assert.Equal(t, "creative", response["name"])
-		
+
 		// AND verify it's now active in the repository
 		activePrompt := mockPromptsRepo.FindActiveByName(ctx, userID, "creative")
 		require.NotNil(t, activePrompt)
@@ -352,23 +352,23 @@ func TestPromptsHandlerEnhanced(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/v1/prompts/"+userID+"/deactivate/professional", nil)
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
-		
+
 		router.ServeHTTP(w, req)
 
 		// THEN the prompt should be deactivated
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, true, response["deactivated"])
 		assert.Equal(t, "professional", response["name"])
-		
+
 		// AND verify it's no longer active in the repository
 		activePrompt := mockPromptsRepo.FindActiveByName(ctx, userID, "professional")
 		assert.Nil(t, activePrompt)
-		
+
 		// Should still exist but be inactive
 		inactivePrompt := mockPromptsRepo.FindByName(ctx, userID, "professional")
 		require.NotNil(t, inactivePrompt)
@@ -398,22 +398,22 @@ func TestPromptsHandlerEnhanced(t *testing.T) {
 			"type":            "ideas",
 			"prompt_template": "New template with same name",
 		}
-		
+
 		jsonData, _ := json.Marshal(createData)
 		req := httptest.NewRequest(http.MethodPost, "/v1/prompts/custom", bytes.NewReader(jsonData))
 		req.Header.Set("Content-Type", "application/json")
 		req = req.WithContext(ctx)
 		w := httptest.NewRecorder()
-		
+
 		router.ServeHTTP(w, req)
 
 		// THEN should return conflict error
 		assert.Equal(t, http.StatusConflict, w.Code)
-		
+
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, "CONFLICT", response["code"])
 		assert.Contains(t, response["message"], "already exists")
 	})
@@ -437,7 +437,7 @@ func (h *PromptsHandler) RegisterEnhancedRoutes(router *mux.Router) {
 // NEW methods for MockPromptsRepository to support enhanced tests
 
 // FindByName finds a prompt by name and user
-func (m *MockPromptsRepository) FindByName(ctx context.Context, userID string, name string) (*entities.Prompt) {
+func (m *MockPromptsRepository) FindByName(ctx context.Context, userID string, name string) *entities.Prompt {
 	for _, p := range m.prompts {
 		if p.Name == name && p.UserID == userID {
 			return p
@@ -447,7 +447,7 @@ func (m *MockPromptsRepository) FindByName(ctx context.Context, userID string, n
 }
 
 // FindActiveByName finds an active prompt by name and user
-func (m *MockPromptsRepository) FindActiveByName(ctx context.Context, userID string, name string) (*entities.Prompt) {
+func (m *MockPromptsRepository) FindActiveByName(ctx context.Context, userID string, name string) *entities.Prompt {
 	p := m.FindByName(ctx, userID, name)
 	if p != nil && p.Active {
 		return p
@@ -456,7 +456,7 @@ func (m *MockPromptsRepository) FindActiveByName(ctx context.Context, userID str
 }
 
 // FindByNameAndType finds a prompt by name, user, and type
-func (m *MockPromptsRepository) FindByNameAndType(ctx context.Context, userID string, name string, promptType entities.PromptType) (*entities.Prompt) {
+func (m *MockPromptsRepository) FindByNameAndType(ctx context.Context, userID string, name string, promptType entities.PromptType) *entities.Prompt {
 	for _, p := range m.prompts {
 		if p.Name == name && p.UserID == userID && p.Type == promptType {
 			return p
@@ -466,7 +466,7 @@ func (m *MockPromptsRepository) FindByNameAndType(ctx context.Context, userID st
 }
 
 // FindActiveByNameAndType finds an active prompt by name, user, and type
-func (m *MockPromptsRepository) FindActiveByNameAndType(ctx context.Context, userID string, name string, promptType entities.PromptType) (*entities.Prompt) {
+func (m *MockPromptsRepository) FindActiveByNameAndType(ctx context.Context, userID string, name string, promptType entities.PromptType) *entities.Prompt {
 	p := m.FindByNameAndType(ctx, userID, name, promptType)
 	if p != nil && p.Active {
 		return p

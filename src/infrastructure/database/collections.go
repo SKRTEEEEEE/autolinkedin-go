@@ -33,45 +33,45 @@ type IndexDefinition struct {
 func GetAllIndexDefinitions() []IndexDefinition {
 	return []IndexDefinition{
 		// Users collection indexes
-		{
+		IndexDefinition{
 			Collection: CollectionUsers,
 			Keys:       bson.D{{Key: "email", Value: 1}},
 			Options:    options.Index().SetUnique(true).SetName("email_unique"),
 		},
-		{
+		IndexDefinition{
 			Collection: CollectionUsers,
 			Keys:       bson.D{{Key: "linkedin_id", Value: 1}},
 			Options:    options.Index().SetUnique(true).SetName("linkedin_id_unique"),
 		},
 		// Ideas collection indexes
-		{
+		IndexDefinition{
 			Collection: CollectionIdeas,
 			Keys:       bson.D{{Key: "user_id", Value: 1}},
 			Options:    options.Index().SetName("user_id_idx"),
 		},
-		{
+		IndexDefinition{
 			Collection: CollectionIdeas,
 			Keys:       bson.D{{Key: "created_at", Value: -1}},
 			Options:    options.Index().SetName("created_at_desc_idx"),
 		},
-		{
+		IndexDefinition{
 			Collection: CollectionIdeas,
 			Keys:       bson.D{{Key: "user_id", Value: 1}, {Key: "topic", Value: 1}},
 			Options:    options.Index().SetName("user_topic_compound_idx"),
 		},
 		// Drafts collection indexes
-		{
+		IndexDefinition{
 			Collection: CollectionDrafts,
 			Keys:       bson.D{{Key: "user_id", Value: 1}},
 			Options:    options.Index().SetName("user_id_idx"),
 		},
-		{
+		IndexDefinition{
 			Collection: CollectionDrafts,
 			Keys:       bson.D{{Key: "status", Value: 1}},
 			Options:    options.Index().SetName("status_idx"),
 		},
 		// Topics collection indexes
-		{
+		IndexDefinition{
 			Collection: CollectionTopics,
 			Keys:       bson.D{{Key: "user_id", Value: 1}},
 			Options:    options.Index().SetName("user_id_idx"),

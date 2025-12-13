@@ -27,7 +27,7 @@ func TestGenerateIdeasWithPromptSystem(tt *testing.T) {
 		// GIVEN a custom prompt with multiple variables
 		userID := primitive.NewObjectID().Hex()
 		topicID := primitive.NewObjectID().Hex()
-		
+
 		prompt := &entities.Prompt{
 			ID:             primitive.NewObjectID().Hex(),
 			UserID:         userID,
@@ -64,13 +64,13 @@ func TestGenerateIdeasWithPromptSystem(tt *testing.T) {
 		// Setup expectations
 		promptRepo.On("GetActiveByName", ctx, userID, "custom-ideas").Return(prompt, nil)
 		topicRepo.On("GetByID", ctx, topicID).Return(topic, nil)
-		
+
 		// Mock LLM response - should NOT be mocked, should call real endpoint
 		// llmClient will be replaced with actual HTTP client to http://100.105.212.98:8317/
-		
+
 		// WHEN generating ideas with the custom prompt
 		useCase := usecases.NewGenerateIdeasUseCase(promptRepo, topicRepo, ideaRepo, llmClient)
-		
+
 		req := &usecases.GenerateIdeasRequest{
 			UserID:  userID,
 			TopicID: topicID,
@@ -123,7 +123,7 @@ func TestGenerateIdeasWithPromptSystem(tt *testing.T) {
 
 		// WHEN generating ideas without specific prompt
 		useCase := usecases.NewGenerateIdeasUseCase(promptRepo, topicRepo, ideaRepo, llmClient)
-		
+
 		req := &usecases.GenerateIdeasRequest{
 			UserID:  userID,
 			TopicID: topicID,
@@ -147,7 +147,7 @@ func TestGenerateIdeasWithPromptSystem(tt *testing.T) {
 
 		// WHEN generating ideas
 		useCase := usecases.NewGenerateIdeasUseCase(promptRepo, topicRepo, ideaRepo, llmClient)
-		
+
 		req := &usecases.GenerateIdeasRequest{
 			UserID:  userID,
 			TopicID: topicID,
@@ -156,7 +156,7 @@ func TestGenerateIdeasWithPromptSystem(tt *testing.T) {
 
 		// This will fail until validation is implemented
 		t.Fatal("implement idea content length validation (10-200 chars) - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should validate each idea:
 		// - Minimum length: 10 characters
 		// - Maximum length: 200 characters (as defined in entity.md)
@@ -179,19 +179,19 @@ func TestGenerateDraftsWithPromptSystem(tt *testing.T) {
 		topicID := primitive.NewObjectID().Hex()
 
 		draftPrompt := &entities.Prompt{
-			ID:             primitive.NewObjectID().Hex(),
-			UserID:         userID,
-			Name:           "professional-draft",
-			Type:           entities.PromptTypeDrafts,
+			ID:     primitive.NewObjectID().Hex(),
+			UserID: userID,
+			Name:   "professional-draft",
+			Type:   entities.PromptTypeDrafts,
 			PromptTemplate: `Create professional LinkedIn content based on:
 Idea: {content}
 User Context: {user_context}
 Topic: {topic_name}
 
 Generate 5 posts and 1 article in Spanish.`,
-			Active:         true,
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
+			Active:    true,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		}
 
 		idea := &entities.Idea{
@@ -206,9 +206,9 @@ Generate 5 posts and 1 article in Spanish.`,
 			ID:   userID,
 			Name: "Juan García",
 			Configuration: map[string]interface{}{
-				"name":             "Juan García",
-				"expertise":        "Desarrollo Backend",
-				"tone_preference":  "Profesional",
+				"name":            "Juan García",
+				"expertise":       "Desarrollo Backend",
+				"tone_preference": "Profesional",
 			},
 		}
 
@@ -224,7 +224,7 @@ Generate 5 posts and 1 article in Spanish.`,
 
 		// WHEN generating drafts with user context
 		useCase := usecases.NewGenerateDraftsUseCase(promptRepo, ideaRepo, userRepo, llmClient)
-		
+
 		req := &usecases.GenerateDraftsRequest{
 			UserID: userID,
 			IdeaID: ideaID,
@@ -232,7 +232,7 @@ Generate 5 posts and 1 article in Spanish.`,
 
 		// This will fail until draft generation with user context is implemented
 		t.Fatal("implement draft generation with user context variables - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should generate:
 		// - 5 LinkedIn posts
 		// - 1 article
@@ -258,7 +258,7 @@ Generate 5 posts and 1 article in Spanish.`,
 		// WHEN building user context string
 		// This will fail until user context formatting is implemented
 		t.Fatal("implement user context formatting per seed/README.md - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should format as:
 		// Name: María Rodríguez
 		// Expertise: Full Stack Development
@@ -269,8 +269,8 @@ Generate 5 posts and 1 article in Spanish.`,
 	tt.Run("should handle missing user configuration gracefully", func(t *testing.T) {
 		// GIVEN a user with minimal configuration
 		user := &entities.User{
-			ID:       primitive.NewObjectID().Hex(),
-			Name:     "Test User",
+			ID:            primitive.NewObjectID().Hex(),
+			Name:          "Test User",
 			Configuration: map[string]interface{}{
 				// Missing name, expertise, and tone_preference
 			},
@@ -279,7 +279,7 @@ Generate 5 posts and 1 article in Spanish.`,
 		// WHEN building user context with missing fields
 		// This will fail until missing field handling is implemented
 		t.Fatal("implement handling of missing user configuration fields - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should use empty strings or defaults for missing fields
 	})
 }

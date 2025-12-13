@@ -23,4 +23,8 @@ type IdeasRepository interface {
 	// ClearByUserID removes all ideas for a specific user
 	// Used when user wants to clear their idea backlog
 	ClearByUserID(ctx context.Context, userID string) error
+
+	// DeleteByTopicID removes all ideas for a specific topic
+	// Used when a topic is deleted to cascade delete related ideas
+	DeleteByTopicID(ctx context.Context, topicID string) error
 }

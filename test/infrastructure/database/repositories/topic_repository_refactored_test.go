@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/linkgen-ai/backend/src/domain/entities"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -51,8 +51,8 @@ func TestTopicRepositoryRefactored(t *testing.T) {
 			Description:   "Contenido sobre estrategias de marketing digital",
 			Category:      "Marketing",
 			Priority:      7,
-			Ideas:         3,           // NEW field
-			Prompt:        "base1",      // NEW field
+			Ideas:         3,                               // NEW field
+			Prompt:        "base1",                         // NEW field
 			RelatedTopics: []string{"SEO", "Social Media"}, // NEW field
 			Active:        true,
 			CreatedAt:     time.Now(),
@@ -81,36 +81,36 @@ func TestTopicRepositoryRefactored(t *testing.T) {
 		// GIVEN topics with different prompt references
 		userID := "user-456"
 		base1Topic := &entities.Topic{
-			Name:          "Topic 1",
-			UserID:        userID,
-			Prompt:        "base1",
-			Ideas:         2,
-			Description:   "Description 1",
-			Priority:      5,
-			Active:        true,
-			CreatedAt:     time.Now(),
+			Name:        "Topic 1",
+			UserID:      userID,
+			Prompt:      "base1",
+			Ideas:       2,
+			Description: "Description 1",
+			Priority:    5,
+			Active:      true,
+			CreatedAt:   time.Now(),
 		}
 
 		creativeTopic := &entities.Topic{
-			Name:          "Topic 2",
-			UserID:        userID,
-			Prompt:        "creative",
-			Ideas:         5,
-			Description:   "Description 2",
-			Priority:      8,
-			Active:        true,
-			CreatedAt:     time.Now(),
+			Name:        "Topic 2",
+			UserID:      userID,
+			Prompt:      "creative",
+			Ideas:       5,
+			Description: "Description 2",
+			Priority:    8,
+			Active:      true,
+			CreatedAt:   time.Now(),
 		}
 
 		base1Topic2 := &entities.Topic{
-			Name:          "Topic 3",
-			UserID:        userID,
-			Prompt:        "base1",
-			Ideas:         3,
-			Description:   "Description 3",
-			Priority:      6,
-			Active:        true,
-			CreatedAt:     time.Now(),
+			Name:        "Topic 3",
+			UserID:      userID,
+			Prompt:      "base1",
+			Ideas:       3,
+			Description: "Description 3",
+			Priority:    6,
+			Active:      true,
+			CreatedAt:   time.Now(),
 		}
 
 		// Insert all topics
@@ -301,9 +301,9 @@ func TestTopicRepositoryRefactored(t *testing.T) {
 
 		// WHEN searching with multiple filters (active, base1 prompt, 3-5 ideas)
 		filter := TopicFilter{
-			UserID: userID,
-			Active: boolPtr(true),
-			Prompt: stringPtr("base1"),
+			UserID:   userID,
+			Active:   boolPtr(true),
+			Prompt:   stringPtr("base1"),
 			IdeasMin: intPtr(3),
 			IdeasMax: intPtr(5),
 		}
@@ -350,17 +350,17 @@ func TestTopicRepositoryRefactored(t *testing.T) {
 		// GIVEN a topic created with the new structure
 		userID := "user-444"
 		topic := &entities.Topic{
-			ID:             primitive.NewObjectID().Hex(),
-			UserID:         userID,
-			Name:           "Compatibility Test",
-			Description:    "Testing backward compatibility",
-			Category:       "Test",
-			Priority:       7,
-			Ideas:          4,
-			Prompt:         "base1",
-			RelatedTopics:  []string{"Test1", "Test2"},
-			Active:         true,
-			CreatedAt:      time.Now(),
+			ID:            primitive.NewObjectID().Hex(),
+			UserID:        userID,
+			Name:          "Compatibility Test",
+			Description:   "Testing backward compatibility",
+			Category:      "Test",
+			Priority:      7,
+			Ideas:         4,
+			Prompt:        "base1",
+			RelatedTopics: []string{"Test1", "Test2"},
+			Active:        true,
+			CreatedAt:     time.Now(),
 		}
 
 		// WHEN using existing repository methods
@@ -416,13 +416,13 @@ func intPtr(i int) *int {
 
 // Filter structure for advanced topic searching
 type TopicFilter struct {
-	UserID    string
-	Name      *string
-	Category  *string
-	Active    *bool
-	Prompt    *string
-	IdeasMin  *int
-	IdeasMax  *int
+	UserID   string
+	Name     *string
+	Category *string
+	Active   *bool
+	Prompt   *string
+	IdeasMin *int
+	IdeasMax *int
 }
 
 // NEW methods to be added to TopicRepository

@@ -12,8 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/linkgen-ai/backend/src/domain/entities"
-	"github.com/linkgen-ai/backend/test"
 	"github.com/linkgen-ai/backend/src/test/mocks"
+	"github.com/linkgen-ai/backend/test"
 )
 
 // TestPromptSystemPerformance tests the performance impact of the new prompt system
@@ -55,7 +55,7 @@ func TestPromptSystemPerformance(tt *testing.T) {
 
 		// WHEN measuring performance
 		start := time.Now()
-		
+
 		for i := 0; i < iterations; i++ {
 			for _, template := range templates {
 				for _, topic := range topics {
@@ -65,7 +65,7 @@ func TestPromptSystemPerformance(tt *testing.T) {
 				}
 			}
 		}
-		
+
 		duration := time.Since(start)
 		totalOperations := iterations * len(templates) * len(topics)
 		avgDuration := duration / time.Duration(totalOperations)
@@ -119,7 +119,7 @@ func TestPromptSystemPerformance(tt *testing.T) {
 		start = time.Now()
 		topics, err := topicRepo.ListByUserID(ctx, userID)
 		require.NoError(t, err)
-		
+
 		fetchDuration := time.Since(start)
 		t.Logf("Fetched %d topics in %v", len(topics), fetchDuration)
 
@@ -136,22 +136,22 @@ func TestPromptSystemPerformance(tt *testing.T) {
 
 		// Mock different template complexities
 		complexTemplates := []struct {
-			name     string
-			template string
+			name         string
+			template     string
 			expectedVars int
 		}{
 			{
-				name:     "simple",
-				template: "Generate 5 ideas about {name}",
+				name:         "simple",
+				template:     "Generate 5 ideas about {name}",
 				expectedVars: 1,
 			},
 			{
-				name:     "medium",
-				template: "Generate {ideas} ideas about {name} with {[keywords]} and priority {priority}",
+				name:         "medium",
+				template:     "Generate {ideas} ideas about {name} with {[keywords]} and priority {priority}",
 				expectedVars: 4,
 			},
 			{
-				name:     "complex",
+				name: "complex",
 				template: `Generate {ideas} professional ideas about {name} in category {category}
 Focus on: {[keywords]}
 Priority: {priority}
@@ -173,11 +173,11 @@ Target: {ideas_count} ideas`,
 					processedPrompt, err := promptProcessor.ProcessTemplate(
 						tc.template,
 						&entities.Topic{
-							Name:         "Test Topic",
-							Category:     "Technology",
-							Keywords:     []string{"test", "performance"},
-							Priority:     8,
-							IdeasCount:   5,
+							Name:          "Test Topic",
+							Category:      "Technology",
+							Keywords:      []string{"test", "performance"},
+							Priority:      8,
+							IdeasCount:    5,
 							RelatedTopics: []string{"Related1", "Related2"},
 						},
 						nil,
@@ -196,7 +196,7 @@ Target: {ideas_count} ideas`,
 				duration := time.Since(start)
 				avgDuration := duration / time.Duration(iterations)
 
-				t.Logf("%s template: Processed %d iterations in %v (avg: %v)", 
+				t.Logf("%s template: Processed %d iterations in %v (avg: %v)",
 					tc.name, iterations, duration, avgDuration)
 
 				// Performance assertions based on complexity
@@ -239,7 +239,7 @@ func TestConcurrentPromptProcessing(tt *testing.T) {
 					template := "Generate {ideas} ideas about {name}" + fmt.Sprintf("-%d-%d", id, j)
 					topic := &entities.Topic{
 						Name:       fmt.Sprintf("Topic-%d", id),
-						IdeasCount: j % 10 + 1,
+						IdeasCount: j%10 + 1,
 					}
 
 					// This will fail until thread-safe concurrent processing is implemented
@@ -276,7 +276,7 @@ func TestConcurrentPromptProcessing(tt *testing.T) {
 		// THEN should handle concurrency without errors
 		assert.Equal(t, 0, errorCount, "Should have no concurrent processing errors")
 		assert.Less(t, duration, 10*time.Second, "Concurrent processing should be efficient")
-		
+
 		t.Logf("Processed %d operations concurrently in %v", totalOperations, duration)
 		t.Logf("Throughput: %.2f ops/sec", float64(totalOperations)/duration.Seconds())
 	})
@@ -352,7 +352,7 @@ func TestConcurrentPromptProcessing(tt *testing.T) {
 		// THEN should handle concurrent database access safely
 		assert.Equal(t, 0, errorCount, "Should have no concurrent database errors")
 		assert.Less(t, duration, 15*time.Second, "Concurrent database operations should be reasonable")
-		
+
 		t.Logf("Concurrent database access completed in %v", duration)
 	})
 }
@@ -436,9 +436,9 @@ func TestMemoryUsageOptimization(tt *testing.T) {
 				runtime.ReadMemStats(&m)
 				currentMemory := m.Alloc
 				memoryGrowth := currentMemory - initialMemory
-				
+
 				tt.Logf("Iteration %d: Memory growth: %d bytes", i, memoryGrowth)
-				
+
 				// Should not grow unbounded
 				assert.Less(tt, memoryGrowth, uint64(10*1024*1024), "Memory growth should be bounded")
 			}

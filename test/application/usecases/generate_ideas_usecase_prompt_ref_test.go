@@ -16,13 +16,13 @@ import (
 // GenerateIdeasUseCasePromptRefTestSuite contains tests for GenerateIdeasUseCase with prompt references
 type GenerateIdeasUseCasePromptRefTestSuite struct {
 	suite.Suite
-	db               *database.Database
-	topicRepo        *repositories.TopicsRepository
-	ideaRepo         *repositories.IdeasRepository
-	promptRepo       *repositories.PromptsRepository
-	useCase          *GenerateIdeasUseCase
-	ctx              context.Context
-	cleanUp          func()
+	db         *database.Database
+	topicRepo  *repositories.TopicsRepository
+	ideaRepo   *repositories.IdeasRepository
+	promptRepo *repositories.PromptsRepository
+	useCase    *GenerateIdeasUseCase
+	ctx        context.Context
+	cleanUp    func()
 }
 
 // SetupSuite runs before all tests
@@ -51,7 +51,7 @@ func TestGenerateIdeasUseCasePromptRefTestSuite(t *testing.T) {
 func (suite *GenerateIdeasUseCasePromptRefTestSuite) Test_Execute_ShouldUseTopicSpecificPrompt() {
 	// Given
 	userID := "user-123"
-	
+
 	// Create a custom prompt
 	customPrompt := &entities.Prompt{
 		ID:             "prompt-custom",
@@ -65,7 +65,7 @@ func (suite *GenerateIdeasUseCasePromptRefTestSuite) Test_Execute_ShouldUseTopic
 	}
 	err := suite.promptRepo.Create(suite.ctx, customPrompt)
 	require.NoError(suite.T(), err)
-	
+
 	// Create topic with custom prompt reference
 	topic := &entities.Topic{
 		ID:          "topic-123",
@@ -89,7 +89,7 @@ func (suite *GenerateIdeasUseCasePromptRefTestSuite) Test_Execute_ShouldUseTopic
 	// Then
 	require.NoError(suite.T(), err)
 	require.Len(suite.T(), ideas, 3)
-	
+
 	// Verify the generated ideas belong to the topic and have topic_name
 	for _, idea := range ideas {
 		assert.Equal(suite.T(), userID, idea.UserID)
@@ -103,7 +103,7 @@ func (suite *GenerateIdeasUseCasePromptRefTestSuite) Test_Execute_ShouldUseTopic
 func (suite *GenerateIdeasUseCasePromptRefTestSuite) Test_Execute_ShouldReturnErrorForNonExistingPrompt() {
 	// Given
 	userID := "user-123"
-	
+
 	// Create topic with non-existing prompt reference
 	topic := &entities.Topic{
 		ID:          "topic-123",
@@ -134,7 +134,7 @@ func (suite *GenerateIdeasUseCasePromptRefTestSuite) Test_Execute_ShouldReturnEr
 func (suite *GenerateIdeasUseCasePromptRefTestSuite) Test_Execute_ShouldUseDefaultPromptWhenNotSpecified() {
 	// Given
 	userID := "user-123"
-	
+
 	// Create the default base1 prompt
 	basePrompt := &entities.Prompt{
 		ID:             "prompt-base",
@@ -148,7 +148,7 @@ func (suite *GenerateIdeasUseCasePromptRefTestSuite) Test_Execute_ShouldUseDefau
 	}
 	err := suite.promptRepo.Create(suite.ctx, basePrompt)
 	require.NoError(suite.T(), err)
-	
+
 	// Create topic without prompt reference
 	topic := &entities.Topic{
 		ID:          "topic-123",
@@ -172,7 +172,7 @@ func (suite *GenerateIdeasUseCasePromptRefTestSuite) Test_Execute_ShouldUseDefau
 	// Then
 	require.NoError(suite.T(), err)
 	require.Len(suite.T(), ideas, 2)
-	
+
 	// Should still generate ideas with topic_name set
 	for _, idea := range ideas {
 		assert.Equal(suite.T(), topic.Name, idea.TopicName)
@@ -183,7 +183,7 @@ func (suite *GenerateIdeasUseCasePromptRefTestSuite) Test_Execute_ShouldUseDefau
 func (suite *GenerateIdeasUseCasePromptRefTestSuite) Test_Execute_ShouldUseIdeasCountFromTopic() {
 	// Given
 	userID := "user-123"
-	
+
 	// Create prompt
 	prompt := &entities.Prompt{
 		ID:             "prompt-test",
@@ -197,7 +197,7 @@ func (suite *GenerateIdeasUseCasePromptRefTestSuite) Test_Execute_ShouldUseIdeas
 	}
 	err := suite.promptRepo.Create(suite.ctx, prompt)
 	require.NoError(suite.T(), err)
-	
+
 	// Create topic with custom ideas count
 	topic := &entities.Topic{
 		ID:          "topic-123",
@@ -227,7 +227,7 @@ func (suite *GenerateIdeasUseCasePromptRefTestSuite) Test_Execute_ShouldUseIdeas
 func (suite *GenerateIdeasUseCasePromptRefTestSuite) Test_Execute_ShouldSetTopicNameOnGeneratedIdeas() {
 	// Given
 	userID := "user-123"
-	
+
 	// Create prompt
 	prompt := &entities.Prompt{
 		ID:             "prompt-test",
@@ -241,7 +241,7 @@ func (suite *GenerateIdeasUseCasePromptRefTestSuite) Test_Execute_ShouldSetTopic
 	}
 	err := suite.promptRepo.Create(suite.ctx, prompt)
 	require.NoError(suite.T(), err)
-	
+
 	// Create topic
 	topic := &entities.Topic{
 		ID:          "topic-123",
@@ -265,12 +265,12 @@ func (suite *GenerateIdeasUseCasePromptRefTestSuite) Test_Execute_ShouldSetTopic
 	// Then
 	require.NoError(suite.T(), err)
 	require.Len(suite.T(), ideas, 3)
-	
+
 	// Verify all ideas have the correct topic_name
 	for _, idea := range ideas {
 		assert.Equal(suite.T(), "Machine Learning Research", idea.TopicName)
 		assert.NotEmpty(suite.T(), idea.Content)
-		
+
 		// Verify the idea is a valid entity
 		err = idea.Validate()
 		assert.NoError(suite.T(), err)
