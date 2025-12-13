@@ -452,12 +452,15 @@ func (uc *GenerateDraftsUseCase) generateDraftsWithPromptEngine(ctx context.Cont
 
 // parseDraftsResponse parses the JSON response from LLM for drafts
 func (uc *GenerateDraftsUseCase) parseDraftsResponse(response string) (interfaces.DraftSet, error) {
+	// Clean the response from markdown code blocks if present
+	cleanedResponse := cleanDraftJSONResponse(response)
+	
 	var result struct {
 		Posts    []string `json:"posts"`
 		Articles []string `json:"articles"`
 	}
 
-	if err := json.Unmarshal([]byte(response), &result); err != nil {
+	if err := json.Unmarshal([]byte(cleanedResponse), &result); err != nil {
 		return interfaces.DraftSet{}, fmt.Errorf("failed to unmarshal JSON response: %w", err)
 	}
 
@@ -467,6 +470,35 @@ func (uc *GenerateDraftsUseCase) parseDraftsResponse(response string) (interface
 		Prompt:      "", // Not tracked in this simplified version
 		RawResponse: response,
 	}, nil
+}
+
+// cleanDraftJSONResponse removes markdown code blocks and extracts JSON
+func cleanDraftJSONResponse(response string) string {
+	// Remove markdown code blocks (```json ... ``` or ``` ... ```)
+	response = strings.TrimSpace(response)
+	
+	// Check if response starts with ``` and ends with ```
+	if strings.HasPrefix(response, "```") {
+		// Find the first newline after ```
+		start := strings.Index(response, "\n")
+		if start == -1 {
+			start = 3 // just skip ```
+		} else {
+			start++ // skip the newline
+		}
+		
+		// Find the last ```
+		end := strings.LastIndex(response, "```")
+		if end > start {
+			response = response[start:end]
+		}
+	}
+	
+	// Remove backticks at the beginning and end
+	response = strings.Trim(response, "`")
+	response = strings.TrimSpace(response)
+	
+	return response
 }
 
 // markIdeaAsUsed marks the idea as used in the repository

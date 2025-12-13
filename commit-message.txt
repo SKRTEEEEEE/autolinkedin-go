@@ -1,0 +1,17 @@
+fix(docker): enable seeding on app startup and fix LLM response parsing
+
+- Add seed directory to Docker image in all build stages (development, builder, production)
+- Mount seed directory as read-only volume in docker-compose for development
+- Update LLM model from non-existent 'gpt-5-high' to 'claude-3-7-sonnet-20250219'
+- Implement cleanJSONResponse and cleanDraftJSONResponse helpers to extract JSON from markdown code blocks
+- Fix parsing errors when Claude LLM returns responses wrapped in markdown syntax
+- Add reset-dev-data.sh script for clearing MongoDB volumes during development
+
+This resolves the issue where prompts and topics were not being seeded on application restart
+due to missing seed files in the Docker container. Also fixes JSON parsing failures when the LLM
+wraps responses in markdown code blocks (```json ... ```).
+
+Tested: Seeding now works correctly on app startup, generating 6 ideas (2 per topic) successfully.
+
+CO-CREATED by Agent666 — ⟦ Product of SKRTEEEEEE ⟧
+Co-authored-by: Agent666 <agent666@skrte.ai>
