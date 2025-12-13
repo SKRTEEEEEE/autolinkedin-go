@@ -24,16 +24,16 @@ const (
 
 // Job represents an asynchronous job execution
 type Job struct {
-	ID        string
-	UserID    string
-	Type      JobType
-	Status    JobStatus
-	IdeaID    *string
-	DraftIDs  []string
-	Error     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	StartedAt *time.Time
+	ID          string
+	UserID      string
+	Type        JobType
+	Status      JobStatus
+	IdeaID      *string
+	DraftIDs    []string
+	Error       string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	StartedAt   *time.Time
 	CompletedAt *time.Time
 }
 

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	appServices "github.com/linkgen-ai/backend/src/application/services"
-	infraServices "github.com/linkgen-ai/backend/src/infrastructure/services"
 	"github.com/linkgen-ai/backend/src/application/usecases"
 	"github.com/linkgen-ai/backend/src/application/workers"
 	"github.com/linkgen-ai/backend/src/domain/entities"
@@ -21,6 +20,7 @@ import (
 	httpServer "github.com/linkgen-ai/backend/src/infrastructure/http"
 	"github.com/linkgen-ai/backend/src/infrastructure/http/llm"
 	"github.com/linkgen-ai/backend/src/infrastructure/messaging/nats"
+	infraServices "github.com/linkgen-ai/backend/src/infrastructure/services"
 	"github.com/linkgen-ai/backend/src/interfaces/handlers"
 	"go.uber.org/zap"
 )
@@ -37,12 +37,12 @@ type Application struct {
 	llmClient  *llm.LLMHTTPClient
 
 	// Repositories
-	userRepo    interfaces.UserRepository
-	topicRepo   interfaces.TopicRepository
-	ideaRepo    interfaces.IdeasRepository
-	draftRepo   interfaces.DraftRepository
-	promptsRepo interfaces.PromptsRepository
-	jobRepo     interfaces.JobRepository
+	userRepo     interfaces.UserRepository
+	topicRepo    interfaces.TopicRepository
+	ideaRepo     interfaces.IdeasRepository
+	draftRepo    interfaces.DraftRepository
+	promptsRepo  interfaces.PromptsRepository
+	jobRepo      interfaces.JobRepository
 	jobErrorRepo interfaces.JobErrorRepository
 
 	// Services
@@ -500,12 +500,12 @@ func (a *Application) initializeWorkers() error {
 
 	// Create draft generation worker
 	draftWorker, err := workers.NewDraftGenerationWorker(workers.WorkerConfig{
-		Consumer:   consumer,
-		UseCase:    ucAdapter,
-		JobRepo:    jobRepoAdapter,
+		Consumer:     consumer,
+		UseCase:      ucAdapter,
+		JobRepo:      jobRepoAdapter,
 		JobErrorRepo: jobErrorRepoAdapter,
-		MaxRetries: 2,
-		Logger:     a.logger,
+		MaxRetries:   2,
+		Logger:       a.logger,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create draft generation worker: %w", err)

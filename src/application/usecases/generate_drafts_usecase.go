@@ -399,7 +399,7 @@ func (uc *GenerateDraftsUseCase) generateDraftsWithPromptEngine(ctx context.Cont
 	// Create a simplified draft set by calling LLM service with the processed prompt
 	// Note: We need to use a different approach here since LLMService.GenerateDrafts expects content and context
 	// We'll need to extend LLMService or create a custom method
-	
+
 	// For now, let's simulate by using the existing LLM service but with our processed prompt
 	response, err := uc.llmService.SendRequest(ctx, finalPrompt)
 	if err != nil {
@@ -454,7 +454,7 @@ func (uc *GenerateDraftsUseCase) generateDraftsWithPromptEngine(ctx context.Cont
 func (uc *GenerateDraftsUseCase) parseDraftsResponse(response string) (interfaces.DraftSet, error) {
 	// Clean the response from markdown code blocks if present
 	cleanedResponse := cleanDraftJSONResponse(response)
-	
+
 	var result struct {
 		Posts    []string `json:"posts"`
 		Articles []string `json:"articles"`
@@ -476,7 +476,7 @@ func (uc *GenerateDraftsUseCase) parseDraftsResponse(response string) (interface
 func cleanDraftJSONResponse(response string) string {
 	// Remove markdown code blocks (```json ... ``` or ``` ... ```)
 	response = strings.TrimSpace(response)
-	
+
 	// Check if response starts with ``` and ends with ```
 	if strings.HasPrefix(response, "```") {
 		// Find the first newline after ```
@@ -486,18 +486,18 @@ func cleanDraftJSONResponse(response string) string {
 		} else {
 			start++ // skip the newline
 		}
-		
+
 		// Find the last ```
 		end := strings.LastIndex(response, "```")
 		if end > start {
 			response = response[start:end]
 		}
 	}
-	
+
 	// Remove backticks at the beginning and end
 	response = strings.Trim(response, "`")
 	response = strings.TrimSpace(response)
-	
+
 	return response
 }
 

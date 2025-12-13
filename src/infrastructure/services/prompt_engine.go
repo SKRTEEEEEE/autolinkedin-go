@@ -15,14 +15,14 @@ import (
 
 // PromptEngine handles processing of prompts with variable substitution and caching
 type PromptEngine struct {
-	repository interfaces.PromptsRepository
-	cache      map[string]string
-	logger     interfaces.Logger
-	mu         sync.RWMutex
-	cacheHits  int
+	repository  interfaces.PromptsRepository
+	cache       map[string]string
+	logger      interfaces.Logger
+	mu          sync.RWMutex
+	cacheHits   int
 	cacheMisses int
-	logs       []PromptLogEntry
-	logMu      sync.Mutex
+	logs        []PromptLogEntry
+	logMu       sync.Mutex
 }
 
 // NewPromptEngine creates a new PromptEngine instance
@@ -236,7 +236,7 @@ func (p *PromptEngine) substituteVariables(
 // buildCacheKey creates a unique cache key based on parameters
 func (p *PromptEngine) buildCacheKey(userID string, promptName string, promptType entities.PromptType, topic *entities.Topic, idea *entities.Idea) string {
 	hash := md5.New()
-	
+
 	// Basic components
 	fmt.Fprintf(hash, "%s:%s:%s", userID, promptName, string(promptType))
 
@@ -410,8 +410,8 @@ func (p *PromptEngine) CacheHitCount() int {
 
 // PromptDiagnostics represents diagnostic information
 type PromptDiagnostics struct {
-	PromptEngineActive  bool
-	UserPromptCount     int
+	PromptEngineActive bool
+	UserPromptCount    int
 	CacheSize          int
 	SupportedVariables []string
 }
@@ -428,7 +428,7 @@ func (p *PromptEngine) GetDiagnostics(ctx context.Context, userID string) *Promp
 	return &PromptDiagnostics{
 		PromptEngineActive: true,
 		UserPromptCount:    userPromptCount,
-		CacheSize:         p.CacheSize(),
+		CacheSize:          p.CacheSize(),
 		SupportedVariables: []string{
 			"{name}",
 			"{ideas}",
@@ -443,25 +443,25 @@ func (p *PromptEngine) GetDiagnostics(ctx context.Context, userID string) *Promp
 // This is a simplified version for testing purposes
 func (p *PromptEngine) ProcessTemplate(template string, topic *entities.Topic, variables map[string]interface{}) (string, error) {
 	result := template
-	
+
 	// Handle topic variables
 	if topic != nil {
 		result = strings.ReplaceAll(result, "{name}", topic.Name)
 		result = strings.ReplaceAll(result, "{ideas}", fmt.Sprintf("%d", topic.Ideas))
-		
+
 		// Handle category
 		if topic.Category != "" {
 			result = strings.ReplaceAll(result, "{category}", topic.Category)
 		}
-		
+
 		// Handle priority
 		if topic.Priority > 0 {
 			result = strings.ReplaceAll(result, "{priority}", fmt.Sprintf("%d", topic.Priority))
 		}
-		
+
 		// Keywords field doesn't exist in Topic entity, keeping empty for compatibility
 		result = strings.ReplaceAll(result, "{[keywords]}", "")
-		
+
 		// Handle related topics array
 		if len(topic.RelatedTopics) > 0 {
 			relatedTopicsStr := strings.Join(topic.RelatedTopics, ", ")
@@ -469,13 +469,13 @@ func (p *PromptEngine) ProcessTemplate(template string, topic *entities.Topic, v
 		} else {
 			result = strings.ReplaceAll(result, "{[related_topics]}", "")
 		}
-		
+
 		// Handle ideas_count for backward compatibility
 		if topic.Ideas > 0 {
 			result = strings.ReplaceAll(result, "{ideas_count}", fmt.Sprintf("%d", topic.Ideas))
 		}
 	}
-	
+
 	// Handle additional variables
 	for key, value := range variables {
 		placeholder := "{" + key + "}"
@@ -496,7 +496,7 @@ func (p *PromptEngine) ProcessTemplate(template string, topic *entities.Topic, v
 			result = strings.ReplaceAll(result, placeholder, fmt.Sprintf("%v", v))
 		}
 	}
-	
+
 	return result, nil
 }
 

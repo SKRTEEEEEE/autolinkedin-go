@@ -719,11 +719,11 @@ func (h *PromptsHandler) GetPromptStatistics(w http.ResponseWriter, r *http.Requ
 	}
 
 	WriteJSON(w, http.StatusOK, map[string]interface{}{
-		"total_count":   stats.TotalCount,
-		"ideas_count":   stats.IdeasCount,
-		"drafts_count":  stats.DraftsCount,
-		"active_count":  stats.ActiveCount,
-		"custom_count":  stats.CustomCount,
+		"total_count":    stats.TotalCount,
+		"ideas_count":    stats.IdeasCount,
+		"drafts_count":   stats.DraftsCount,
+		"active_count":   stats.ActiveCount,
+		"custom_count":   stats.CustomCount,
 		"last_synced_at": lastSynced,
 	}, h.logger)
 }

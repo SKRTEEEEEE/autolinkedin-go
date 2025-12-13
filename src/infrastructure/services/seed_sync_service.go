@@ -19,11 +19,11 @@ import (
 
 // SeedSyncService handles synchronization between seed files and database
 type SeedSyncService struct {
-	db                *mongo.Database
-	promptRepo        interfaces.PromptsRepository
-	topicRepo         interfaces.TopicRepository
-	promptLoader      *PromptLoader
-	promptEngine      *PromptEngine
+	db           *mongo.Database
+	promptRepo   interfaces.PromptsRepository
+	topicRepo    interfaces.TopicRepository
+	promptLoader *PromptLoader
+	promptEngine *PromptEngine
 }
 
 // NewSeedSyncService creates a new seed sync service
@@ -41,125 +41,55 @@ func NewSeedSyncService(db *mongo.Database, promptLoader *PromptLoader, promptEn
 func (s *SeedSyncService) SeedPromptsFromFiles(ctx context.Context, userID string, seedDir string) error {
 	log.Printf("Seeding prompts from directory: %s", seedDir)
 
-	// Read all prompt files
-	files, err := os.ReadDir(seedDir)
+	// Load prompts from files using PromptLoader
+	promptFiles, err := s.promptLoader.LoadPromptsFromDir(seedDir)
 	if err != nil {
-		return fmt.Errorf("failed to read seed directory: %v", err)
+		return fmt.Errorf("failed to load prompts from directory: %v", err)
 	}
 
-	for _, file := range files {
-		if file.IsDir() {
-			continue
-		}
+	if len(promptFiles) == 0 {
+		log.Printf("No prompt files found in directory: %s", seedDir)
+		return nil
+	}
 
-		// Skip non-md files for now (assuming .md format)
-		if filepath.Ext(file.Name()) != ".md" {
-			log.Printf("Skipping non-markdown file: %s", file.Name())
-			continue
-		}
+	// Create prompt entities from files
+	prompts, err := s.promptLoader.CreatePromptsFromFile(userID, promptFiles)
+	if err != nil {
+		return fmt.Errorf("failed to create prompt entities: %v", err)
+	}
 
-		filePath := filepath.Join(seedDir, file.Name())
-		if err := s.processPromptFile(ctx, userID, filePath); err != nil {
-			log.Printf("Error processing prompt file %s: %v", filePath, err)
-			continue
+	if len(prompts) == 0 {
+		log.Printf("No valid prompts were created from files")
+		return nil
+	}
+
+	// Sync prompts to database
+	for _, prompt := range prompts {
+		// Check if prompt already exists for this user
+		existing, err := s.promptRepo.FindByName(ctx, userID, prompt.Name)
+		if err == nil && existing != nil {
+			// Update existing prompt
+			prompt.ID = existing.ID
+			prompt.CreatedAt = existing.CreatedAt
+			prompt.UpdatedAt = time.Now()
+
+			if err := s.promptRepo.Update(ctx, prompt); err != nil {
+				log.Printf("Failed to update existing prompt %s: %v", prompt.Name, err)
+				continue
+			}
+			log.Printf("Updated existing prompt: %s (type: %s)", prompt.Name, prompt.Type)
+		} else {
+			// Create new prompt
+			if _, err := s.promptRepo.Create(ctx, prompt); err != nil {
+				log.Printf("Failed to create new prompt %s: %v", prompt.Name, err)
+				continue
+			}
+			log.Printf("Created new prompt: %s (type: %s)", prompt.Name, prompt.Type)
 		}
 	}
 
 	log.Println("Prompt seeding completed")
 	return nil
-}
-
-// processPromptFile processes a single prompt file and syncs it to the database
-func (s *SeedSyncService) processPromptFile(ctx context.Context, userID, filePath string) error {
-	// Read file content
-	content, err := os.ReadFile(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to read prompt file: %v", err)
-	}
-
-	// Parse as a structured prompt
-	prompt, err := s.parsePromptFile(content, userID)
-	if err != nil {
-		return fmt.Errorf("failed to parse prompt file: %v", err)
-	}
-
-	// Check if prompt already exists for this user
-	existing, err := s.promptRepo.FindByName(ctx, userID, prompt.Name)
-	if err == nil && existing != nil {
-		// Update existing prompt
-		prompt.ID = existing.ID
-		prompt.CreatedAt = existing.CreatedAt
-		prompt.UpdatedAt = time.Now()
-		
-		if err := s.promptRepo.Update(ctx, prompt); err != nil {
-			return fmt.Errorf("failed to update existing prompt: %v", err)
-		}
-		log.Printf("Updated existing prompt: %s", prompt.Name)
-	} else {
-		// Create new prompt
-		prompt.ID = primitive.NewObjectID().Hex()
-		prompt.CreatedAt = time.Now()
-		prompt.UpdatedAt = time.Now()
-
-		if _, err := s.promptRepo.Create(ctx, prompt); err != nil {
-			return fmt.Errorf("failed to create new prompt: %v", err)
-		}
-		log.Printf("Created new prompt: %s", prompt.Name)
-	}
-
-	return nil
-}
-
-// parsePromptFile parses the content of a prompt file into a Prompt entity
-func (s *SeedSyncService) parsePromptFile(content []byte, userID string) (*entities.Prompt, error) {
-	// Extract metadata from filename
-	// Format: base1.idea.md, pro.draft.md, etc.
-	// name.type.md pattern
-	
-	// For now, we'll create a basic structure based on file name patterns
-	// In a full implementation, this would need proper parsing of markdown files
-	
-	// Default values
-	prompt := &entities.Prompt{
-		UserID:         userID,
-		Name:           "default",
-		Type:           entities.PromptTypeIdeas,
-		PromptTemplate: string(content),
-		Active:         true,
-	}
-
-	// Simple parsing based on common patterns
-	contentStr := string(content)
-	
-	// Detect type based on content or filename
-	if contains(contentStr, []string{"draft", "article", "content", "post"}) {
-		prompt.Type = entities.PromptTypeDrafts
-	}
-	
-	// Try to extract name from file template
-	if contains(contentStr, []string{"professional", "pro"}) {
-		prompt.Name = "professional"
-	} else if contains(contentStr, []string{"creative", "innovative"}) {
-		prompt.Name = "creative"
-	} else if contains(contentStr, []string{"base", "basic", "simple"}) {
-		prompt.Name = "base1"
-	}
-
-	return prompt, nil
-}
-
-// contains checks if content contains any of the substrings
-func contains(content string, substrings []string) bool {
-	for _, substr := range substrings {
-		if len(content) > len(substr) {
-			for i := 0; i <= len(content)-len(substr); i++ {
-				if content[i:i+len(substr)] == substr {
-					return true
-				}
-			}
-		}
-	}
-	return false
 }
 
 // SeedTopicsFromFile loads topics from seed/topic.json and syncs with database
@@ -209,13 +139,13 @@ func (s *SeedSyncService) SeedTopicsFromFile(ctx context.Context, userID, topicF
 					break
 				}
 			}
-			
+
 			if existing != nil {
 				// Update existing topic
 				topic.ID = existing.ID
 				topic.CreatedAt = existing.CreatedAt
 				topic.UpdatedAt = time.Now()
-				
+
 				if err := s.topicRepo.Update(ctx, topic); err != nil {
 					log.Printf("Error updating topic %s: %v", topic.Name, err)
 					continue
@@ -224,7 +154,7 @@ func (s *SeedSyncService) SeedTopicsFromFile(ctx context.Context, userID, topicF
 			} else {
 				// Create new topic
 				topic.ID = primitive.NewObjectID().Hex()
-				
+
 				if _, err := s.topicRepo.Create(ctx, topic); err != nil {
 					log.Printf("Error creating topic %s: %v", topic.Name, err)
 					continue
@@ -293,16 +223,16 @@ func (s *SeedSyncService) generateIdeasForTopic(ctx context.Context, userID stri
 // createMockIdeas creates mock ideas for development purposes
 func (s *SeedSyncService) createMockIdeas(topic *entities.Topic, count int) []*entities.Idea {
 	ideas := make([]*entities.Idea, count)
-	
+
 	for i := 0; i < count; i++ {
 		ideaNum := i + 1
 		ideas[i] = &entities.Idea{
-			Content: fmt.Sprintf("Idea #%d for %s: %s approach with %s", 
-				ideaNum, topic.Name, 
+			Content: fmt.Sprintf("Idea #%d for %s: %s approach with %s",
+				ideaNum, topic.Name,
 				getRandomAdjective(), getRandomTechnology()),
 		}
 	}
-	
+
 	return ideas
 }
 
