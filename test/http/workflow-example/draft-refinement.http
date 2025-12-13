@@ -1,0 +1,217 @@
+# Phase 3 - Draft Refinement Workflow Test
+# Tests the refinement functionality according to docs/fase-oth.md
+
+@baseUrl = http://localhost:8080
+@devUserId = 000000000000000000000001
+
+# Replace these with actual values from draft-generation.http responses
+@ideaId = 6935d53ac95d0eae4a139760
+@draftId = 69396f923587f862431eeef1
+@jobId = 825372af-f822-417e-a87b-d2bec8110872
+
+### Test the refinement endpoint - Step 1: Get existing draft
+# First, we need to get an existing draft to work with
+# This should return a draft with status DRAFT
+GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=DRAFT&limit=1 HTTP/1.1
+Content-Type: application/json
+
+### Expected response format:
+# {
+#   "count": 6,
+#   "drafts": [
+#     {
+#       "id": "69396f923587f862431eeef1",
+#       "user_id": "000000000000000000000001",
+#       "idea_id": "6935d53ac95d0eae4a139760",
+#       "type": "POST",
+#       "title": "",
+#       "content": "¿Migrar a TypeScript en un monorepo sin congelar releases...",
+#       "status": "DRAFT",
+#       "refinement_history": [],
+#       "linkedin_post_id": "",
+#       "metadata": {},
+#       "created_at": "2025-12-10T13:03:14Z",
+#       "updated_at": "2025-12-10T13:03:14Z"
+#     }
+#   ]
+# }
+
+### Test the refinement endpoint - Step 2: Refine draft with emojis
+# This tests the core refinement functionality
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Hazlo más engaging y añade emojis apropiados para LinkedIn"
+}
+
+### Expected response format:
+# {
+#   "draft": {
+#     "id": "69396f923587f862431eeef1",
+#     "user_id": "000000000000000000000001",
+#     "idea_id": "6935d53ac95d0eae4a139760",
+#     "type": "POST",
+#     "title": "",
+#     "content": "🚀 ¿Migrar a TypeScript en un monorepo sin congelar releases?...",
+#     "status": "REFINED",
+#     "refinement_history": [
+#       {
+#         "timestamp": "2025-12-13T10:30:00Z",
+#         "prompt": "Hazlo más engaging y añade emojis apropiados para LinkedIn",
+#         "content": "🚀 ¿Migrar a TypeScript en un monorepo sin congelar releases?...",
+#         "version": 1
+#       }
+#     ],
+#     "linkedin_post_id": "",
+#     "metadata": {},
+#     "created_at": "2025-12-10T13:03:14Z",
+#     "updated_at": "2025-12-13T10:30:00Z"
+#   }
+# }
+
+### Test the refinement endpoint - Step 3: Refine again with different prompt
+# This tests sequential refinements and history preservation
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Hazlo más técnico y añade métricas específicas"
+}
+
+### Expected response format:
+# {
+#   "draft": {
+#     "id": "69396f923587f862431eeef1",
+#     "content": "📊 En nuestra migración de TypeScript mejoramos en un 35%...",
+#     "status": "REFINED",
+#     "refinement_history": [
+#       {
+#         "timestamp": "2025-12-13T10:30:00Z",
+#         "prompt": "Hazlo más engaging y añade emojis apropiados para LinkedIn",
+#         "content": "🚀 ¿Migrar a TypeScript en un monorepo sin congelar releases?...",
+#         "version": 1
+#       },
+#       {
+#         "timestamp": "2025-12-13T10:35:00Z",
+#         "prompt": "Hazlo más técnico y añade métricas específicas",
+#         "content": "📊 En nuestra migración de TypeScript mejoramos en un 35%...",
+#         "version": 2
+#       }
+#     ],
+#     "updated_at": "2025-12-13T10:35:00Z"
+#   }
+# }
+
+### Test error handling - Invalid draft ID
+# Should return 404 Not Found
+POST {{baseUrl}}/v1/drafts/invalid_draft_id/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Make it better"
+}
+
+### Expected error response:
+# {
+#   "error": {
+#     "code": "NOT_FOUND",
+#     "message": "Draft not found",
+#     "timestamp": "2025-12-13T10:40:00Z"
+#   }
+# }
+
+### Test error handling - Empty prompt
+# Should return 400 Bad Request
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": ""
+}
+
+### Expected error response:
+# {
+#   "error": {
+#     "code": "VALIDATION_ERROR",
+#     "message": "prompt is required",
+#     "timestamp": "2025-12-13T10:40:00Z"
+#   }
+# }
+
+### Test error handling - Prompt too short
+# Should return 400 Bad Request
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "x"
+}
+
+### Expected error response:
+# {
+#   "error": {
+#     "code": "VALIDATION_ERROR",
+#     "message": "prompt must be at least 10 characters",
+#     "timestamp": "2025-12-13T10:40:00Z"
+#   }
+# }
+
+### Test error handling - Prompt too long
+# Should return 400 Bad Request
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "This prompt is way too long and should exceed the maximum length of 500 characters that is allowed by the validation logic in the system. This is a test to make sure that long prompts are properly rejected by the API endpoint"
+}
+
+### Expected error response:
+# {
+#   "error": {
+#     "code": "VALIDATION_ERROR",
+#     "message": "prompt exceeds maximum of 500 characters",
+#     "timestamp": "2025-12-13T10:40:00Z"
+#   }
+# }
+
+### Verify final state - Get updated drafts
+# Should show the refined draft with updated status and history
+GET {{baseUrl}}/v1/drafts/{{devUserId}}?status=REFINED HTTP/1.1
+Content-Type: application/json
+
+### Test refinement limit - Multiple refinements (optional)
+# This would test the maximum 10 refinement limit
+# Note: This requires running the refine endpoint 10+ times
+
+### Additional validation tests for different types of content:
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Añade hashtags relevantes al final del post"
+}
+
+### Test with professional tone adjustment:
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Ajusta el tono para que sea más profesional y corporativo"
+}
+
+### Test with content expansion:
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Expande el contenido con ejemplos concretos y casos de uso reales"
+}
+
+### Test with content simplification:
+POST {{baseUrl}}/v1/drafts/{{draftId}}/refine HTTP/1.1
+Content-Type: application/json
+
+{
+  "prompt": "Simplifica el lenguaje para que sea más accesible para audiencia general"
+}
