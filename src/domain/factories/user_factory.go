@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/linkgen-ai/backend/domain/entities"
+	"github.com/linkgen-ai/backend/src/domain/entities"
 )
 
 // NewUser creates a new User entity with validation

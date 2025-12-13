@@ -19,6 +19,7 @@ type Topic struct {
 	RelatedTopics []string
 	Active        bool
 	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 const (
@@ -84,6 +85,18 @@ func (t *Topic) Validate() error {
 
 	if t.CreatedAt.After(time.Now()) {
 		return fmt.Errorf("created timestamp cannot be in the future")
+	}
+
+	if t.UpdatedAt.IsZero() {
+		return fmt.Errorf("updated timestamp cannot be zero")
+	}
+
+	if t.UpdatedAt.Before(t.CreatedAt) {
+		return fmt.Errorf("updated timestamp cannot be before created timestamp")
+	}
+
+	if t.UpdatedAt.After(time.Now()) {
+		return fmt.Errorf("updated timestamp cannot be in the future")
 	}
 
 	return nil
@@ -218,5 +231,11 @@ func (t *Topic) SetDefaults() {
 	}
 	if t.Prompt == "" {
 		t.Prompt = DefaultPrompt
+	}
+	if t.CreatedAt.IsZero() {
+		t.CreatedAt = time.Now()
+	}
+	if t.UpdatedAt.IsZero() {
+		t.UpdatedAt = t.CreatedAt
 	}
 }

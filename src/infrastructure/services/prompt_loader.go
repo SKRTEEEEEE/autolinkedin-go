@@ -11,6 +11,7 @@ import (
 	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"gopkg.in/yaml.v3"
 )
 
 // PromptLoader handles loading prompts from markdown files with front-matter
@@ -52,6 +53,12 @@ func (pl *PromptLoader) LoadPromptsFromDir(dirPath string) ([]*PromptFile, error
 			return nil
 		}
 
+		// Skip legacy prompt files
+		if strings.HasSuffix(path, ".old.md") {
+			pl.logger.Info("Skipping legacy prompt file", "path", path)
+			return nil
+		}
+
 		// Parse the prompt file
 		promptFile, err := pl.parsePromptFile(path)
 		if err != nil {
@@ -84,18 +91,17 @@ func (pl *PromptLoader) parsePromptFile(filePath string) (*PromptFile, error) {
 	}
 
 	// Parse YAML front-matter
-	frontMatter := strings.TrimSpace(parts[1])
-	lines := strings.Split(frontMatter, "\n")
-
-	var name, promptType string
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "name:") {
-			name = strings.TrimSpace(strings.TrimPrefix(line, "name:"))
-		} else if strings.HasPrefix(line, "type:") {
-			promptType = strings.TrimSpace(strings.TrimPrefix(line, "type:"))
-		}
+	var meta struct {
+		Name string `yaml:"name"`
+		Type string `yaml:"type"`
 	}
+
+	if err := yaml.Unmarshal([]byte(parts[1]), &meta); err != nil {
+		return nil, fmt.Errorf("invalid front-matter in %s: %w", filePath, err)
+	}
+
+	name := strings.TrimSpace(meta.Name)
+	promptType := strings.TrimSpace(meta.Type)
 
 	if name == "" {
 		return nil, fmt.Errorf("missing name in front-matter of %s", filePath)
@@ -103,6 +109,10 @@ func (pl *PromptLoader) parsePromptFile(filePath string) (*PromptFile, error) {
 
 	if promptType == "" {
 		return nil, fmt.Errorf("missing type in front-matter of %s", filePath)
+	}
+
+	if promptType != string(entities.PromptTypeIdeas) && promptType != string(entities.PromptTypeDrafts) {
+		return nil, fmt.Errorf("invalid prompt type %s in %s", promptType, filePath)
 	}
 
 	// Get the template content (everything after the second ---)

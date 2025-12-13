@@ -1,12 +1,12 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
-
-	"context"
 
 	"github.com/gorilla/mux"
 	"github.com/linkgen-ai/backend/src/domain/entities"
@@ -19,6 +19,7 @@ import (
 type TopicsHandler struct {
 	topicRepo       interfaces.TopicRepository
 	userRepo        interfaces.UserRepository
+	promptsRepo     interfaces.PromptsRepository
 	generateIdeasUC GenerateIdeasUseCase
 	logger          *zap.Logger
 }
@@ -33,6 +34,7 @@ type GenerateIdeasUseCase interface {
 func NewTopicsHandler(
 	topicRepo interfaces.TopicRepository,
 	userRepo interfaces.UserRepository,
+	promptsRepo interfaces.PromptsRepository,
 	generateIdeasUC GenerateIdeasUseCase,
 	logger *zap.Logger,
 ) *TopicsHandler {
@@ -43,6 +45,7 @@ func NewTopicsHandler(
 	return &TopicsHandler{
 		topicRepo:       topicRepo,
 		userRepo:        userRepo,
+		promptsRepo:     promptsRepo,
 		generateIdeasUC: generateIdeasUC,
 		logger:          logger,
 	}
@@ -61,6 +64,7 @@ type TopicDTO struct {
 	RelatedTopics []string `json:"related_topics,omitempty"`
 	Active        bool     `json:"active"`
 	CreatedAt     string   `json:"created_at"`
+	UpdatedAt     string   `json:"updated_at"`
 }
 
 // CreateTopicRequest represents the request to create a topic
@@ -195,6 +199,7 @@ func (h *TopicsHandler) GetTopics(w http.ResponseWriter, r *http.Request) {
 			RelatedTopics: topic.RelatedTopics,
 			Active:        topic.Active,
 			CreatedAt:     topic.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:     topic.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		})
 	}
 
@@ -235,6 +240,11 @@ func (h *TopicsHandler) CreateTopic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := h.validatePromptReference(ctx, req.UserID, req.Prompt); err != nil {
+		WriteError(w, http.StatusBadRequest, ErrorCodeValidation, err.Error(), nil, h.logger)
+		return
+	}
+
 	// Create topic entity
 	topic := &entities.Topic{
 		ID:            primitive.NewObjectID().Hex(),
@@ -260,7 +270,7 @@ func (h *TopicsHandler) CreateTopic(w http.ResponseWriter, r *http.Request) {
 		topic.Ideas = *req.Ideas
 	}
 	if req.Prompt != nil {
-		topic.Prompt = *req.Prompt
+		topic.Prompt = strings.TrimSpace(*req.Prompt)
 	}
 	if req.Active != nil {
 		topic.Active = *req.Active
@@ -310,6 +320,7 @@ func (h *TopicsHandler) CreateTopic(w http.ResponseWriter, r *http.Request) {
 		RelatedTopics: topic.RelatedTopics,
 		Active:        topic.Active,
 		CreatedAt:     topic.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:     topic.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}, h.logger)
 }
 
@@ -369,7 +380,7 @@ func (h *TopicsHandler) UpdateTopic(w http.ResponseWriter, r *http.Request) {
 		topic.Ideas = *req.Ideas
 	}
 	if req.Prompt != nil {
-		topic.Prompt = *req.Prompt
+		topic.Prompt = strings.TrimSpace(*req.Prompt)
 	}
 	if req.RelatedTopics != nil {
 		topic.RelatedTopics = req.RelatedTopics
@@ -378,6 +389,15 @@ func (h *TopicsHandler) UpdateTopic(w http.ResponseWriter, r *http.Request) {
 	if req.Active != nil {
 		topic.Active = *req.Active
 	}
+
+	if req.Prompt != nil {
+		if err := h.validatePromptReference(ctx, topic.UserID, req.Prompt); err != nil {
+			WriteError(w, http.StatusBadRequest, ErrorCodeValidation, err.Error(), nil, h.logger)
+			return
+		}
+	}
+
+	topic.UpdatedAt = time.Now()
 
 	// Set defaults and validate
 	topic.SetDefaults()
@@ -406,6 +426,7 @@ func (h *TopicsHandler) UpdateTopic(w http.ResponseWriter, r *http.Request) {
 		RelatedTopics: topic.RelatedTopics,
 		Active:        topic.Active,
 		CreatedAt:     topic.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:     topic.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}, h.logger)
 }
 
@@ -431,6 +452,32 @@ func (h *TopicsHandler) DeleteTopic(w http.ResponseWriter, r *http.Request) {
 
 	// Return success
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *TopicsHandler) validatePromptReference(ctx context.Context, userID string, promptName *string) error {
+	if promptName == nil {
+		return nil
+	}
+
+	trimmed := strings.TrimSpace(*promptName)
+	if trimmed == "" {
+		return fmt.Errorf("prompt reference cannot be empty")
+	}
+
+	prompt, err := h.promptsRepo.FindByName(ctx, userID, trimmed)
+	if err != nil {
+		return fmt.Errorf("failed to validate prompt reference: %w", err)
+	}
+
+	if prompt == nil {
+		return fmt.Errorf("prompt reference not found: %s", trimmed)
+	}
+
+	if prompt.Type != entities.PromptTypeIdeas {
+		return fmt.Errorf("prompt reference must be of ideas type")
+	}
+
+	return nil
 }
 
 // RegisterRoutes registers all topic routes

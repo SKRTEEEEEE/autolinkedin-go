@@ -16,9 +16,10 @@ func NewIdea(id, userID, topicID, topicName, content string) (*entities.Idea, er
 		TopicID:      topicID,
 		TopicName:    topicName,
 		Content:      content,
-		QualityScore: nil,
+		QualityScore: func() *float64 { v := 0.0; return &v }(),
 		Used:         false,
 		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 		ExpiresAt:    nil,
 	}
 
@@ -69,9 +70,10 @@ func NewIdeaWithoutExpiration(id, userID, topicID, topicName, content string) (*
 		TopicID:      topicID,
 		TopicName:    topicName,
 		Content:      content,
-		QualityScore: nil,
+		QualityScore: func() *float64 { v := 0.0; return &v }(),
 		Used:         false,
 		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 		ExpiresAt:    nil,
 	}
 

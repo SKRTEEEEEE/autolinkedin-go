@@ -2,8 +2,11 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/linkgen-ai/backend/src/application/usecases"
@@ -22,13 +25,20 @@ const (
 
 // DevSeeder handles seeding development data
 type DevSeeder struct {
-	userRepo    interfaces.UserRepository
-	topicRepo   interfaces.TopicRepository
-	ideasRepo   interfaces.IdeasRepository
-	promptsRepo interfaces.PromptsRepository
-	llmService  interfaces.LLMService
-	logger      *zap.Logger
-	promptDir   string
+	userRepo      interfaces.UserRepository
+	topicRepo     interfaces.TopicRepository
+	ideasRepo     interfaces.IdeasRepository
+	promptsRepo   interfaces.PromptsRepository
+	llmService    interfaces.LLMService
+	logger        *zap.Logger
+	promptDir     string
+	topicSeedPath string
+}
+
+// DevSeederConfig allows customizing seed sources for testing
+type DevSeederConfig struct {
+	PromptDir     string
+	TopicSeedPath string
 }
 
 // NewDevSeeder creates a new development data seeder
@@ -39,15 +49,29 @@ func NewDevSeeder(
 	promptsRepo interfaces.PromptsRepository,
 	llmService interfaces.LLMService,
 	logger *zap.Logger,
+	config *DevSeederConfig,
 ) *DevSeeder {
+	promptDir := filepath.Join(".", "seed", "prompt")
+	topicSeedPath := filepath.Join(".", "seed", "topic.json")
+
+	if config != nil {
+		if config.PromptDir != "" {
+			promptDir = config.PromptDir
+		}
+		if config.TopicSeedPath != "" {
+			topicSeedPath = config.TopicSeedPath
+		}
+	}
+
 	return &DevSeeder{
-		userRepo:    userRepo,
-		topicRepo:   topicRepo,
-		ideasRepo:   ideasRepo,
-		promptsRepo: promptsRepo,
-		llmService:  llmService,
-		logger:      logger,
-		promptDir:   filepath.Join(".", "seed", "prompt"),
+		userRepo:      userRepo,
+		topicRepo:     topicRepo,
+		ideasRepo:     ideasRepo,
+		promptsRepo:   promptsRepo,
+		llmService:    llmService,
+		logger:        logger,
+		promptDir:     promptDir,
+		topicSeedPath: topicSeedPath,
 	}
 }
 
@@ -97,84 +121,56 @@ func (s *DevSeeder) SeedDevUser(ctx context.Context) error {
 func (s *DevSeeder) SeedDefaultTopics(ctx context.Context) error {
 	s.logger.Info("Seeding default topics for development user...")
 
-	defaultTopics := []struct {
-		name        string
-		description string
-	}{
-		{
-			name:        "Inteligencia Artificial",
-			description: "Machine Learning, Deep Learning, aplicaciones de IA y tendencias tecnológicas",
-		},
-		{
-			name:        "Desarrollo Backend",
-			description: "Arquitecturas de servidor, APIs, bases de datos y mejores prácticas de backend",
-		},
-		{
-			name:        "TypeScript",
-			description: "Desarrollo con TypeScript, frameworks modernos y patrones de diseño",
-		},
+	seedTopics, err := s.loadTopicsFromFile()
+	if err != nil {
+		return fmt.Errorf("failed to load topics from seed: %w", err)
 	}
 
-	for _, topicData := range defaultTopics {
-		// Check if topic already exists for this user
-		topics, err := s.topicRepo.ListByUserID(ctx, DevUserID)
+	existingTopics, err := s.topicRepo.ListByUserID(ctx, DevUserID)
+	if err != nil {
+		s.logger.Warn("Failed to check existing topics", zap.Error(err))
+		existingTopics = []*entities.Topic{}
+	}
+
+	existingByName := make(map[string]bool)
+	for _, t := range existingTopics {
+		existingByName[strings.ToLower(t.Name)] = true
+	}
+
+	for _, seedTopic := range seedTopics {
+		normalizedName := strings.ToLower(seedTopic.Name)
+		if existingByName[normalizedName] {
+			s.logger.Info("Topic already exists, skipping", zap.String("topic", seedTopic.Name))
+			continue
+		}
+
+		seedTopic.ID = primitive.NewObjectID().Hex()
+		seedTopic.UserID = DevUserID
+		seedTopic.NormalizeRelatedTopics()
+		seedTopic.SetDefaults()
+		if seedTopic.Prompt == "" {
+			seedTopic.Prompt = entities.DefaultPrompt
+		}
+
+		if seedTopic.CreatedAt.IsZero() {
+			seedTopic.CreatedAt = time.Now()
+		}
+		if seedTopic.UpdatedAt.IsZero() {
+			seedTopic.UpdatedAt = seedTopic.CreatedAt
+		}
+
+		if err := seedTopic.Validate(); err != nil {
+			s.logger.Warn("Failed to validate topic", zap.String("topic", seedTopic.Name), zap.Error(err))
+			continue
+		}
+
+		topicID, err := s.topicRepo.Create(ctx, seedTopic)
 		if err != nil {
-			s.logger.Warn("Failed to check existing topics", zap.Error(err))
-		}
-
-		// Check if this topic name already exists
-		topicExists := false
-		for _, t := range topics {
-			if t.Name == topicData.name {
-				topicExists = true
-				break
-			}
-		}
-
-		if topicExists {
-			s.logger.Info("Topic already exists, skipping", zap.String("topic", topicData.name))
+			s.logger.Warn("Failed to save topic", zap.String("topic", seedTopic.Name), zap.Error(err))
 			continue
 		}
 
-		// Create new topic
-		topic := &entities.Topic{
-			ID:            primitive.NewObjectID().Hex(),
-			UserID:        DevUserID,
-			Name:          topicData.name,
-			Description:   topicData.description,
-			Category:      entities.DefaultCategory,
-			Priority:      entities.DefaultPriority,
-			Ideas:         entities.DefaultIdeasCount,
-			Prompt:        entities.DefaultPrompt,
-			RelatedTopics: []string{},
-			Active:        true,
-			CreatedAt:     time.Now(),
-		}
-
-		// Set defaults and validate
-		topic.SetDefaults()
-		if err := topic.Validate(); err != nil {
-			s.logger.Warn("Failed to validate topic",
-				zap.String("topic", topicData.name),
-				zap.Error(err),
-			)
-			continue
-		}
-
-		// Save topic
-		topicID, err := s.topicRepo.Create(ctx, topic)
-		if err != nil {
-			s.logger.Warn("Failed to save topic",
-				zap.String("topic", topicData.name),
-				zap.Error(err),
-			)
-			continue
-		}
-
-		s.logger.Info("Default topic created",
-			zap.String("topic", topicData.name),
-			zap.String("topic_id", topicID),
-		)
+		s.logger.Info("Default topic created", zap.String("topic", seedTopic.Name), zap.String("topic_id", topicID))
 	}
 
 	s.logger.Info("Default topics seeding completed")
@@ -251,16 +247,6 @@ func (s *DevSeeder) SeedInitialIdeas(ctx context.Context) error {
 func (s *DevSeeder) SeedDefaultPrompts(ctx context.Context) error {
 	s.logger.Info("Seeding default prompts for development user...")
 
-	// Check if prompts already exist
-	existingCount, err := s.promptsRepo.CountByUserID(ctx, DevUserID)
-	if err != nil {
-		s.logger.Warn("Failed to check existing prompts count", zap.Error(err))
-	} else if existingCount > 0 {
-		s.logger.Info("Prompts already exist, skipping default generation",
-			zap.Int64("existing_count", existingCount))
-		return nil
-	}
-
 	// Create prompt loader using zap adapter for interfaces.Logger
 	loggerAdapter := services.NewZapLoggerAdapter(s.logger)
 	promptLoader := services.NewPromptLoader(loggerAdapter)
@@ -287,8 +273,23 @@ func (s *DevSeeder) SeedDefaultPrompts(ctx context.Context) error {
 		return nil
 	}
 
+	existingPrompts, err := s.promptsRepo.ListByUserID(ctx, DevUserID)
+	if err != nil {
+		s.logger.Warn("Failed to list existing prompts", zap.Error(err))
+	}
+
+	existingByName := make(map[string]bool)
+	for _, p := range existingPrompts {
+		existingByName[strings.ToLower(p.Name)] = true
+	}
+
 	// Save prompts to database
 	for _, prompt := range prompts {
+		if existingByName[strings.ToLower(prompt.Name)] {
+			s.logger.Info("Prompt already exists, skipping", zap.String("name", prompt.Name))
+			continue
+		}
+
 		promptID, err := s.promptsRepo.Create(ctx, prompt)
 		if err != nil {
 			s.logger.Warn("Failed to save prompt",
@@ -307,6 +308,65 @@ func (s *DevSeeder) SeedDefaultPrompts(ctx context.Context) error {
 
 	s.logger.Info("Default prompts seeding completed", zap.Int("total_created", len(prompts)))
 	return nil
+}
+
+func (s *DevSeeder) loadTopicsFromFile() ([]*entities.Topic, error) {
+	content, err := os.ReadFile(s.topicSeedPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read topic seed file: %w", err)
+	}
+
+	var rawTopics []map[string]interface{}
+	if err := json.Unmarshal(content, &rawTopics); err != nil {
+		return nil, fmt.Errorf("failed to parse topic seed JSON: %w", err)
+	}
+
+	topics := make([]*entities.Topic, 0, len(rawTopics))
+	for _, raw := range rawTopics {
+		name, _ := raw["name"].(string)
+		description, _ := raw["description"].(string)
+		category, _ := raw["category"].(string)
+		promptName, _ := raw["prompt"].(string)
+
+		priority := entities.DefaultPriority
+		if value, ok := raw["priority"].(float64); ok {
+			priority = int(value)
+		}
+
+		ideas := entities.DefaultIdeasCount
+		if value, ok := raw["ideas"].(float64); ok {
+			ideas = int(value)
+		}
+
+		active := true
+		if value, ok := raw["active"].(bool); ok {
+			active = value
+		}
+
+		var relatedTopics []string
+		if list, ok := raw["related_topics"].([]interface{}); ok {
+			for _, item := range list {
+				if str, ok := item.(string); ok {
+					relatedTopics = append(relatedTopics, str)
+				}
+			}
+		}
+
+		topic := &entities.Topic{
+			Name:          name,
+			Description:   description,
+			Category:      category,
+			Priority:      priority,
+			Ideas:         ideas,
+			Prompt:        promptName,
+			RelatedTopics: relatedTopics,
+			Active:        active,
+		}
+
+		topics = append(topics, topic)
+	}
+
+	return topics, nil
 }
 
 // SeedAll seeds all development data

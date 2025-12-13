@@ -16,12 +16,13 @@ type Idea struct {
 	QualityScore *float64
 	Used         bool
 	CreatedAt    time.Time
+	UpdatedAt    time.Time
 	ExpiresAt    *time.Time
 }
 
 const (
 	MinIdeaContentLength = 10
-	MaxIdeaContentLength = 200  // Updated from 5000 to 200 as specified in entity.md
+	MaxIdeaContentLength = 200 // Updated from 5000 to 200 as specified in entity.md
 	DefaultIdeaTTLDays   = 30
 )
 
@@ -59,6 +60,18 @@ func (i *Idea) Validate() error {
 		return fmt.Errorf("created timestamp cannot be in the future")
 	}
 
+	if i.UpdatedAt.IsZero() {
+		return fmt.Errorf("updated timestamp cannot be zero")
+	}
+
+	if i.UpdatedAt.Before(i.CreatedAt) {
+		return fmt.Errorf("updated timestamp cannot be before created timestamp")
+	}
+
+	if i.UpdatedAt.After(time.Now()) {
+		return fmt.Errorf("updated timestamp cannot be in the future")
+	}
+
 	return nil
 }
 
@@ -86,6 +99,11 @@ func (i *Idea) ValidateContent() error {
 
 // validateQualityScore validates quality score range
 func (i *Idea) validateQualityScore() error {
+	if i.QualityScore == nil {
+		defaultScore := 0.0
+		i.QualityScore = &defaultScore
+	}
+
 	if i.QualityScore != nil {
 		score := *i.QualityScore
 		if score < 0.0 || score > 1.0 {

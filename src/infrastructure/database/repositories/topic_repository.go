@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
@@ -40,6 +41,7 @@ type topicDocument struct {
 	RelatedTopics []string           `bson:"related_topics"`
 	Active        bool               `bson:"active"`
 	CreatedAt     primitive.DateTime `bson:"created_at"`
+	UpdatedAt     primitive.DateTime `bson:"updated_at"`
 }
 
 // toDocument converts a Topic entity to a MongoDB document
@@ -64,6 +66,7 @@ func (r *topicRepository) toDocument(topic *entities.Topic) (*topicDocument, err
 		RelatedTopics: topic.RelatedTopics,
 		Active:        topic.Active,
 		CreatedAt:     primitive.NewDateTimeFromTime(topic.CreatedAt),
+		UpdatedAt:     primitive.NewDateTimeFromTime(topic.UpdatedAt),
 	}
 
 	// Only set ID if it's valid
@@ -96,6 +99,13 @@ func (r *topicRepository) toEntity(doc *topicDocument) *entities.Topic {
 		RelatedTopics: doc.RelatedTopics,
 		Active:        doc.Active,
 		CreatedAt:     doc.CreatedAt.Time(),
+		UpdatedAt: func() time.Time {
+			updatedAt := doc.UpdatedAt.Time()
+			if updatedAt.IsZero() {
+				return doc.CreatedAt.Time()
+			}
+			return updatedAt
+		}(),
 	}
 }
 
@@ -103,6 +113,10 @@ func (r *topicRepository) toEntity(doc *topicDocument) *entities.Topic {
 func (r *topicRepository) Create(ctx context.Context, topic *entities.Topic) (string, error) {
 	if topic == nil {
 		return "", database.ErrInvalidEntity
+	}
+
+	if topic.UpdatedAt.IsZero() {
+		topic.UpdatedAt = topic.CreatedAt
 	}
 
 	// Validate topic before persisting
@@ -239,6 +253,8 @@ func (r *topicRepository) Update(ctx context.Context, topic *entities.Topic) err
 		return database.ErrInvalidID
 	}
 
+	topic.UpdatedAt = time.Now()
+
 	// Validate topic before persisting
 	if err := topic.Validate(); err != nil {
 		return fmt.Errorf("topic validation failed: %w", err)
@@ -260,6 +276,7 @@ func (r *topicRepository) Update(ctx context.Context, topic *entities.Topic) err
 			"prompt":         topic.Prompt,
 			"related_topics": topic.RelatedTopics,
 			"active":         topic.Active,
+			"updated_at":     primitive.NewDateTimeFromTime(topic.UpdatedAt),
 		},
 	}
 

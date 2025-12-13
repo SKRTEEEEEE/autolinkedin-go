@@ -21,6 +21,7 @@ func NewTopic(id, userID, name string) (*entities.Topic, error) {
 		RelatedTopics: []string{},
 		Active:        true,
 		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 
 	// Set defaults and validate
@@ -46,6 +47,7 @@ func NewTopicWithDetails(id, userID, name, description, category string, priorit
 		RelatedTopics: relatedTopics,
 		Active:        true,
 		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 
 	// Normalize related topics to remove duplicates
@@ -69,6 +71,7 @@ func NewTopicWithRelatedTopics(id, userID, name string, relatedTopics []string) 
 
 	topic.RelatedTopics = relatedTopics
 	topic.NormalizeRelatedTopics()
+	topic.UpdatedAt = topic.CreatedAt
 
 	if err := topic.Validate(); err != nil {
 		return nil, fmt.Errorf("topic validation failed: %w", err)
@@ -85,6 +88,7 @@ func NewTopicWithPrompt(id, userID, name, prompt string) (*entities.Topic, error
 	}
 
 	topic.Prompt = prompt
+	topic.UpdatedAt = topic.CreatedAt
 
 	if err := topic.Validate(); err != nil {
 		return nil, fmt.Errorf("topic validation failed: %w", err)

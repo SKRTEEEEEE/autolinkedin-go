@@ -176,14 +176,21 @@ func (uc *GenerateIdeasUseCase) generateIdeasForTopicContext(ctx context.Context
 }
 
 func (uc *GenerateIdeasUseCase) resolvePrompt(ctx context.Context, topic *entities.Topic) (*entities.Prompt, error) {
+	if topic == nil {
+		return nil, fmt.Errorf("topic cannot be nil")
+	}
+
 	var prompt *entities.Prompt
 
 	if topic.Prompt != "" {
-		foundPrompt, err := uc.promptsRepo.FindByName(ctx, topic.UserID, topic.Prompt)
+		foundPrompt, err := uc.promptsRepo.FindByName(ctx, topic.UserID, strings.TrimSpace(topic.Prompt))
 		if err != nil {
 			return nil, fmt.Errorf("failed to find prompt: %w", err)
 		}
-		prompt = foundPrompt
+
+		if foundPrompt != nil {
+			prompt = foundPrompt
+		}
 	}
 
 	if prompt == nil {
@@ -192,7 +199,7 @@ func (uc *GenerateIdeasUseCase) resolvePrompt(ctx context.Context, topic *entiti
 			return nil, fmt.Errorf("failed to find fallback prompt: %w", err)
 		}
 		if len(fallbackPrompts) == 0 {
-			return nil, fmt.Errorf("prompt not found: %s", topic.Prompt)
+			return nil, fmt.Errorf("no active prompts available for ideas")
 		}
 		prompt = fallbackPrompts[0]
 	}

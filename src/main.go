@@ -350,6 +350,7 @@ func (a *Application) seedDevelopmentData(ctx context.Context) error {
 		a.promptsRepo,
 		a.llmClient,
 		a.logger,
+		nil,
 	)
 
 	if err := seeder.SeedAll(ctx); err != nil {
@@ -408,6 +409,7 @@ func (a *Application) initializeHTTPServer() error {
 	topicsHandler := handlers.NewTopicsHandler(
 		a.topicRepo,
 		a.userRepo,
+		a.promptsRepo,
 		a.generateIdeasUC,
 		a.logger,
 	)
