@@ -2,11 +2,14 @@ package usecases
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/linkgen-ai/backend/src/domain/entities"
+	domainErrors "github.com/linkgen-ai/backend/src/domain/errors"
 	"github.com/linkgen-ai/backend/src/domain/interfaces"
+	"github.com/linkgen-ai/backend/src/infrastructure/database"
 )
 
 // RefineDraftUseCase orchestrates draft refinement with user feedback
@@ -34,28 +37,44 @@ type RefineDraftInput struct {
 
 // Execute refines a draft based on user feedback
 func (uc *RefineDraftUseCase) Execute(ctx context.Context, input RefineDraftInput) (*entities.Draft, error) {
-	// Validate input
-	if err := uc.validateInput(input); err != nil {
-		return nil, fmt.Errorf("input validation failed: %w", err)
+	normalized := RefineDraftInput{
+		DraftID:    strings.TrimSpace(input.DraftID),
+		UserPrompt: strings.TrimSpace(input.UserPrompt),
 	}
+
+	// Validate input
+	if err := uc.validateInput(normalized); err != nil {
+		return nil, err
+	}
+	input = normalized
 
 	// Get draft from repository
 	draft, err := uc.draftRepo.FindByID(ctx, input.DraftID)
 	if err != nil {
+		if errors.Is(err, database.ErrEntityNotFound) {
+			return nil, domainErrors.NewDraftNotFound(input.DraftID)
+		}
+		if errors.Is(err, database.ErrInvalidID) {
+			return nil, domainErrors.NewValidationError("draft_id", "invalid draft ID")
+		}
 		return nil, fmt.Errorf("failed to retrieve draft: %w", err)
 	}
 	if draft == nil {
-		return nil, fmt.Errorf("draft not found: %s", input.DraftID)
+		return nil, domainErrors.NewDraftNotFound(input.DraftID)
 	}
 
 	// Verify draft can be refined
 	if !draft.CanBeRefined() {
-		return nil, fmt.Errorf("draft cannot be refined in current status: %s", draft.Status)
+		return nil, domainErrors.NewInvalidDraftStatus(string(draft.Status))
 	}
 
 	// Check refinement limit
 	if len(draft.RefinementHistory) >= entities.MaxRefinements {
-		return nil, fmt.Errorf("refinement limit exceeded (maximum %d)", entities.MaxRefinements)
+		return nil, domainErrors.NewRefinementLimitExceeded(
+			draft.ID,
+			len(draft.RefinementHistory),
+			entities.MaxRefinements,
+		)
 	}
 
 	// Build conversation history from refinement history
@@ -70,17 +89,17 @@ func (uc *RefineDraftUseCase) Execute(ctx context.Context, input RefineDraftInpu
 	// Validate refined content
 	trimmedContent := strings.TrimSpace(refinedContent)
 	if trimmedContent == "" {
-		return nil, fmt.Errorf("LLM returned empty refined content")
+		return nil, domainErrors.NewValidationError("refined_content", "LLM returned empty refined content")
 	}
 
 	// Add refinement to draft
 	if err := draft.AddRefinement(trimmedContent, input.UserPrompt); err != nil {
-		return nil, fmt.Errorf("failed to add refinement: %w", err)
+		return nil, domainErrors.NewValidationError("refinement", err.Error())
 	}
 
 	// Validate the refined draft
 	if err := draft.Validate(); err != nil {
-		return nil, fmt.Errorf("refined draft validation failed: %w", err)
+		return nil, domainErrors.NewValidationError("draft", err.Error())
 	}
 
 	// Save updated draft
@@ -90,22 +109,25 @@ func (uc *RefineDraftUseCase) Execute(ctx context.Context, input RefineDraftInpu
 
 	return draft, nil
 }
-
-// validateInput validates the input parameters
 func (uc *RefineDraftUseCase) validateInput(input RefineDraftInput) error {
-	draftID := strings.TrimSpace(input.DraftID)
-	userPrompt := strings.TrimSpace(input.UserPrompt)
-
-	if draftID == "" && userPrompt == "" {
-		return fmt.Errorf("draft ID and prompt cannot be empty")
+	if input.DraftID == "" && input.UserPrompt == "" {
+		return domainErrors.NewValidationError("draft_id", "draft ID and prompt cannot be empty")
 	}
 
-	if draftID == "" {
-		return fmt.Errorf("draft ID cannot be empty")
+	if input.DraftID == "" {
+		return domainErrors.NewValidationError("draft_id", "draft ID cannot be empty")
 	}
 
-	if userPrompt == "" {
-		return fmt.Errorf("user prompt cannot be empty")
+	if input.UserPrompt == "" {
+		return domainErrors.NewValidationError("prompt", "user prompt cannot be empty")
+	}
+
+	if len([]rune(input.UserPrompt)) < 10 {
+		return domainErrors.NewValidationError("prompt", "prompt must be at least 10 characters")
+	}
+
+	if len([]rune(input.UserPrompt)) > 500 {
+		return domainErrors.NewValidationError("prompt", "prompt exceeds maximum of 500 characters")
 	}
 
 	return nil
@@ -120,8 +142,8 @@ func (uc *RefineDraftUseCase) buildConversationHistory(draft *entities.Draft) []
 	history := make([]string, 0, len(draft.RefinementHistory)*2)
 
 	for _, entry := range draft.RefinementHistory {
-		history = append(history, fmt.Sprintf("User: %s", entry.Prompt))
-		history = append(history, fmt.Sprintf("Assistant: %s", entry.Content))
+		history = append(history, fmt.Sprintf("Versión %d - Prompt del usuario: %s", entry.Version, entry.Prompt))
+		history = append(history, fmt.Sprintf("Versión %d - Respuesta generada: %s", entry.Version, entry.Content))
 	}
 
 	return history
@@ -138,6 +160,9 @@ func (uc *RefineDraftUseCase) saveDraft(ctx context.Context, draft *entities.Dra
 	}
 
 	if err := uc.draftRepo.Update(ctx, draft.ID, updates); err != nil {
+		if errors.Is(err, database.ErrEntityNotFound) {
+			return domainErrors.NewDraftNotFound(draft.ID)
+		}
 		return fmt.Errorf("failed to save draft: %w", err)
 	}
 

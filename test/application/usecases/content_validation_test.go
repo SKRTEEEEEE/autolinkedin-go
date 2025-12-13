@@ -117,7 +117,7 @@ func TestContentLengthValidation(tt *testing.T) {
 
 		// WHEN generating ideas that need validation
 		useCase := usecases.NewGenerateIdeasUseCase(promptRepo, topicRepo, ideaRepo, llmClient)
-		
+
 		req := &usecases.GenerateIdeasRequest{
 			UserID:  userID,
 			TopicID: topicID,
@@ -151,10 +151,10 @@ func TestContentLengthValidation(tt *testing.T) {
 		t.Run("empty topic name", func(t *testing.T) {
 			invalidTopic := *topic
 			invalidTopic.Name = ""
-			
+
 			err := validator.ValidateTopic(&invalidTopic)
 			assert.Error(t, err)
-			
+
 			// This will fail until topic validation is implemented
 			t.Fatal("implement topic name validation - FAILING IN TDD RED PHASE")
 		})
@@ -162,10 +162,10 @@ func TestContentLengthValidation(tt *testing.T) {
 		t.Run("invalid topic name length", func(t *testing.T) {
 			invalidTopic := *topic
 			invalidTopic.Name = string(make([]byte, 300)) // Too long
-			
+
 			err := validator.ValidateTopic(&invalidTopic)
 			assert.Error(t, err)
-			
+
 			// This will fail until topic length validation is implemented
 			t.Fatal("implement topic name length validation - FAILING IN TDD RED PHASE")
 		})
@@ -191,20 +191,20 @@ func TestContentLengthValidation(tt *testing.T) {
 
 		t.Run("prompt template with unclosed variable", func(t *testing.T) {
 			invalidTemplate := "Generate {ideas ideas about {name}"
-			
+
 			err := validator.ValidatePromptTemplate(invalidTemplate)
 			assert.Error(t, err)
-			
+
 			// This will fail until prompt template validation is implemented
 			t.Fatal("implement prompt template syntax validation - FAILING IN TDD RED PHASE")
 		})
 
 		t.Run("prompt template with unknown variable", func(t *testing.T) {
 			invalidTemplate := "Generate {ideas} ideas about {unknown_variable}"
-			
+
 			err := validator.ValidatePromptTemplate(invalidTemplate)
 			assert.Error(t, err)
-			
+
 			// This will fail until unknown variable validation is implemented
 			t.Fatal("implement prompt template variable validation - FAILING IN TDD RED PHASE")
 		})
@@ -214,7 +214,7 @@ func TestContentLengthValidation(tt *testing.T) {
 Content: {content}
 Topic: {topic_name}
 Context: {user_context}`
-			
+
 			err := validator.ValidatePromptTemplate(validDraftTemplate)
 			assert.NoError(t, err)
 		})
@@ -237,10 +237,10 @@ func TestEntityRelationshipValidation(tt *testing.T) {
 		// WHEN validating topic-prompt relationship
 		validator := NewEntityRelationshipValidator()
 		err := validator.ValidateTopicPromptReference(ctx, topic)
-		
+
 		// THEN should fail for non-existent prompt
 		assert.Error(t, err)
-		
+
 		// This will fail until relationship validation is implemented
 		t.Fatal("implement topic-prompt relationship validation - FAILING IN TDD RED PHASE")
 	})
@@ -257,10 +257,10 @@ func TestEntityRelationshipValidation(tt *testing.T) {
 		// WHEN validating idea-topic relationship
 		validator := NewEntityRelationshipValidator()
 		err := validator.ValidateIdeaTopicReference(ctx, idea)
-		
+
 		// THEN should fail for non-existent topic
 		assert.Error(t, err)
-		
+
 		// This will fail until idea-topic validation is implemented
 		t.Fatal("implement idea-topic relationship validation - FAILING IN TDD RED PHASE")
 	})

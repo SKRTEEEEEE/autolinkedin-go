@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/linkgen-ai/backend/src/domain/entities"
+	"github.com/linkgen-ai/backend/src/infrastructure/database/repositories/mocks"
+	"github.com/linkgen-ai/backend/src/infrastructure/llm/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/linkgen-ai/backend/src/domain/entities"
-	"github.com/linkgen-ai/backend/src/infrastructure/llm/mocks"
-	"github.com/linkgen-ai/backend/src/infrastructure/database/repositories/mocks"
 )
 
 func TestGenerateIdeasUseCaseRefactored(t *testing.T) {
@@ -31,12 +31,12 @@ func TestGenerateIdeasUseCaseRefactored(t *testing.T) {
 		topicID := "topic-123"
 		userID := "user-123"
 		topic := &entities.Topic{
-			ID:     topicID,
-			UserID: userID,
-			Name:   "Marketing Digital",
-			Ideas:  3,           // Generate 3 ideas
-			Prompt: "base1",      // Use "base1" prompt
-			Active: true,
+			ID:        topicID,
+			UserID:    userID,
+			Name:      "Marketing Digital",
+			Ideas:     3,       // Generate 3 ideas
+			Prompt:    "base1", // Use "base1" prompt
+			Active:    true,
 			CreatedAt: time.Now(),
 		}
 
@@ -82,8 +82,8 @@ func TestGenerateIdeasUseCaseRefactored(t *testing.T) {
 
 		// AND the LLM should be called with the processed template
 		mockLLM.AssertCalled(t, "GenerateContent", mock.Anything, mock.MatchedBy(func(processedPrompt string) bool {
-			return contains(processedPrompt, "Genera 3 ideas") && 
-				   contains(processedPrompt, "Marketing Digital")
+			return contains(processedPrompt, "Genera 3 ideas") &&
+				contains(processedPrompt, "Marketing Digital")
 		}))
 
 		// AND ideas should be saved to the repository
@@ -101,12 +101,12 @@ func TestGenerateIdeasUseCaseRefactored(t *testing.T) {
 		topicID := "topic-456"
 		userID := "user-456"
 		topic := &entities.Topic{
-			ID:     topicID,
-			UserID: userID,
-			Name:   "Test Topic",
-			Ideas:  2,
-			Prompt: "nonexistent", // This prompt doesn't exist
-			Active: true,
+			ID:        topicID,
+			UserID:    userID,
+			Name:      "Test Topic",
+			Ideas:     2,
+			Prompt:    "nonexistent", // This prompt doesn't exist
+			Active:    true,
 			CreatedAt: time.Now(),
 		}
 
@@ -185,9 +185,9 @@ func TestGenerateIdeasUseCaseRefactored(t *testing.T) {
 
 		// AND the LLM should be called with all variables replaced
 		mockLLM.AssertCalled(t, "GenerateContent", mock.Anything, mock.MatchedBy(func(processedPrompt string) bool {
-			return contains(processedPrompt, "Crea exactamente 5 ideas") && 
-				   contains(processedPrompt, "Estrategias de Marketing") &&
-				   contains(processedPrompt, "SEO, Social Media, Analytics")
+			return contains(processedPrompt, "Crea exactamente 5 ideas") &&
+				contains(processedPrompt, "Estrategias de Marketing") &&
+				contains(processedPrompt, "SEO, Social Media, Analytics")
 		}))
 	})
 
@@ -202,12 +202,12 @@ func TestGenerateIdeasUseCaseRefactored(t *testing.T) {
 		topicID := "topic-999"
 		userID := "user-999"
 		topic := &entities.Topic{
-			ID:     topicID,
-			UserID: userID,
-			Name:   "Simple Topic",
-			Ideas:  2,
-			Prompt: "simple",
-			Active: true,
+			ID:        topicID,
+			UserID:    userID,
+			Name:      "Simple Topic",
+			Ideas:     2,
+			Prompt:    "simple",
+			Active:    true,
 			CreatedAt: time.Now(),
 		}
 
@@ -257,12 +257,12 @@ func TestGenerateIdeasUseCaseRefactored(t *testing.T) {
 		topicID := "topic-000"
 		userID := "user-000"
 		topic := &entities.Topic{
-			ID:     topicID,
-			UserID: userID,
-			Name:   "Response Test Topic",
-			Ideas:  3,
-			Prompt: "base1",
-			Active: true,
+			ID:        topicID,
+			UserID:    userID,
+			Name:      "Response Test Topic",
+			Ideas:     3,
+			Prompt:    "base1",
+			Active:    true,
 			CreatedAt: time.Now(),
 		}
 
@@ -356,12 +356,12 @@ func TestGenerateIdeasUseCaseRefactored(t *testing.T) {
 		userID := "user-111"
 		topicName := "Tecnologías Emergentes"
 		topic := &entities.Topic{
-			ID:     topicID,
-			UserID: userID,
-			Name:   topicName,
-			Ideas:  2,
-			Prompt: "base1",
-			Active: true,
+			ID:        topicID,
+			UserID:    userID,
+			Name:      topicName,
+			Ideas:     2,
+			Prompt:    "base1",
+			Active:    true,
 			CreatedAt: time.Now(),
 		}
 
@@ -405,8 +405,8 @@ func TestGenerateIdeasUseCaseRefactored(t *testing.T) {
 		// AND the ideas should be created with the correct fields
 		mockIdeaRepo.AssertCalled(t, "Create", mock.Anything, mock.MatchedBy(func(idea *entities.Idea) bool {
 			return idea.TopicName == topicName &&
-				   idea.TopicID == topicID &&
-				   idea.UserID == userID
+				idea.TopicID == topicID &&
+				idea.UserID == userID
 		}))
 	})
 
@@ -425,8 +425,8 @@ func TestGenerateIdeasUseCaseRefactored(t *testing.T) {
 			UserID: userID,
 			Name:   "Default Ideas Topic",
 			// Ideas field not set, should default
-			Prompt: "base1",
-			Active: true,
+			Prompt:    "base1",
+			Active:    true,
 			CreatedAt: time.Now(),
 		}
 
@@ -564,12 +564,12 @@ func (uc *GenerateIdeasUseCaseRefactored) processPromptTemplate(template string,
 	result := template
 	result = strings.ReplaceAll(result, "{ideas}", fmt.Sprintf("%d", ideasCount))
 	result = strings.ReplaceAll(result, "{name}", topic.Name)
-	
+
 	if len(topic.RelatedTopics) > 0 {
 		relatedTopicsStr := strings.Join(topic.RelatedTopics, ", ")
 		result = strings.ReplaceAll(result, "{related_topics}", relatedTopicsStr)
 	}
-	
+
 	return result
 }
 
@@ -577,22 +577,22 @@ func (uc *GenerateIdeasUseCaseRefactored) processPromptTemplate(template string,
 func (uc *GenerateIdeasUseCaseRefactored) parseLLMResponse(response string, expectedCount int) ([]string, error) {
 	// This is a mock implementation for testing
 	// In the real implementation, this would parse JSON response
-	
+
 	if response == "" {
 		return nil, fmt.Errorf("empty LLM response")
 	}
-	
+
 	// Simple mock JSON parsing - in reality this would use JSON parsing
 	if !contains(response, `{"ideas":`) {
 		return nil, fmt.Errorf("invalid LLM response format")
 	}
-	
+
 	// Extract ideas based on expected count
 	ideas := make([]string, expectedCount)
 	for i := 0; i < expectedCount; i++ {
 		ideas[i] = fmt.Sprintf("Generated idea %d", i+1)
 	}
-	
+
 	return ideas, nil
 }
 

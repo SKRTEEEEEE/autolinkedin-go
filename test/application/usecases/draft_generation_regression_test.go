@@ -41,7 +41,7 @@ func TestDraftGenerationRegression(tt *testing.T) {
 			Configuration: map[string]interface{}{
 				"name":            "Juan García",
 				"expertise":       "Backend Development",
-				"tone_preference":  "Profesional",
+				"tone_preference": "Profesional",
 			},
 		}
 
@@ -65,7 +65,7 @@ func TestDraftGenerationRegression(tt *testing.T) {
 
 		// WHEN generating drafts with new prompt system
 		useCase := usecases.NewGenerateDraftsUseCase(promptRepo, ideaRepo, userRepo, llmClient)
-		
+
 		req := &usecases.GenerateDraftsRequest{
 			UserID: userID,
 			IdeaID: idea.ID,
@@ -80,15 +80,15 @@ func TestDraftGenerationRegression(tt *testing.T) {
 		// THEN should maintain same output structure
 		assert.Equal(t, 5, len(response.Posts), "Should generate exactly 5 posts")
 		assert.Equal(t, 1, len(response.Articles), "Should generate exactly 1 article")
-		
+
 		// Verify post characteristics
 		for i, post := range response.Posts {
 			assert.NotEmpty(t, post.Content, fmt.Sprintf("Post %d should have content", i+1))
-			
+
 			// Posts should be reasonable length for LinkedIn
 			assert.Greater(t, len(post.Content), 50, "Post should have meaningful content")
 			assert.Less(t, len(post.Content), 300, "Post should not exceed Twitter-like limit")
-			
+
 			// Should include Spanish content as expected
 			assert.True(t, containsSpanishWords(post.Content), "Post should be in Spanish")
 		}
@@ -114,15 +114,15 @@ func TestDraftGenerationRegression(tt *testing.T) {
 			Configuration: map[string]interface{}{
 				"name":            "María López",
 				"expertise":       "Full Stack",
-				"tone_preference":  "Técnico",
+				"tone_preference": "Técnico",
 			},
 		}
 
 		llmClient := &mocks.MockLLMClient{}
-		
+
 		// WHEN generating drafts
 		useCase := setupDraftUseCaseWithClients(llmClient)
-		
+
 		req := &usecases.GenerateDraftsRequest{
 			UserID: userID,
 			IdeaID: idea.ID,
@@ -145,7 +145,7 @@ func TestDraftGenerationRegression(tt *testing.T) {
 
 		// Verify prompt contains the idea content
 		assert.Contains(t, llmCall.Prompt, idea.Content, "Should include original idea")
-		
+
 		// Verify user context is properly included
 		assert.Contains(t, llmCall.Prompt, "María López", "Should include user name")
 		assert.Contains(t, llmCall.Prompt, "Full Stack", "Should include user expertise")
@@ -170,7 +170,7 @@ func TestDraftGenerationRegression(tt *testing.T) {
 				llmClient.SetFixedResponse(malformedResponse)
 
 				useCase := setupDraftUseCaseWithClients(llmClient)
-				
+
 				req := &usecases.GenerateDraftsRequest{
 					UserID: primitive.NewObjectID().Hex(),
 					IdeaID: primitive.NewObjectID().Hex(),
@@ -198,7 +198,7 @@ func TestDraftGenerationRegression(tt *testing.T) {
 	tt.Run("should maintain performance characteristics for draft generation", func(t *testing.T) {
 		// GIVEN draft generation requirements
 		numDrafts := 20 // Generate multiple drafts to test performance
-		
+
 		// Track timing
 		var durations []time.Duration
 		successCount := 0
@@ -206,7 +206,7 @@ func TestDraftGenerationRegression(tt *testing.T) {
 
 		for i := 0; i < numDrafts; i++ {
 			userID := primitive.NewObjectID().Hex()
-			
+
 			req := &usecases.GenerateDraftsRequest{
 				UserID: userID,
 				IdeaID: primitive.NewObjectID().Hex(),
@@ -216,15 +216,15 @@ func TestDraftGenerationRegression(tt *testing.T) {
 
 			// WHEN measuring performance
 			start := time.Now()
-			
+
 			// This will fail until performance is maintained
 			t.Fatal("implement maintaining draft generation performance after refactor - FAILING IN TDD RED PHASE")
 
 			_, err := useCase.Execute(ctx, req)
 			duration := time.Since(start)
-			
+
 			durations = append(durations, duration)
-			
+
 			if err != nil {
 				errorCount++
 			} else {
@@ -239,10 +239,10 @@ func TestDraftGenerationRegression(tt *testing.T) {
 				totalDuration += d
 			}
 			avgDuration := totalDuration / time.Duration(len(durations))
-			
+
 			t.Logf("Draft generation performance: %d successful, %d errors", successCount, errorCount)
 			t.Logf("Average time: %v", avgDuration)
-			
+
 			// Performance assertions
 			assert.Greater(t, successCount, numDrafts*8/10, "At least 80% should succeed")
 			assert.Less(t, avgDuration, 15*time.Second, "Average should be under 15 seconds")
@@ -258,7 +258,7 @@ func TestPromptIntegrationRegression(tt *testing.T) {
 	tt.Run("should use draft prompts correctly for idea generation", func(t *testing.T) {
 		// GIVEN different types of draft prompts
 		userID := primitive.NewObjectID().Hex()
-		
+
 		prompts := []*entities.Prompt{
 			{
 				ID:             primitive.NewObjectID().Hex(),
@@ -302,7 +302,7 @@ func TestPromptIntegrationRegression(tt *testing.T) {
 				userRepo.On("GetByID", ctx, userID).Return(&entities.User{}, nil)
 
 				useCase := usecases.NewGenerateDraftsUseCase(promptRepo, ideaRepo, userRepo, llmClient)
-				
+
 				req := &usecases.GenerateDraftsRequest{
 					UserID: userID,
 					IdeaID: idea.ID,
@@ -322,29 +322,29 @@ func TestPromptIntegrationRegression(tt *testing.T) {
 				// Verify prompt was actually used
 				llmCall := llmClient.GetLastCall()
 				require.NotNil(t, llmCall)
-				
-				assert.Contains(t, llmCall.Prompt, prompt.PromptTemplate, 
+
+				assert.Contains(t, llmCall.Prompt, prompt.PromptTemplate,
 					"Should use specific prompt template")
-				assert.Contains(t, llmCall.Prompt, idea.Content, 
+				assert.Contains(t, llmCall.Prompt, idea.Content,
 					"Should include idea in prompt")
-				assert.Contains(t, llmCall.Prompt, idea.TopicName, 
+				assert.Contains(t, llmCall.Prompt, idea.TopicName,
 					"Should include topic name variable")
 
 				// Content should reflect prompt style
 				for j, post := range response.Posts {
-					assert.NotEmpty(t, post.Content, 
+					assert.NotEmpty(t, post.Content,
 						fmt.Sprintf("Post %d with %s prompt should have content", j+1, prompt.Name))
-					
+
 					// Content should vary based on prompt type
 					switch prompt.Name {
 					case "professional":
-						assert.True(t, isProfessionalTone(post.Content), 
+						assert.True(t, isProfessionalTone(post.Content),
 							"Should have professional tone")
 					case "casual":
-						assert.True(t, isCasualTone(post.Content), 
+						assert.True(t, isCasualTone(post.Content),
 							"Should have casual tone")
 					case "technical":
-						assert.True(t, isTechnicalTone(post.Content), 
+						assert.True(t, isTechnicalTone(post.Content),
 							"Should have technical depth")
 					}
 				}
@@ -355,7 +355,7 @@ func TestPromptIntegrationRegression(tt *testing.T) {
 	tt.Run("should fallback to default draft prompt when no specific prompt is active", func(t *testing.T) {
 		// GIVEN no active draft prompt
 		userID := primitive.NewObjectID().Hex()
-		
+
 		promptRepo := &mocks.MockPromptRepository{}
 		ideaRepo := &mocks.MockIdeaRepository{}
 		userRepo := &mocks.MockUserRepository{}
@@ -363,18 +363,18 @@ func TestPromptIntegrationRegression(tt *testing.T) {
 
 		// No active draft prompts
 		promptRepo.On("GetActiveByType", ctx, userID, entities.PromptTypeDrafts).Return(nil, nil)
-		
+
 		idea := &entities.Idea{
 			Content:   "Machine learning models for time series prediction",
 			TopicName: "AI/ML",
 			UserID:    userID,
 		}
-		
+
 		ideaRepo.On("GetByID", ctx, idea.ID).Return(idea, nil)
 		userRepo.On("GetByID", ctx, userID).Return(&entities.User{}, nil)
 
 		useCase := usecases.NewGenerateDraftsUseCase(promptRepo, ideaRepo, userRepo, llmClient)
-		
+
 		req := &usecases.GenerateDraftsRequest{
 			UserID: userID,
 			IdeaID: idea.ID,
@@ -394,7 +394,7 @@ func TestPromptIntegrationRegression(tt *testing.T) {
 		// Should use hardcoded default prompt as fallback
 		llmCall := llmClient.GetLastCall()
 		require.NotNil(t, llmCall)
-		
+
 		// Should contain default prompt structure
 		assert.Contains(t, llmCall.Prompt, idea.Content, "Should still include idea")
 	})
@@ -416,14 +416,14 @@ func TestAsyncJobRegression(tt *testing.T) {
 		// Should return job ID immediately
 		jobResponse, err := startDraftGenerationJob(userID, ideaID)
 		require.NoError(t, err)
-		
+
 		assert.NotEmpty(t, jobResponse.JobID, "Should return job ID")
 		assert.Contains(t, jobResponse.Message, "started", "Should indicate job started")
 
 		// Should be able to check job status
 		status, err := checkJobStatus(jobResponse.JobID)
 		require.NoError(t, err)
-		
+
 		assert.NotEmpty(t, status.JobID, "Status should have job ID")
 		assert.NotEmpty(t, status.Status, "Status should have status value")
 		assert.Equal(t, jobResponse.JobID, status.JobID, "Job IDs should match")
@@ -442,7 +442,7 @@ func TestAsyncJobRegression(tt *testing.T) {
 				assert.Len(t, status.DraftIDs, 6, "Should have 6 draft IDs (5 posts + 1 article)")
 				return
 			}
-			
+
 			if status.Status == "failed" {
 				assert.Fail(t, "Job should not fail", "Job error: %s", status.Error)
 				return
@@ -460,13 +460,13 @@ func TestAsyncJobRegression(tt *testing.T) {
 func containsSpanishWords(text string) bool {
 	// Simple check for Spanish words
 	spanishWords := []string{"el", "la", "de", "que", "y", "en", "un", "es", "se", "no", "te", "lo", "le", "da", "su", "por", "son", "con", "para", "como", "las", "del", "los", "una", "todo", "pero", "más", "ni", "yo", "ya", "me", "si", "bien", "mi", "sí", "tu"}
-	
+
 	textLower := strings.ToLower(text)
 	for _, word := range spanishWords {
-		if strings.Contains(textLower, " "+word+" ") || 
-		   strings.HasPrefix(textLower, word+" ") || 
-		   strings.HasSuffix(textLower, " "+word) ||
-		   textLower == word {
+		if strings.Contains(textLower, " "+word+" ") ||
+			strings.HasPrefix(textLower, word+" ") ||
+			strings.HasSuffix(textLower, " "+word) ||
+			textLower == word {
 			return true
 		}
 	}
@@ -486,9 +486,9 @@ func isProfessionalTone(text string) bool {
 
 func isCasualTone(text string) bool {
 	// Casual tone might be harder to detect, but let's check for certain patterns
-	return !strings.Contains(strings.ToLower(text), "profesional") && 
-		   strings.Contains(strings.ToLower(text), "vamos") ||
-		   strings.Contains(strings.ToLower(text), "hablemos")
+	return !strings.Contains(strings.ToLower(text), "profesional") &&
+		strings.Contains(strings.ToLower(text), "vamos") ||
+		strings.Contains(strings.ToLower(text), "hablemos")
 }
 
 func isTechnicalTone(text string) bool {
@@ -529,12 +529,12 @@ type JobResponse struct {
 }
 
 type JobStatusResponse struct {
-	JobID      string    `json:"job_id"`
-	Status     string    `json:"status"`
-	IdeaID     string    `json:"idea_id"`
-	DraftIDs   []string  `json:"draft_ids,omitempty"`
-	Error      string    `json:"error,omitempty"`
-	CreatedAt  time.Time `json:"created_at"`
-	StartedAt  time.Time `json:"started_at"`
+	JobID       string    `json:"job_id"`
+	Status      string    `json:"status"`
+	IdeaID      string    `json:"idea_id"`
+	DraftIDs    []string  `json:"draft_ids,omitempty"`
+	Error       string    `json:"error,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+	StartedAt   time.Time `json:"started_at"`
 	CompletedAt time.Time `json:"completed_at,omitempty"`
 }

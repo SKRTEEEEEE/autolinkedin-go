@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/linkgen-ai/backend/src/infrastructure/services"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // NOTE: These tests are written according to TDD Red pattern - they will FAIL
@@ -29,26 +29,26 @@ func TestPromptSystemIntegration(t *testing.T) {
 	// Setup test user
 	userID := "test-integration-user-123"
 	testUser := &entities.User{
-		ID:        userID,
-		Email:     "integration@test.com",
-		Industry:  "Software Development",
-		Role:      "Tech Lead",
+		ID:         userID,
+		Email:      "integration@test.com",
+		Industry:   "Software Development",
+		Role:       "Tech Lead",
 		Experience: "3 years",
-		Goals:     "Team leadership and system architecture",
-		CreatedAt: now,
-		UpdatedAt: now,
+		Goals:      "Team leadership and system architecture",
+		CreatedAt:  now,
+		UpdatedAt:  now,
 	}
 
 	// Setup test topic
 	testTopic := &entities.Topic{
-		ID:              "topic-1",
-		UserID:          userID,
-		Name:            "Microservices Architecture Best Practices",
-		Ideas:           5,
-		RelatedTopics:   []string{"System Design", "DevOps", "Scalability"},
-		Active:          true,
-		CreatedAt:       now,
-		UpdatedAt:       now,
+		ID:            "topic-1",
+		UserID:        userID,
+		Name:          "Microservices Architecture Best Practices",
+		Ideas:         5,
+		RelatedTopics: []string{"System Design", "DevOps", "Scalability"},
+		Active:        true,
+		CreatedAt:     now,
+		UpdatedAt:     now,
 	}
 
 	// Setup test idea
@@ -175,14 +175,14 @@ func TestPromptSystemIntegration(t *testing.T) {
 		// GIVEN a user without custom prompts
 		userWithoutPrompts := "user-no-prompts"
 		userWithoutPromptsEntity := &entities.User{
-			ID:        userWithoutPrompts,
-			Email:     "noprompts@test.com",
-			Industry:  "Education",
-			Role:      "Teacher",
+			ID:         userWithoutPrompts,
+			Email:      "noprompts@test.com",
+			Industry:   "Education",
+			Role:       "Teacher",
 			Experience: "2 years",
-			Goals:     "Student engagement techniques",
-			CreatedAt: now,
-			UpdatedAt: now,
+			Goals:      "Student engagement techniques",
+			CreatedAt:  now,
+			UpdatedAt:  now,
 		}
 
 		mockUserRepo.users = append(mockUserRepo.users, userWithoutPromptsEntity)
@@ -190,14 +190,14 @@ func TestPromptSystemIntegration(t *testing.T) {
 
 		// Create topic for this user
 		topicWithoutPrompts := &entities.Topic{
-			ID:              "topic-2",
-			UserID:          userWithoutPrompts,
-			Name:            "Digital Learning Tools",
-			Ideas:           3,
-			RelatedTopics:   []string{"Technology", "Education"},
-			Active:          true,
-			CreatedAt:       now,
-			UpdatedAt:       now,
+			ID:            "topic-2",
+			UserID:        userWithoutPrompts,
+			Name:          "Digital Learning Tools",
+			Ideas:         3,
+			RelatedTopics: []string{"Technology", "Education"},
+			Active:        true,
+			CreatedAt:     now,
+			UpdatedAt:     now,
 		}
 
 		mockTopicRepo.topics = append(mockTopicRepo.topics, topicWithoutPrompts)
@@ -296,7 +296,7 @@ func TestPromptSystemIntegration(t *testing.T) {
 
 		// AND should log the error
 		logEntries := promptEngine.GetLogEntries()
-		
+
 		// Find error log entry
 		var errorLogEntry *services.PromptLogEntry
 		for _, entry := range logEntries {
@@ -349,7 +349,7 @@ func TestPromptSystemIntegration(t *testing.T) {
 
 		// THEN should include comprehensive system information
 		require.NotNil(t, diagnostics)
-		
+
 		assert.True(t, diagnostics.PromptEngineActive)
 		assert.Equal(t, 2, diagnostics.UserPromptCount)
 		assert.GreaterOrEqual(t, diagnostics.CacheSize, 0)
@@ -445,18 +445,18 @@ func (p *services.PromptEngine) GetDiagnostics(ctx context.Context, userID strin
 
 // Types to be implemented in the services package
 type PromptLogEntry struct {
-	UserID      string
-	PromptName  string
-	PromptType  string
-	Action      string
-	Timestamp   time.Time
-	Success     bool
+	UserID       string
+	PromptName   string
+	PromptType   string
+	Action       string
+	Timestamp    time.Time
+	Success      bool
 	ErrorMessage string
 }
 
 type PromptDiagnostics struct {
-	PromptEngineActive  bool
-	UserPromptCount     int
+	PromptEngineActive bool
+	UserPromptCount    int
 	CacheSize          int
 	SupportedVariables []string
 }

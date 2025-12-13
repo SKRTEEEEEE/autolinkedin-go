@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/linkgen-ai/backend/src/domain/entities"
 )
 
 // NOTE: These tests are written according to TDD Red pattern - they will FAIL
@@ -69,7 +69,7 @@ func TestPromptLoader(t *testing.T) {
 
 		// THEN .old.md files should be ignored
 		require.NoError(t, err)
-		
+
 		// Verify no prompt with .old in the name exists
 		for _, prompt := range prompts {
 			assert.NotContains(t, prompt.Name, ".old")
@@ -89,7 +89,7 @@ func TestPromptLoader(t *testing.T) {
 
 		// THEN front-matter should be parsed correctly
 		require.NoError(t, err)
-		
+
 		base1Prompt := findPromptByName(t, prompts, "base1")
 		require.NotNil(t, base1Prompt)
 		assert.Equal(t, "base1", base1Prompt.Name)
@@ -105,7 +105,7 @@ func TestPromptLoader(t *testing.T) {
 		// GIVEN a PromptLoader instance and a mock repository with existing prompts
 		loader := NewPromptLoader(tempDir)
 		mockRepo := &MockPromptRepository{}
-		
+
 		// Add an existing prompt in the repo to simulate previous version
 		existingPrompt := &entities.Prompt{
 			Name:           "base1",
@@ -121,7 +121,7 @@ func TestPromptLoader(t *testing.T) {
 		// THEN changes should be detected
 		require.NoError(t, err)
 		assert.Greater(t, len(changes), 0)
-		
+
 		// Find the changed prompt
 		base1Change := findChangeByName(t, changes, "base1")
 		require.NotNil(t, base1Change)
@@ -311,13 +311,25 @@ func (m *MockPromptRepository) Update(ctx context.Context, prompt *entities.Prom
 }
 
 // Other methods not needed for this test
-func (m *MockPromptRepository) FindByID(ctx context.Context, id string) (*entities.Prompt, error) { return nil, assert.AnError }
-func (m *MockPromptRepository) ListByUserID(ctx context.Context, userID string) ([]*entities.Prompt, error) { return nil, assert.AnError }
-func (m *MockPromptRepository) ListByUserIDAndType(ctx context.Context, userID string, promptType entities.PromptType) ([]*entities.Prompt, error) { return nil, assert.AnError }
-func (m *MockPromptRepository) FindActiveByUserIDAndType(ctx context.Context, userID string, promptType entities.PromptType) ([]*entities.Prompt, error) { return nil, assert.AnError }
-func (m *MockPromptRepository) FindByUserIDAndStyle(ctx context.Context, userID string, styleName string) (*entities.Prompt, error) { return nil, assert.AnError }
+func (m *MockPromptRepository) FindByID(ctx context.Context, id string) (*entities.Prompt, error) {
+	return nil, assert.AnError
+}
+func (m *MockPromptRepository) ListByUserID(ctx context.Context, userID string) ([]*entities.Prompt, error) {
+	return nil, assert.AnError
+}
+func (m *MockPromptRepository) ListByUserIDAndType(ctx context.Context, userID string, promptType entities.PromptType) ([]*entities.Prompt, error) {
+	return nil, assert.AnError
+}
+func (m *MockPromptRepository) FindActiveByUserIDAndType(ctx context.Context, userID string, promptType entities.PromptType) ([]*entities.Prompt, error) {
+	return nil, assert.AnError
+}
+func (m *MockPromptRepository) FindByUserIDAndStyle(ctx context.Context, userID string, styleName string) (*entities.Prompt, error) {
+	return nil, assert.AnError
+}
 func (m *MockPromptRepository) Delete(ctx context.Context, id string) error { return assert.AnError }
-func (m *MockPromptRepository) CountByUserID(ctx context.Context, userID string) (int64, error) { return 0, assert.AnError }
+func (m *MockPromptRepository) CountByUserID(ctx context.Context, userID string) (int64, error) {
+	return 0, assert.AnError
+}
 
 // Types that don't exist yet (to be implemented)
 type PromptLoader struct {

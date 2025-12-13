@@ -20,7 +20,7 @@ func TestTopicRefactored(t *testing.T) {
 			Description: "Contenido sobre estrategias de marketing digital",
 			Category:    "Marketing",
 			Priority:    5,
-			Ideas:       3,      // NEW field
+			Ideas:       3,       // NEW field
 			Prompt:      "base1", // NEW field
 			Active:      true,
 			CreatedAt:   time.Now(),
@@ -133,17 +133,17 @@ func TestTopicRefactored(t *testing.T) {
 		// GIVEN a topic with related topics
 		relatedTopics := []string{"Marketing", "Social Media", "Content Strategy"}
 		topic := &Topic{
-			ID:             "topic-111",
-			UserID:         "user-111",
-			Name:           "Digital Marketing",
-			Description:    "Contenido sobre marketing digital",
-			Category:       "Marketing",
-			Priority:       5,
-			Ideas:          2,
-			Prompt:         "base1",
-			RelatedTopics:  relatedTopics, // NEW field
-			Active:         true,
-			CreatedAt:      time.Now(),
+			ID:            "topic-111",
+			UserID:        "user-111",
+			Name:          "Digital Marketing",
+			Description:   "Contenido sobre marketing digital",
+			Category:      "Marketing",
+			Priority:      5,
+			Ideas:         2,
+			Prompt:        "base1",
+			RelatedTopics: relatedTopics, // NEW field
+			Active:        true,
+			CreatedAt:     time.Now(),
 		}
 
 		// WHEN validating the entity
@@ -169,17 +169,17 @@ func TestTopicRefactored(t *testing.T) {
 	t.Run("should validate related_topics field removes duplicates", func(t *testing.T) {
 		// GIVEN a topic with duplicate related topics
 		topic := &Topic{
-			ID:             "topic-222",
-			UserID:         "user-222",
-			Name:           "Test Topic",
-			Description:    "Test Description",
-			Category:       "Test",
-			Priority:       5,
-			Ideas:          2,
-			Prompt:         "base1",
-			RelatedTopics:  []string{"Marketing", "marketing", "Marketing"}, // Duplicates with different cases
-			Active:         true,
-			CreatedAt:      time.Now(),
+			ID:            "topic-222",
+			UserID:        "user-222",
+			Name:          "Test Topic",
+			Description:   "Test Description",
+			Category:      "Test",
+			Priority:      5,
+			Ideas:         2,
+			Prompt:        "base1",
+			RelatedTopics: []string{"Marketing", "marketing", "Marketing"}, // Duplicates with different cases
+			Active:        true,
+			CreatedAt:     time.Now(),
 		}
 
 		// WHEN normalizing the related topics
@@ -198,17 +198,17 @@ func TestTopicRefactored(t *testing.T) {
 	t.Run("should generate prompt context with new fields", func(t *testing.T) {
 		// GIVEN a topic with all new fields
 		topic := &Topic{
-			ID:             "topic-333",
-			UserID:         "user-333",
-			Name:           "Content Strategy",
-			Description:    "Strategy for content creation",
-			Category:       "Marketing",
-			Priority:       8,
-			Ideas:          5,
-			Prompt:         "creative1",
-			RelatedTopics:  []string{"SEO", "Social Media", "Analytics"},
-			Active:         true,
-			CreatedAt:      time.Now(),
+			ID:            "topic-333",
+			UserID:        "user-333",
+			Name:          "Content Strategy",
+			Description:   "Strategy for content creation",
+			Category:      "Marketing",
+			Priority:      8,
+			Ideas:         5,
+			Prompt:        "creative1",
+			RelatedTopics: []string{"SEO", "Social Media", "Analytics"},
+			Active:        true,
+			CreatedAt:     time.Now(),
 		}
 
 		// WHEN generating prompt context

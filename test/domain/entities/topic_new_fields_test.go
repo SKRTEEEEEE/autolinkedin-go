@@ -10,21 +10,21 @@ import (
 // TestTopicNewFields tests the new fields added to Topic entity
 func TestTopicNewFields(t *testing.T) {
 	t.Skip("Topic new fields test placeholder - not implemented yet")
-	
+
 	t.Run("should create topic with new fields", func(t *testing.T) {
 		// GIVEN a topic with all new fields
 		// WHEN creating the topic
 		// THEN new fields should be populated correctly
 		t.Fatal("Topic creation with new fields test not implemented - TDD Red phase")
 	})
-	
+
 	t.Run("should validate related_topics field", func(t *testing.T) {
 		// GIVEN a topic with related topics
 		// WHEN validating
 		// THEN related_topics should be a valid array
 		t.Fatal("Related topics validation test not implemented - TDD Red phase")
 	})
-	
+
 	t.Run("should handle prompt reference properly", func(t *testing.T) {
 		// GIVEN a topic with prompt reference
 		// WHEN processing
@@ -36,7 +36,7 @@ func TestTopicNewFields(t *testing.T) {
 // TestTopicValidation tests validation of topic fields
 func TestTopicValidation(t *testing.T) {
 	t.Skip("Topic validation test placeholder - not implemented yet")
-	
+
 	testCases := []struct {
 		name     string
 		topic    *Topic
@@ -94,7 +94,7 @@ func TestTopicValidation(t *testing.T) {
 			expected: false,
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Fatal("Topic validation test not implemented - TDD Red phase")
@@ -105,14 +105,14 @@ func TestTopicValidation(t *testing.T) {
 // TestTopicFieldLengths validates field length limits
 func TestTopicFieldLengths(t *testing.T) {
 	t.Skip("Field length test placeholder - not implemented yet")
-	
+
 	t.Run("should validate name field length", func(t *testing.T) {
 		// GIVEN a topic with very long name
 		// WHEN validating
 		// THEN length limit should be enforced
 		t.Fatal("Name length validation test not implemented - TDD Red phase")
 	})
-	
+
 	t.Run("should validate related topics array size", func(t *testing.T) {
 		// GIVEN a topic with too many related topics
 		// WHEN validating
@@ -124,14 +124,14 @@ func TestTopicFieldLengths(t *testing.T) {
 // TestTopicDefaults tests default values for topic fields
 func TestTopicDefaults(t *testing.T) {
 	t.Skip("Default values test placeholder - not implemented yet")
-	
+
 	t.Run("should set default values for optional fields", func(t *testing.T) {
 		// GIVEN a topic with missing optional fields
 		// WHEN creating
 		// THEN defaults should be applied
 		t.Fatal("Default values test not implemented - TDD Red phase")
 	})
-	
+
 	t.Run("should calculate appropriate defaults", func(t *testing.T) {
 		// GIVEN a topic configuration
 		// WHEN calculating defaults

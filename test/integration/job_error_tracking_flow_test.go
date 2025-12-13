@@ -332,11 +332,11 @@ func TestJobErrorTrackingFlow_MetadataEnrichment(t *testing.T) {
 			Error:   "LLM error",
 			Attempt: 1,
 			Metadata: map[string]interface{}{
-				"model":          "llama3",
-				"temperature":    0.7,
-				"max_tokens":     2000,
-				"top_p":          0.9,
-				"presence_penalty": 0.1,
+				"model":             "llama3",
+				"temperature":       0.7,
+				"max_tokens":        2000,
+				"top_p":             0.9,
+				"presence_penalty":  0.1,
 				"frequency_penalty": 0.1,
 			},
 			CreatedAt: time.Now(),
@@ -361,12 +361,12 @@ func TestJobErrorTrackingFlow_MetadataEnrichment(t *testing.T) {
 			Error:   "request failed",
 			Attempt: 1,
 			Metadata: map[string]interface{}{
-				"request_id":       "req-12345",
-				"worker_id":        "worker-1",
-				"queue_name":       "draft.generation",
-				"processing_time":  250,
-				"timestamp":        time.Now().Unix(),
-				"environment":      "production",
+				"request_id":      "req-12345",
+				"worker_id":       "worker-1",
+				"queue_name":      "draft.generation",
+				"processing_time": 250,
+				"timestamp":       time.Now().Unix(),
+				"environment":     "production",
 			},
 			CreatedAt: time.Now(),
 		}
@@ -434,7 +434,7 @@ func TestJobErrorTrackingFlow_Persistence(t *testing.T) {
 
 		assert.NoError(mt, err)
 		assert.NotEmpty(mt, id)
-		
+
 		// Verify ID is a valid ObjectID
 		objectID, err := primitive.ObjectIDFromHex(id)
 		assert.NoError(mt, err)
@@ -446,7 +446,7 @@ func TestJobErrorTrackingFlow_Persistence(t *testing.T) {
 		ctx := context.Background()
 
 		jobID := "job-multi-error-1212"
-		
+
 		for i := 0; i < 3; i++ {
 			jobError := &entities.JobError{
 				JobID:     jobID,

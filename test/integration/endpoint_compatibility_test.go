@@ -70,18 +70,18 @@ func TestExistingEndpointsCompatibility(tt *testing.T) {
 
 		// THEN should return the expected response format
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response struct {
-			Count   int                 `json:"count"`
-			Prompts []entities.Prompt   `json:"prompts"`
+			Count   int               `json:"count"`
+			Prompts []entities.Prompt `json:"prompts"`
 		}
-		
+
 		err = json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, len(prompts), response.Count)
 		assert.Len(t, response.Prompts, len(prompts))
-		
+
 		// This will fail until the endpoint is properly implemented
 		t.Fatal("implement GET /v1/prompts/{userId} endpoint compatibility - FAILING IN TDD RED PHASE")
 	})
@@ -113,34 +113,34 @@ func TestExistingEndpointsCompatibility(tt *testing.T) {
 		// Create topics with prompt references
 		topics := []entities.Topic{
 			{
-				ID:             primitive.NewObjectID().Hex(),
-				UserID:         userID,
-				Name:           "TypeScript Patterns",
-				Description:    "Advanced TypeScript techniques",
-				Keywords:       []string{"typescript", "types", "generics"},
-				Category:       "Frontend",
-				Priority:       8,
-				IdeasCount:     5,
-				Active:         true,
-				PromptName:     "base1",
-				RelatedTopics:  []string{"JavaScript", "Node.js"},
-				CreatedAt:      now(),
-				UpdatedAt:      now(),
+				ID:            primitive.NewObjectID().Hex(),
+				UserID:        userID,
+				Name:          "TypeScript Patterns",
+				Description:   "Advanced TypeScript techniques",
+				Keywords:      []string{"typescript", "types", "generics"},
+				Category:      "Frontend",
+				Priority:      8,
+				IdeasCount:    5,
+				Active:        true,
+				PromptName:    "base1",
+				RelatedTopics: []string{"JavaScript", "Node.js"},
+				CreatedAt:     now(),
+				UpdatedAt:     now(),
 			},
 			{
-				ID:             primitive.NewObjectID().Hex(),
-				UserID:         userID,
-				Name:           "Go Microservices",
-				Description:    "Building microservices with Go",
-				Keywords:       []string{"go", "microservices", "grpc"},
-				Category:       "Backend",
-				Priority:       9,
-				IdeasCount:     3,
-				Active:         true,
-				PromptName:     "base1",
-				RelatedTopics:  []string{"Docker", "Kubernetes"},
-				CreatedAt:      now(),
-				UpdatedAt:      now(),
+				ID:            primitive.NewObjectID().Hex(),
+				UserID:        userID,
+				Name:          "Go Microservices",
+				Description:   "Building microservices with Go",
+				Keywords:      []string{"go", "microservices", "grpc"},
+				Category:      "Backend",
+				Priority:      9,
+				IdeasCount:    3,
+				Active:        true,
+				PromptName:    "base1",
+				RelatedTopics: []string{"Docker", "Kubernetes"},
+				CreatedAt:     now(),
+				UpdatedAt:     now(),
 			},
 		}
 
@@ -157,18 +157,18 @@ func TestExistingEndpointsCompatibility(tt *testing.T) {
 
 		// THEN should return topics with all expected fields
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response struct {
-			Count  int               `json:"count"`
-			Topics []entities.Topic  `json:"topics"`
+			Count  int              `json:"count"`
+			Topics []entities.Topic `json:"topics"`
 		}
-		
+
 		err = json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, len(topics), response.Count)
 		assert.Len(t, response.Topics, len(topics))
-		
+
 		// Verify prompt references are present
 		for _, topic := range response.Topics {
 			assert.NotEmpty(t, topic.PromptName, "Topic should have prompt reference")
@@ -238,18 +238,18 @@ func TestExistingEndpointsCompatibility(tt *testing.T) {
 
 		// THEN should return ideas with topic names
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response struct {
-			Count  int              `json:"count"`
-			Ideas  []entities.Idea  `json:"ideas"`
+			Count int             `json:"count"`
+			Ideas []entities.Idea `json:"ideas"`
 		}
-		
+
 		err = json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, len(ideas), response.Count)
 		assert.Len(t, response.Ideas, len(ideas))
-		
+
 		// Verify topic names are included
 		for _, idea := range response.Ideas {
 			assert.NotEmpty(t, idea.TopicName, "Idea should include topic name")
@@ -295,15 +295,15 @@ func TestExistingEndpointsCompatibility(tt *testing.T) {
 
 		// THEN should accept request and return job ID
 		assert.Equal(t, http.StatusAccepted, w.Code)
-		
+
 		var response struct {
 			Message string `json:"message"`
 			JobID   string `json:"job_id"`
 		}
-		
+
 		err = json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, "Draft generation started", response.Message)
 		assert.NotEmpty(t, response.JobID, "Should return job ID for async processing")
 
@@ -315,7 +315,7 @@ func TestExistingEndpointsCompatibility(tt *testing.T) {
 		// GIVEN a job ID from draft generation
 		db := setupTestDB(t)
 		defer cleanupTestDB(t, db)
-		
+
 		jobID := primitive.NewObjectID().Hex()
 
 		// WHEN checking job status
@@ -326,19 +326,19 @@ func TestExistingEndpointsCompatibility(tt *testing.T) {
 
 		// THEN should return job status
 		assert.Equal(t, http.StatusOK, w.Code)
-		
+
 		var response struct {
-			JobID      string    `json:"job_id"`
-			Status     string    `json:"status"`
-			IdeaID     string    `json:"idea_id"`
-			CreatedAt  string    `json:"created_at"`
-			DraftIDs   []string  `json:"draft_ids,omitempty"`
-			Error      string    `json:"error,omitempty"`
+			JobID     string   `json:"job_id"`
+			Status    string   `json:"status"`
+			IdeaID    string   `json:"idea_id"`
+			CreatedAt string   `json:"created_at"`
+			DraftIDs  []string `json:"draft_ids,omitempty"`
+			Error     string   `json:"error,omitempty"`
 		}
-		
+
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
-		
+
 		assert.Equal(t, jobID, response.JobID)
 		assert.NotEmpty(t, response.Status, "Job should have a status")
 
@@ -366,7 +366,7 @@ func TestResponseFormatCompatibility(tt *testing.T) {
 				}
 			]
 		}`
-		
+
 		expectedTopicResponse := `{
 			"count": 4,
 			"topics": [
@@ -387,11 +387,11 @@ func TestResponseFormatCompatibility(tt *testing.T) {
 				}
 			]
 		}`
-		
+
 		// WHEN implementing endpoints
 		// This will fail until endpoints return proper JSON structure
 		t.Fatal("implement backward compatible JSON response formats - FAILING IN TDD RED PHASE")
-		
+
 		// THEN should match expected contracts
 	})
 }

@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/linkgen-ai/backend/src/domain/entities"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/linkgen-ai/backend/src/domain/entities"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -330,7 +330,7 @@ func TestPromptsRepositoryRefactored(t *testing.T) {
 
 		// THEN the repository should allow insertion (uniqueness handled at application level)
 		newID, err := repo.Create(context.Background(), duplicatePrompt)
-		
+
 		// Note: This test verifies the repository behavior
 		// In the actual implementation, uniqueness validation should be handled
 		// at the application layer since MongoDB doesn't enforce uniqueness across fields

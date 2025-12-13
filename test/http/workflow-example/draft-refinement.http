@@ -6,7 +6,7 @@
 
 # Replace these with actual values from draft-generation.http responses
 @ideaId = 6935d53ac95d0eae4a139760
-@draftId = 69396f923587f862431eeef1
+@draftId = 693dc32284f4164d74f9bc73
 @jobId = 825372af-f822-417e-a87b-d2bec8110872
 
 ### Test the refinement endpoint - Step 1: Get existing draft

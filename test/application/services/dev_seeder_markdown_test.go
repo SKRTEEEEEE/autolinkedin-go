@@ -15,9 +15,9 @@ import (
 // DevSeederMarkdownTestSuite contains tests for DevSeeder with markdown prompt parsing
 type DevSeederMarkdownTestSuite struct {
 	suite.Suite
-	db     *database.Database
-	seeder *DevSeeder
-	ctx    context.Context
+	db      *database.Database
+	seeder  *DevSeeder
+	ctx     context.Context
 	cleanUp func()
 }
 
@@ -148,12 +148,12 @@ func (suite *DevSeederMarkdownTestSuite) Test_SeedPromptsFromMarkdown_ShouldRead
 
 	// Then
 	require.NoError(suite.T(), err)
-	
+
 	// Verify that prompts were created
 	prompts, err := suite.seeder.promptRepo.FindAllByUserID(suite.ctx, "dev-user-id")
 	require.NoError(suite.T(), err)
 	assert.Greater(suite.T(), len(prompts), 0)
-	
+
 	// Verify specific prompts exist
 	base1Prompt, err := suite.seeder.promptRepo.FindByName(suite.ctx, "dev-user-id", "base1")
 	assert.NoError(suite.T(), err)
@@ -172,16 +172,16 @@ func (suite *DevSeederMarkdownTestSuite) Test_SeedTopicsWithPromptReferences_Sho
 
 	// Then
 	require.NoError(suite.T(), err)
-	
+
 	// Verify topics were created with prompt references
 	topics, err := suite.seeder.topicRepo.FindAllByUserID(suite.ctx, "dev-user-id")
 	require.NoError(suite.T(), err)
 	assert.Greater(suite.T(), len(topics), 0)
-	
+
 	// Check that topics have the prompt field set
 	for _, topic := range topics {
 		assert.NotEmpty(suite.T(), topic.Prompt, "Topic should have prompt reference")
-		
+
 		// Verify the referenced prompt exists
 		prompt, err := suite.seeder.promptRepo.FindByName(suite.ctx, "dev-user-id", topic.Prompt)
 		assert.NoError(suite.T(), err)
@@ -203,7 +203,7 @@ func (suite *DevSeederMarkdownTestSuite) Test_ValidatePromptReference_ShouldChec
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
-	
+
 	err := suite.seeder.promptRepo.Create(suite.ctx, existingPrompt)
 	require.NoError(suite.T(), err)
 

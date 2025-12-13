@@ -13,10 +13,10 @@ type ErrorCode string
 
 const (
 	ErrorCodeValidation     ErrorCode = "VALIDATION_ERROR"
-	ErrorCodeNotFound       ErrorCode = "RESOURCE_NOT_FOUND"
+	ErrorCodeNotFound       ErrorCode = "NOT_FOUND"
 	ErrorCodeUnauthorized   ErrorCode = "UNAUTHORIZED"
 	ErrorCodeInternalServer ErrorCode = "INTERNAL_SERVER_ERROR"
-	ErrorCodeServiceTimeout ErrorCode = "SERVICE_TIMEOUT"
+	ErrorCodeServiceTimeout ErrorCode = "TIMEOUT"
 	ErrorCodeInvalidInput   ErrorCode = "INVALID_INPUT"
 	ErrorCodeAlreadyExists  ErrorCode = "RESOURCE_ALREADY_EXISTS"
 	ErrorCodeLimitExceeded  ErrorCode = "LIMIT_EXCEEDED"
@@ -91,7 +91,7 @@ func MapDomainError(err error, logger *zap.Logger) (statusCode int, code ErrorCo
 	case *errors.ErrDraftAlreadyPublished:
 		return http.StatusConflict, ErrorCodeAlreadyExists, e.Error()
 	case *errors.ErrRefinementLimitExceeded:
-		return http.StatusUnprocessableEntity, ErrorCodeLimitExceeded, e.Error()
+		return http.StatusConflict, ErrorCodeLimitExceeded, e.Error()
 	case *errors.ErrInvalidDraftType:
 		return http.StatusBadRequest, ErrorCodeInvalidInput, e.Error()
 	case *errors.ErrInvalidDraftStatus:

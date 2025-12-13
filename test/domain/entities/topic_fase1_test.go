@@ -9,7 +9,7 @@ import (
 // TestTopicFase1 tests the refactored Topic entity for Phase 1
 // TDD Red: Tests will fail initially as the refactored code doesn't exist yet
 func TestTopicFase1(t *testing.T) {
-	
+
 	t.Run("should validate topic with new fields from entity.md", func(t *testing.T) {
 		// GIVEN a topic with all new fields according to entity.md
 		topic := &Topic{
@@ -21,8 +21,8 @@ func TestTopicFase1(t *testing.T) {
 			Category:      "Marketing",
 			Priority:      5,
 			Active:        true,
-			Ideas:         3,        // NEW: Number of ideas to generate
-			Prompt:        "base1",   // NEW: Reference to prompt name
+			Ideas:         3,                                   // NEW: Number of ideas to generate
+			Prompt:        "base1",                             // NEW: Reference to prompt name
 			RelatedTopics: []string{"SEO", "Content Strategy"}, // NEW: Related topics
 			CreatedAt:     time.Now(),
 		}
@@ -415,13 +415,13 @@ func TestTopicPromptReferenceFase1(t *testing.T) {
 
 		for _, promptName := range validPrompts {
 			topic := &Topic{
-				ID:          "topic-prompt-" + promptName,
-				UserID:      "user-prompt",
-				Name:        "Test Topic",
-				Prompt:      promptName,
-				Ideas:       2,
-				Active:      true,
-				CreatedAt:   time.Now(),
+				ID:        "topic-prompt-" + promptName,
+				UserID:    "user-prompt",
+				Name:      "Test Topic",
+				Prompt:    promptName,
+				Ideas:     2,
+				Active:    true,
+				CreatedAt: time.Now(),
 			}
 
 			// WHEN validating
@@ -435,13 +435,13 @@ func TestTopicPromptReferenceFase1(t *testing.T) {
 
 		// WHEN using an invalid prompt
 		topic := &Topic{
-			ID:          "topic-invalid",
-			UserID:      "user-invalid",
-			Name:        "Invalid Topic",
-			Prompt:      "invalid_prompt_name",
-			Ideas:       2,
-			Active:      true,
-			CreatedAt:   time.Now(),
+			ID:        "topic-invalid",
+			UserID:    "user-invalid",
+			Name:      "Invalid Topic",
+			Prompt:    "invalid_prompt_name",
+			Ideas:     2,
+			Active:    true,
+			CreatedAt: time.Now(),
 		}
 
 		err := topic.ValidateFase1()

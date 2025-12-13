@@ -178,3 +178,39 @@ func (m *MockLLMService) RefineDraft(ctx context.Context, draft string, userProm
 	}
 	return "", nil
 }
+
+// MockLinkedInService is a mock implementation of interfaces.LinkedInService
+type MockLinkedInService struct {
+	PublishPostFunc    func(ctx context.Context, content string, accessToken string) (*interfaces.LinkedInPostResponse, error)
+	PublishArticleFunc func(ctx context.Context, title string, content string, accessToken string) (*interfaces.LinkedInPostResponse, error)
+	ValidateTokenFunc  func(ctx context.Context, accessToken string) (bool, error)
+	RefreshTokenFunc   func(ctx context.Context, refreshToken string) (string, error)
+}
+
+func (m *MockLinkedInService) PublishPost(ctx context.Context, content string, accessToken string) (*interfaces.LinkedInPostResponse, error) {
+	if m.PublishPostFunc != nil {
+		return m.PublishPostFunc(ctx, content, accessToken)
+	}
+	return nil, nil
+}
+
+func (m *MockLinkedInService) PublishArticle(ctx context.Context, title string, content string, accessToken string) (*interfaces.LinkedInPostResponse, error) {
+	if m.PublishArticleFunc != nil {
+		return m.PublishArticleFunc(ctx, title, content, accessToken)
+	}
+	return nil, nil
+}
+
+func (m *MockLinkedInService) ValidateToken(ctx context.Context, accessToken string) (bool, error) {
+	if m.ValidateTokenFunc != nil {
+		return m.ValidateTokenFunc(ctx, accessToken)
+	}
+	return false, nil
+}
+
+func (m *MockLinkedInService) RefreshToken(ctx context.Context, refreshToken string) (string, error) {
+	if m.RefreshTokenFunc != nil {
+		return m.RefreshTokenFunc(ctx, refreshToken)
+	}
+	return "", nil
+}

@@ -18,14 +18,14 @@ func TestIdeaRefactored(t *testing.T) {
 	t.Run("should create a valid idea with all required fields including topic_name", func(t *testing.T) {
 		// GIVEN an idea with all required fields
 		idea := &Idea{
-			ID:          "idea-123",
-			UserID:      "user-123",
-			TopicID:     "topic-123",
-			TopicName:   "Marketing Digital", // NEW field
-			Content:     "Crea contenido sobre estrategias SEO para LinkedIn",
+			ID:           "idea-123",
+			UserID:       "user-123",
+			TopicID:      "topic-123",
+			TopicName:    "Marketing Digital", // NEW field
+			Content:      "Crea contenido sobre estrategias SEO para LinkedIn",
 			QualityScore: &[]float64{0.8}[0],
-			Used:        false,
-			CreatedAt:   time.Now(),
+			Used:         false,
+			CreatedAt:    time.Now(),
 		}
 
 		// Set expiration
@@ -350,8 +350,8 @@ func TestIdeaRefactored(t *testing.T) {
 
 // Constants for the refactored Idea entity
 const (
-	MaxIdeaContentLengthRefactored = 200  // Reduced from 5000
-	MaxTopicNameLength             = 100  // Maximum topic name length
+	MaxIdeaContentLengthRefactored = 200 // Reduced from 5000
+	MaxTopicNameLength             = 100 // Maximum topic name length
 )
 
 // NEW validation method for the refactored Idea entity

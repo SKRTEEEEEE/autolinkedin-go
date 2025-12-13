@@ -39,17 +39,17 @@ func TestPromptEngine(t *testing.T) {
 
 	// Setup test user with profile data using Configuration (new system)
 	testUser := &entities.User{
-		ID:        userID,
-		Email:     "test@example.com",
-		Language:  "es",
+		ID:       userID,
+		Email:    "test@example.com",
+		Language: "es",
 		Configuration: map[string]interface{}{
-			"name":               "Juan García",
-			"expertise":          "Desarrollo Backend",
-			"tone_preference":    "Profesional",
-			"industry":           "Technology",
-			"role":               "Software Engineer",
-			"experience":         "5 years",
-			"goals":              "Career growth in AI/ML",
+			"name":            "Juan García",
+			"expertise":       "Desarrollo Backend",
+			"tone_preference": "Profesional",
+			"industry":        "Technology",
+			"role":            "Software Engineer",
+			"experience":      "5 years",
+			"goals":           "Career growth in AI/ML",
 		},
 		CreatedAt: now,
 		UpdatedAt: now,
@@ -90,13 +90,13 @@ func TestPromptEngine(t *testing.T) {
 
 		// GIVEN a topic with related data for ideas prompt
 		topic := &entities.Topic{
-			ID:              "topic-1",
-			Name:            "Machine Learning for Startups",
-			Ideas:           5,
-			RelatedTopics:   []string{"AI", "Venture Capital", "Technology Innovation"},
-			Active:          true,
-			CreatedAt:       now,
-			UpdatedAt:       now,
+			ID:            "topic-1",
+			Name:          "Machine Learning for Startups",
+			Ideas:         5,
+			RelatedTopics: []string{"AI", "Venture Capital", "Technology Innovation"},
+			Active:        true,
+			CreatedAt:     now,
+			UpdatedAt:     now,
 		}
 
 		// WHEN processing the prompt
@@ -105,7 +105,7 @@ func TestPromptEngine(t *testing.T) {
 		// THEN variables should be replaced correctly
 		require.NoError(t, err)
 		assert.NotNil(t, processedPrompt)
-		
+
 		// Verify variables were substituted
 		assert.Contains(t, processedPrompt, "Genera 5 ideas de contenido")
 		assert.Contains(t, processedPrompt, "Machine Learning for Startups")
@@ -134,15 +134,15 @@ func TestPromptEngine(t *testing.T) {
 		// THEN variables should be replaced correctly
 		require.NoError(t, err)
 		assert.NotNil(t, processedPrompt)
-		
+
 		// Verify content variable was substituted
 		assert.Contains(t, processedPrompt, "How ML models are revolutionizing startup growth strategies")
-		
+
 		// Verify user context was built and substituted (using new Configuration system)
 		assert.Contains(t, processedPrompt, "Name: Juan García")
 		assert.Contains(t, processedPrompt, "Expertise: Desarrollo Backend")
 		assert.Contains(t, processedPrompt, "Tone: Profesional")
-		
+
 		assert.NotContains(t, processedPrompt, "{content}")
 		assert.NotContains(t, processedPrompt, "{user_context}")
 	})
@@ -152,25 +152,25 @@ func TestPromptEngine(t *testing.T) {
 
 		// GIVEN a topic
 		topic := &entities.Topic{
-			ID:              "topic-1",
-			Name:            "Test Topic",
-			Ideas:           3,
-			RelatedTopics:   []string{"AI"},
-			Active:          true,
-			CreatedAt:       now,
-			UpdatedAt:       now,
+			ID:            "topic-1",
+			Name:          "Test Topic",
+			Ideas:         3,
+			RelatedTopics: []string{"AI"},
+			Active:        true,
+			CreatedAt:     now,
+			UpdatedAt:     now,
 		}
 
 		// WHEN processing the prompt twice
 		processed1, err := engine.ProcessPrompt(ctx, userID, "base1", entities.PromptTypeIdeas, topic, nil, testUser)
 		require.NoError(t, err)
-		
+
 		processed2, err := engine.ProcessPrompt(ctx, userID, "base1", entities.PromptTypeIdeas, topic, nil, testUser)
 		require.NoError(t, err)
 
 		// THEN results should be identical and cached
 		assert.Equal(t, processed1, processed2)
-		
+
 		// Verify cache contains something (we can't access private buildCacheKey)
 		assert.Greater(t, engine.CacheSize(), 0)
 		assert.Greater(t, engine.CacheHitCount(), 0)
@@ -182,13 +182,13 @@ func TestPromptEngine(t *testing.T) {
 		// GIVEN no custom prompt exists for the user
 		nonExistentPromptName := "nonexistent-prompt"
 		topic := &entities.Topic{
-			ID:              "topic-1",
-			Name:            "Test Topic",
-			Ideas:           3,
-			RelatedTopics:   []string{"AI"},
-			Active:          true,
-			CreatedAt:       now,
-			UpdatedAt:       now,
+			ID:            "topic-1",
+			Name:          "Test Topic",
+			Ideas:         3,
+			RelatedTopics: []string{"AI"},
+			Active:        true,
+			CreatedAt:     now,
+			UpdatedAt:     now,
 		}
 
 		// WHEN processing a non-existent prompt
@@ -197,7 +197,7 @@ func TestPromptEngine(t *testing.T) {
 		// THEN should fall back to default prompts from seed files
 		require.NoError(t, err)
 		assert.NotNil(t, processedPrompt)
-		
+
 		// Should contain the default prompt content for the type
 		assert.Contains(t, processedPrompt, "Genera 3 ideas de contenido")
 		assert.Contains(t, processedPrompt, "Test Topic")
@@ -221,13 +221,13 @@ func TestPromptEngine(t *testing.T) {
 
 		// GIVEN a topic without related topics
 		topic := &entities.Topic{
-			ID:              "topic-1",
-			Name:            "Solo Topic",
-			Ideas:           2,
-			RelatedTopics:   []string{}, // Empty array
-			Active:          true,
-			CreatedAt:       now,
-			UpdatedAt:       now,
+			ID:            "topic-1",
+			Name:          "Solo Topic",
+			Ideas:         2,
+			RelatedTopics: []string{}, // Empty array
+			Active:        true,
+			CreatedAt:     now,
+			UpdatedAt:     now,
 		}
 
 		// WHEN processing the prompt
@@ -247,13 +247,13 @@ func TestPromptEngine(t *testing.T) {
 
 		// GIVEN a topic with missing name (required for ideas prompt)
 		topic := &entities.Topic{
-			ID:              "topic-1",
-			Name:            "", // Missing required field
-			Ideas:           3,
-			RelatedTopics:   []string{"AI"},
-			Active:          true,
-			CreatedAt:       now,
-			UpdatedAt:       now,
+			ID:            "topic-1",
+			Name:          "", // Missing required field
+			Ideas:         3,
+			RelatedTopics: []string{"AI"},
+			Active:        true,
+			CreatedAt:     now,
+			UpdatedAt:     now,
 		}
 
 		// WHEN processing the prompt
@@ -298,13 +298,13 @@ func TestPromptEngine(t *testing.T) {
 
 		// GIVEN an invalid user (nil)
 		topic := &entities.Topic{
-			ID:              "topic-1",
-			Name:            "Test Topic",
-			Ideas:           3,
-			RelatedTopics:   []string{"AI"},
-			Active:          true,
-			CreatedAt:       now,
-			UpdatedAt:       now,
+			ID:            "topic-1",
+			Name:          "Test Topic",
+			Ideas:         3,
+			RelatedTopics: []string{"AI"},
+			Active:        true,
+			CreatedAt:     now,
+			UpdatedAt:     now,
 		}
 
 		// WHEN processing without a valid user
@@ -327,12 +327,12 @@ func TestPromptEngine(t *testing.T) {
 		// THEN should have empty cache and valid repository reference
 		assert.NotNil(t, newEngine)
 		assert.Empty(t, newEngine.GetCacheContents())
-		
+
 		// Should have default prompts loaded from seed
 		defaultIdeas := newEngine.GetDefaultPrompt(entities.PromptTypeIdeas)
 		assert.NotEmpty(t, defaultIdeas)
 		assert.Contains(t, defaultIdeas, "Genera {ideas} ideas")
-		
+
 		defaultDrafts := newEngine.GetDefaultPrompt(entities.PromptTypeDrafts)
 		assert.NotEmpty(t, defaultDrafts)
 		assert.Contains(t, defaultDrafts, "Eres un experto creador de contenido para LinkedIn")
